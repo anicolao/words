@@ -1,8 +1,8 @@
 <script>
 	import firebase from '../firebase';
 	import { store } from '../store';
-	import { collection, addDoc } from 'firebase/firestore';
 	import Button from '@smui/button';
+	import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
 
 	const auth = firebase.auth;
 	const gAuthProvider = firebase.google_auth_provider;
@@ -20,15 +20,18 @@
 					authMessage: ''
 				})
 			);
-			addDoc(collection(firebase.firestore, 'users'), {
-				name: user.displayName,
-				email: user.email,
-				photo: user.photoURL,
-				activity_timestamp: new Date().getTime()
-			}).catch((message) => {
-				// TODO: Surface this error state in the UI.
-				console.error(message);
-			});
+			if (user.email) {
+				// always true
+				setDoc(doc(firebase.firestore, 'users', user.email), {
+					name: user.displayName,
+					email: user.email,
+					photo: user.photoURL,
+					activity_timestamp: new Date().getTime()
+				}).catch((message) => {
+					// TODO: Surface this error state in the UI.
+					console.error(message);
+				});
+			}
 		} else {
 			store.dispatch(signed_out());
 		}
