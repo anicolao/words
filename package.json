@@ -45,6 +45,7 @@
 	"type": "module",
 	"dependencies": {
 		"@reduxjs/toolkit": "^1.8.5",
+		"cubing": "^0.29.0",
 		"firebase": "^9.9.3"
 	}
 }
