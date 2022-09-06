@@ -4,6 +4,7 @@
   import Button, { Label } from '@smui/button';
   import { Actions, } from '@smui/card';
 	import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
+	import Avatar from '$lib/components/Avatar.svelte';
 
 	const auth = firebase.auth;
 	const gAuthProvider = firebase.google_auth_provider;
@@ -58,7 +59,10 @@
 		</Button>
 	</Actions>
 {:else}
-	<p><img alt="Avatar" src={$store.auth.photo} referrerpolicy="no-referrer" />{$store.auth.email}</p>
+	<p>
+	<Avatar />
+	{$store.auth.email}</p>
 	<p>{$store.auth.name}</p>
 	<Button on:click={signout} variant="raised">Sign Out</Button>
 {/if}
+

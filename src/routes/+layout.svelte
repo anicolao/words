@@ -2,18 +2,13 @@
   <Row>
     <Section>
       <IconButton class="material-icons">menu</IconButton>
-      <Title>Fixed</Title>
+      <Title>Blue Roux</Title>
     </Section>
     <Section align="end" toolbar>
-      <IconButton class="material-icons" aria-label="Download"
-        >file_download</IconButton
+      <IconButton class="material-icons" aria-label="Connect Cube"
+        >settings_bluetooth</IconButton
       >
-      <IconButton class="material-icons" aria-label="Print this page"
-        >print</IconButton
-      >
-      <IconButton class="material-icons" aria-label="Bookmark this page"
-        >bookmark</IconButton
-      >
+      <Avatar />
     </Section>
   </Row>
 </TopAppBar>
@@ -30,6 +25,7 @@
     AutoAdjust,
   } from '@smui/top-app-bar';
   import IconButton from '@smui/icon-button';
+  import Avatar from '$lib/components/Avatar.svelte';
 
   let topAppBar: TopAppBarComponentDev;
 </script>
@@ -43,5 +39,7 @@
     height: auto !important;
     width: auto !important;
     position: static !important;
+    margin: 0;
+    padding: 0;
   }
 </style>

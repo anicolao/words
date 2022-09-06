@@ -22,7 +22,6 @@
 			<Card>
 	{#if !$store.cubes.bluetoothSupported && !$store.cubes.overrideUsingCubes}
 				<Content>
-					<h1>Blue Roux</h1>
 					<p>Make the most of your bluetooth cube as you master the Roux speedsolving method.</p>
 					<p>Your web browser doesn't support bluetooth. Try using
 					Google Chrome or installing the app version of blueroux.
@@ -36,7 +35,6 @@
 				</Actions>
 	{:else}
 				<Content>
-					<h1>Blue Roux</h1>
 					<p>Make the most of your bluetooth cube as you master the Roux speedsolving method.</p>
 					<p>Sign in with Google to proceed.</p>
 				</Content>
@@ -46,9 +44,10 @@
 		</div>
 	</div>
 {:else}
-<h1>Blue Roux</h1>
-<Pair/>
-<Login/>
+<Content>
+	<Pair/>
+	<Login/>
+</Content>
 {/if}
 
 <style>
