@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { pair, listKnownDevices, setupDevices } from '$lib/bluetooth/pair';
 	import { bluetooth_supported, known_cubes, reconnect_supported } from './cubes';
-	import { store } from '$lib/../store';
+	import { store } from '$lib/store';
 
 	import Button from '@smui/button';
 

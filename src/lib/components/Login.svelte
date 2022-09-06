@@ -1,7 +1,8 @@
 <script>
-	import firebase from '../firebase';
-	import { store } from '../store';
-	import Button from '@smui/button';
+	import firebase from '$lib/firebase';
+	import { store } from '$lib/store';
+  import Button, { Label } from '@smui/button';
+  import { Actions, } from '@smui/card';
 	import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
 
 	const auth = firebase.auth;
@@ -50,9 +51,14 @@
 </script>
 
 {#if $store.auth.signedIn !== true}
-	<Button on:click={signin} variant="raised">Sign In</Button>
+	<Actions fullBleed>
+		<Button on:click={signin}>
+			<Label>Sign In</Label>
+			<i class="material-icons" aria-hidden="true">arrow_forward</i>
+		</Button>
+	</Actions>
 {:else}
-	<p><img src={$store.auth.photo} referrerpolicy="no-referrer" />{$store.auth.email}</p>
+	<p><img alt="Avatar" src={$store.auth.photo} referrerpolicy="no-referrer" />{$store.auth.email}</p>
 	<p>{$store.auth.name}</p>
-	<button on:click={signout}>Sign Out</button>
+	<Button on:click={signout} variant="raised">Sign Out</Button>
 {/if}
