@@ -24,12 +24,12 @@ function getSupportedProperties(characteristic) {
   return '[' + supportedProperties.join(', ') + ']';
 }
 
-export async function listKnownDevices() {
+export async function listKnownDevices(): BluetoothDevice[] {
   const devices = await navigator.bluetooth.getDevices();
-  console.log(devices);
-  if (devices.length === 0) {
-    return false;
-  }
+  return devices;
+}
+
+export async function setupDevices(devices: BluetoothDevice[]) {
 	for (const device of devices) {
 		const abortController = new AbortController();
 		const log = console.log;
