@@ -11,7 +11,11 @@
 
   import { writable } from 'svelte/store';
   const loading = writable(true);
+
+  let width;
 </script>
+
+<svelte:window bind:innerWidth={width}/>
 
 {#if $loading || $store.auth.signedIn === undefined}
 <h2>Loading ...</h2>
@@ -47,6 +51,7 @@
 <Content>
 	<Pair/>
 	<Login/>
+	<p>Page width is: {width}px</p>
 </Content>
 {/if}
 

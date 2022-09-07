@@ -53,7 +53,9 @@
 	"type": "module",
 	"dependencies": {
 		"@reduxjs/toolkit": "^1.8.5",
+		"@smui/drawer": "^6.1.0",
 		"@smui/icon-button": "^6.1.0",
+		"@smui/list": "^6.1.0",
 		"@smui/top-app-bar": "^6.1.0",
 		"cubing": "^0.29.0",
 		"firebase": "^9.9.3"
