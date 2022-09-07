@@ -29,43 +29,46 @@ export async function listKnownDevices(): BluetoothDevice[] {
   return devices;
 }
 
-export async function setupDevices(devices: BluetoothDevice[]) {
+export async function setupDevices(devices: BluetoothDevice[], connectCallback: any) {
 	for (const device of devices) {
 		const abortController = new AbortController();
 		const log = console.log;
-		log("listen for ads from ", device);
-		device.addEventListener(
-			"advertisementreceived",
-			() => {
-				log("ad: ", device);
-				abortController.abort();
-				device.gatt.connect()
-				.then(
-					server => { log('Connected: ', device); 
-						log('Getting Services...');
-						return server.getPrimaryServices();
-					})
-					.then(services => {
-						log('Getting Characteristics...');
-						let queue = Promise.resolve();
-						services.forEach(service => {
-							queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
-								log('> Service: ' + service.uuid);
-								characteristics.forEach(characteristic => {
-									log('>> Characteristic: ' + characteristic.uuid + ' ' +
-											getSupportedProperties(characteristic));
-								});
-							}));
-						});
-						return queue;
-					})
-				  .catch((err) => { log('Error: ', err); });
-			},
-			{ once: true }
-		);
-		log("watchAdvertisements");
-		device.watchAdvertisements({ signal: abortController.signal });
-		log("done");
+		if (!(device.gatt && device.gatt.connected)) {
+			log("listen for ads from ", device);
+			device.addEventListener(
+				"advertisementreceived",
+				() => {
+					log("ad: ", device);
+					abortController.abort();
+					device.gatt.connect()
+					.then(
+						server => { log('Connected: ', device); 
+							connectCallback(device);
+							log('Getting Services...');
+							return server.getPrimaryServices();
+						})
+						.then(services => {
+							log('Getting Characteristics...');
+							let queue = Promise.resolve();
+							services.forEach(service => {
+								queue = queue.then(_ => service.getCharacteristics().then(characteristics => {
+									log('> Service: ' + service.uuid);
+									characteristics.forEach(characteristic => {
+										log('>> Characteristic: ' + characteristic.uuid + ' ' +
+												getSupportedProperties(characteristic));
+									});
+								}));
+							});
+							return queue;
+						})
+						.catch((err) => { log('Error: ', err); });
+				},
+				{ once: true }
+			);
+			device.watchAdvertisements({ signal: abortController.signal });
+		} else {
+			log("Device: ", device.name, " already connected.");
+		}
 	}
 }
 
