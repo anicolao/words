@@ -1,6 +1,7 @@
 import { combineReducers, configureStore, createStore } from '@reduxjs/toolkit';
 import { auth } from './components/auth';
 import { cubes } from '$lib/components/cubes';
+import { nav } from '$lib/components/nav';
 
 function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
 	return function (reducer: any, initialState: any) {
@@ -23,5 +24,6 @@ function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
 const reducer = {
     auth,
     cubes,
+    nav,
 }
 export const store = configureStore({ reducer, enhancers: [svelteStoreEnhancer] });

@@ -10,14 +10,14 @@
 {:else}
 				<IconButton class="material-icons" on:click={() => open = !open || width > 720}>{active}</IconButton>
 {/if}
-				<Title>{active}</Title>
+				<Title>{textLookup(active)}</Title>
 			</Section>
 </div>
 			<Section align="end" toolbar>
-				<IconButton class="material-icons" aria-label="Connect Cube"
+				<IconButton class="material-icons" aria-label="Connect Cube" on:click={() => setActive('bluetooth')}
 					>settings_bluetooth</IconButton
 				>
-				<Avatar />
+				<span on:click={() => setActive('account_circle')}><Avatar /></span>
 			</Section>
 		</Row>
 	</TopAppBar>
@@ -39,7 +39,7 @@
           activated={active === 'inbox'}
         >
           <Graphic class="material-icons" aria-hidden="true">inbox</Graphic>
-          <Text>Inbox</Text>
+          <Text>{textLookup('inbox')}</Text>
         </Item>
         <Item
           href="javascript:void(0)"
@@ -47,7 +47,7 @@
           activated={active === 'star'}
         >
           <Graphic class="material-icons" aria-hidden="true">star</Graphic>
-          <Text>Star</Text>
+          <Text>{textLookup('star')}</Text>
         </Item>
         <Item
           href="javascript:void(0)"
@@ -55,7 +55,7 @@
           activated={active === 'send'}
         >
           <Graphic class="material-icons" aria-hidden="true">send</Graphic>
-          <Text>Sent Mail</Text>
+          <Text>{textLookup('send')}</Text>
         </Item>
         <Item
           href="javascript:void(0)"
@@ -63,18 +63,26 @@
           activated={active === 'drafts'}
         >
           <Graphic class="material-icons" aria-hidden="true">drafts</Graphic>
-          <Text>Drafts</Text>
+          <Text>{textLookup('drafts')}</Text>
         </Item>
 
         <Separator />
-        <Subheader component={H6}>Labels</Subheader>
+        <Subheader component={H6}>Settings</Subheader>
         <Item
           href="javascript:void(0)"
-          on:click={() => setActive('bookmark')}
-          activated={active === 'bookmark'}
+          on:click={() => setActive('account_circle')}
+          activated={active === 'account_circle'}
         >
-          <Graphic class="material-icons" aria-hidden="true">bookmark</Graphic>
-          <Text>Family</Text>
+          <Graphic class="material-icons" aria-hidden="true">account_circle</Graphic>
+          <Text>{textLookup('account_circle')}</Text>
+        </Item>
+        <Item
+          href="javascript:void(0)"
+          on:click={() => setActive('bluetooth')}
+          activated={active === 'bluetooth'}
+        >
+          <Graphic class="material-icons" aria-hidden="true">bluetooth</Graphic>
+          <Text>{textLookup('bluetooth')}</Text>
         </Item>
       </List>
     </Content>
@@ -87,6 +95,7 @@
 </div>
 
 <script lang="ts">
+  import {goto} from '$app/navigation';
   /* app bar */
   import type { TopAppBarComponentDev } from '@smui/top-app-bar';
   import TopAppBar, {
@@ -111,16 +120,32 @@
   import Button, { Label } from '@smui/button';
   import List, { Item, Text, Graphic, Separator, Subheader } from '@smui/list';
   import { H6 } from '@smui/common/elements';
+  import { store } from '$lib/store';
+  import { navigate_to } from '$lib/components/nav';
 
   $: open = width > 720;
   let active = 'inbox';
 
   function setActive(value: string) {
+    store.dispatch(navigate_to(value));
     active = value;
     open = false || width > 720;
+    goto(active);
   }
 
   let width;
+
+  const i18n = {
+  	inbox: "Inbox",
+  	star: "Star",
+  	send: "Send",
+  	drafts: "Drafts",
+  	account_circle: "Profile",
+  	bluetooth: "Cubes",
+	};
+  function textLookup(key: string) {
+  	return i18n[key];
+	}
 </script>
 
 

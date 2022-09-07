@@ -1,4 +1,5 @@
 <script lang="ts">
+	import {getContext} from 'svelte';
 	import Login from '$lib/components/Login.svelte';
 	import Pair from '$lib/components/Pair.svelte';
   import Card, {
@@ -52,6 +53,7 @@
 	<Pair/>
 	<Login/>
 	<p>Page width is: {width}px</p>
+	<p>Active page is: {$store.nav.active}</p>
 </Content>
 {/if}
 
