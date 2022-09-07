@@ -61,42 +61,34 @@
   <Drawer variant={width>720 ? undefined : 'modal'} 
           fixed={width>720 ? undefined : false} bind:open>
     <Header>
-      <Title>Super Mail</Title>
-      <Subtitle>It's the best fake mail app drawer.</Subtitle>
+      <Title>Blue Roux</Title>
+      <Subtitle>Bluetooth training FTW</Subtitle>
     </Header>
     <Content>
       <List>
         <Item
           href="javascript:void(0)"
-          on:click={() => setActive('inbox')}
-          activated={active === 'inbox'}
+          on:click={() => setActive('timer')}
+          activated={active === 'timer'}
         >
-          <Graphic class="material-icons" aria-hidden="true">inbox</Graphic>
-          <Text>{textLookup('inbox')}</Text>
+          <Graphic class="material-icons" aria-hidden="true">timer</Graphic>
+          <Text>{textLookup('timer')}</Text>
         </Item>
         <Item
           href="javascript:void(0)"
-          on:click={() => setActive('star')}
-          activated={active === 'star'}
+          on:click={() => setActive('trending_down')}
+          activated={active === 'trending_down'}
         >
-          <Graphic class="material-icons" aria-hidden="true">star</Graphic>
-          <Text>{textLookup('star')}</Text>
+          <Graphic class="material-icons" aria-hidden="true">trending_down</Graphic>
+          <Text>{textLookup('trending_down')}</Text>
         </Item>
         <Item
           href="javascript:void(0)"
-          on:click={() => setActive('send')}
-          activated={active === 'send'}
+          on:click={() => setActive('school')}
+          activated={active === 'school'}
         >
-          <Graphic class="material-icons" aria-hidden="true">send</Graphic>
-          <Text>{textLookup('send')}</Text>
-        </Item>
-        <Item
-          href="javascript:void(0)"
-          on:click={() => setActive('drafts')}
-          activated={active === 'drafts'}
-        >
-          <Graphic class="material-icons" aria-hidden="true">drafts</Graphic>
-          <Text>{textLookup('drafts')}</Text>
+          <Graphic class="material-icons" aria-hidden="true">school</Graphic>
+          <Text>{textLookup('school')}</Text>
         </Item>
 
         <Separator />
@@ -177,10 +169,9 @@
 
   const i18n = {
   	unknown: "Unknown",
-  	inbox: "Inbox",
-  	star: "Star",
-  	send: "Send",
-  	drafts: "Drafts",
+  	timer: "Speed Solving",
+  	trending_down: "Efficient Solving",
+  	school: "Roux Academy",
   	account_circle: "Profile",
   	bluetooth: "Cubes",
 	};
