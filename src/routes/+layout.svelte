@@ -1,5 +1,38 @@
 <svelte:window bind:innerWidth={width}/>
 
+{#if loading || $store.auth.signedIn === undefined}
+<h2>Loading ...</h2>
+<div style="display: none"><Pair/><Login/>{loading = false}</div>
+{:else if !$store.auth.signedIn}
+	<div class="card-display">
+		<div class="card-container">
+			<Card>
+	{#if !$store.cubes.bluetoothSupported && !$store.cubes.overrideUsingCubes}
+				<CardContent>
+					<h2>Blue Roux</h2>
+					<p>Make the most of your bluetooth cube as you master the Roux speedsolving method.</p>
+					<p>Your web browser doesn't support bluetooth. Try using
+					Google Chrome or installing the app version of blueroux.
+					</p>
+				</CardContent>
+				<Actions fullBleed>
+					<Button on:click={() => store.dispatch(override(true)) }>
+						<Label>Ignore and continue</Label>
+						<i class="material-icons" aria-hidden="true">arrow_forward</i>
+					</Button>
+				</Actions>
+	{:else}
+				<CardContent>
+					<h2>Blue Roux</h2>
+					<p>Make the most of your bluetooth cube as you master the Roux speedsolving method.</p>
+					<p>Sign in with Google to proceed.</p>
+				</CardContent>
+				<Login/>
+	{/if}
+			</Card>
+		</div>
+	</div>
+{:else}
 <div class="drawer-container">
 	<TopAppBar bind:this={topAppBar} variant="fixed">
 		<Row>
@@ -93,6 +126,7 @@
 		<slot />
 	</AppContent>
 </div>
+{/if}
 
 <script lang="ts">
   import {goto} from '$app/navigation';
@@ -106,6 +140,15 @@
   } from '@smui/top-app-bar';
   import IconButton from '@smui/icon-button';
   import Avatar from '$lib/components/Avatar.svelte';
+	import Login from '$lib/components/Login.svelte';
+	import Pair from '$lib/components/Pair.svelte';
+  import Card, {
+    Content as CardContent,
+    Actions,
+  } from '@smui/card';
+  import Button, { Label } from '@smui/button';
+  import { store } from '$lib/store';
+  import { override } from '$lib/components/cubes';
 
   let topAppBar: TopAppBarComponentDev;
 
@@ -117,25 +160,23 @@
     Subtitle,
     Scrim,
   } from '@smui/drawer';
-  import Button, { Label } from '@smui/button';
   import List, { Item, Text, Graphic, Separator, Subheader } from '@smui/list';
   import { H6 } from '@smui/common/elements';
-  import { store } from '$lib/store';
   import { navigate_to } from '$lib/components/nav';
 
   $: open = width > 720;
-  let active = 'inbox';
+  $: active = $store.nav.active;
 
   function setActive(value: string) {
     store.dispatch(navigate_to(value));
-    active = value;
     open = false || width > 720;
-    goto(active);
+    goto(value);
   }
 
   let width;
 
   const i18n = {
+  	unknown: "Unknown",
   	inbox: "Inbox",
   	star: "Star",
   	send: "Send",
@@ -146,6 +187,8 @@
   function textLookup(key: string) {
   	return i18n[key];
 	}
+
+	let loading = true;
 </script>
 
 
@@ -199,5 +242,18 @@
   	margin-left: 256px;
 	}
 
+.card-display {
+	margin: 25%;
+	margin-top: 5%;
+}
+
+p {
+	padding-top: 0.5em;
+}
+
+h2 {
+	font-family: "Roboto", sans-serif;
+	font-size: large;
+}
 </style>
 

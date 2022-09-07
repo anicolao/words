@@ -6,12 +6,12 @@ export interface NavState {
 export const navigate_to = createAction<string>('navigate_to');
 
 const initialState = {
-	active: "login",
+	active: "unknown",
 } as NavState;
 
 export const nav = createReducer(initialState, (r) => {
 	r.addCase(navigate_to, (state, action) => {
-		state.active = action.payload;
+		state.active = action.payload || "bluetooth";
 		return state;
 	})
 });
