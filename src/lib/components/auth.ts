@@ -1,4 +1,5 @@
-import { createAction, createReducer, } from '@reduxjs/toolkit';
+import * as toolkitRaw from '@reduxjs/toolkit';
+const { createAction, createReducer, } = ((toolkitRaw as any).default ?? toolkitRaw) as typeof toolkitRaw;
 export interface AuthState {
 	name?: string | null;
 	email?: string | null;

@@ -1,4 +1,6 @@
-import { combineReducers, configureStore, createStore } from '@reduxjs/toolkit';
+//import { combineReducers, configureStore, createStore } from '@reduxjs/toolkit';
+import * as toolkitRaw from '@reduxjs/toolkit';
+const { combineReducers, configureStore, createStore } = ((toolkitRaw as any).default ?? toolkitRaw) as typeof toolkitRaw;
 import { auth } from './components/auth';
 import { cubes } from '$lib/components/cubes';
 import { nav } from '$lib/components/nav';
