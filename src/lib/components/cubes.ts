@@ -18,7 +18,7 @@ const initialState = {
 	autoReconnectSupported: false,
 	overrideUsingCubes: false,
 	knownCubes: [],
-} as AuthState;
+} as CubesState;
 
 export const cubes = createReducer(initialState, (r) => {
 	r.addCase(known_cubes, (state, action) => {
