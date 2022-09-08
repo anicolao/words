@@ -1,5 +1,4 @@
-const { expect: untypedExpect } = await import('@esm-bundle' + '/chai');
-export const expect: typeof import('chai').expect = untypedExpect;
+import { expect } from 'chai';
 
 import {
 	initialState,
