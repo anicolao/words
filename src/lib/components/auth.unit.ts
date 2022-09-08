@@ -2,6 +2,7 @@ const { expect: untypedExpect } = await import('@esm-bundle' + '/chai');
 export const expect: typeof import('chai').expect = untypedExpect;
 
 import { auth, waiting } from './auth.js';
+import { describe, it } from 'vitest';
 
 describe('auth', () => {
 	it('waiting message is initialized correctly', () => {
