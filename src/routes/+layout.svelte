@@ -165,9 +165,9 @@
     goto(value);
   }
 
-  let width;
+  let width: number = 0;
 
-  const i18n = {
+  const i18n: { [key: string]: string } = {
   	unknown: "Unknown",
   	timer: "Speed Solving",
   	trending_down: "Efficient Solving",
