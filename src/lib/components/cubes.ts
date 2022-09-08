@@ -15,7 +15,7 @@ export const known_cubes = createAction<[string, string, boolean][]>('known_cube
 export const connect = createAction<[string, boolean]>('connect');
 export const override = createAction<boolean>('override');
 
-const initialState = {
+export const initialState = {
 	bluetoothSupported: false,
 	autoReconnectSupported: false,
 	overrideUsingCubes: false,
@@ -36,7 +36,6 @@ export const cubes = createReducer(initialState, (r) => {
 			return state;
 		})
 		.addCase(bluetooth_supported, (state, action) => {
-			console.log(action);
 			state.bluetoothSupported = action.payload;
 			return state;
 		})
