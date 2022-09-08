@@ -8,7 +8,7 @@ export interface NavState {
 
 export const navigate_to = createAction<string>('navigate_to');
 
-const initialState = {
+export const initialState = {
 	active: 'unknown'
 } as NavState;
 
