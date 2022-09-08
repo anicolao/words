@@ -1,4 +1,5 @@
 import * as toolkitRaw from '@reduxjs/toolkit';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { createAction, createReducer, } = ((toolkitRaw as any).default ?? toolkitRaw) as typeof toolkitRaw;
 export interface AuthState {
 	name?: string | null;
@@ -23,19 +24,19 @@ const initialAuthState = {
 } as AuthState;
 
 export const auth = createReducer(initialAuthState, (r) => {
-	r.addCase(waiting, (state, action) => {
+	r.addCase(waiting, () => {
 		return { authMessage: 'Waiting...', signedIn: false };
 	})
-		.addCase(unknown, (state, action) => {
+		.addCase(unknown, () => {
 			return { authMessage: 'Unknown sign in state', signedIn: false };
 		})
-		.addCase(error, (state, action) => {
+		.addCase(error, (_state, action) => {
 			return { authMessage: action.payload, signedIn: false };
 		})
         .addCase(signed_in, (state, action) => {
             return {...state, ...action.payload, signedIn: true }
         })
-        .addCase(signed_out, (state, action) => {
+        .addCase(signed_out, () => {
             return { authMessage: "Signed out.", signedIn: false }
         });
 });
