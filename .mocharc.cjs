@@ -5,4 +5,4 @@ module.exports = {
 	loader: 'ts-node/esm',
 	spec: ['src/**/*.unit.ts'],
 	require: 'ts-node/register'
-}
+};
