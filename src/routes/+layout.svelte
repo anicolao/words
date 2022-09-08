@@ -29,7 +29,7 @@
 		goto(value);
 	}
 
-	let width: number = 0;
+	let width = 0;
 
 	const i18n: { [key: string]: string } = {
 		unknown: 'Unknown',

@@ -1,4 +1,5 @@
 import * as toolkitRaw from '@reduxjs/toolkit';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { createAction, createReducer } = ((toolkitRaw as any).default ??
 	toolkitRaw) as typeof toolkitRaw;
 export interface CubesState {
@@ -27,10 +28,10 @@ export const cubes = createReducer(initialState, (r) => {
 		return state;
 	})
 		.addCase(connect, (state, action) => {
-			let cubeId = action.payload[0];
-			let connectedState = action.payload[1];
-			let otherCubes = state.knownCubes.filter((x) => x[0] !== cubeId);
-			let thisCube = state.knownCubes.filter((x) => x[0] === cubeId)[0];
+			const cubeId = action.payload[0];
+			const connectedState = action.payload[1];
+			const otherCubes = state.knownCubes.filter((x) => x[0] !== cubeId);
+			const thisCube = state.knownCubes.filter((x) => x[0] === cubeId)[0];
 			state.knownCubes = [...otherCubes, [thisCube[0], thisCube[1], connectedState]];
 			return state;
 		})
