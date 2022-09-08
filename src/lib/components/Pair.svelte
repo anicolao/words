@@ -21,7 +21,9 @@
 				devices.map((d) => [d.id, d.name || 'Unknown Device', !!d.gatt && d.gatt.connected])
 			)
 		);
-		setupDevices(devices, (d: BluetoothDevice) => store.dispatch(connect([d.id, !!d.gatt && d.gatt.connected])));
+		setupDevices(devices, (d: BluetoothDevice) =>
+			store.dispatch(connect([d.id, !!d.gatt && d.gatt.connected]))
+		);
 	});
 
 	$: cubes = $store.cubes.knownCubes;

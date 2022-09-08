@@ -1,7 +1,3 @@
-<Content id="main-content">
-	<p>{scramble}</p>
-</Content>
-
 <script lang="ts">
 	import { Content } from '@smui/card';
 	import { randomScrambleForEvent } from 'cubing/scramble';
@@ -24,3 +20,7 @@
 		}
 	});
 </script>
+
+<Content id="main-content">
+	<p>{scramble}</p>
+</Content>

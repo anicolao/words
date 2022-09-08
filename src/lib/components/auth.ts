@@ -1,6 +1,7 @@
 import * as toolkitRaw from '@reduxjs/toolkit';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const { createAction, createReducer, } = ((toolkitRaw as any).default ?? toolkitRaw) as typeof toolkitRaw;
+const { createAction, createReducer } = ((toolkitRaw as any).default ??
+	toolkitRaw) as typeof toolkitRaw;
 export interface AuthState {
 	name?: string | null;
 	email?: string | null;
@@ -33,10 +34,10 @@ export const auth = createReducer(initialAuthState, (r) => {
 		.addCase(error, (_state, action) => {
 			return { authMessage: action.payload, signedIn: false };
 		})
-        .addCase(signed_in, (state, action) => {
-            return {...state, ...action.payload, signedIn: true }
-        })
-        .addCase(signed_out, () => {
-            return { authMessage: "Signed out.", signedIn: false }
-        });
+		.addCase(signed_in, (state, action) => {
+			return { ...state, ...action.payload, signedIn: true };
+		})
+		.addCase(signed_out, () => {
+			return { authMessage: 'Signed out.', signedIn: false };
+		});
 });

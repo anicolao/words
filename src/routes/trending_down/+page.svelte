@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { Content, } from '@smui/card';
+	import { Content } from '@smui/card';
 </script>
 
-<Content>
-Efficient Solving
-</Content>
+<Content>Efficient Solving</Content>

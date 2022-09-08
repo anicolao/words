@@ -1,8 +1,8 @@
 <script>
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
-  import Button, { Label } from '@smui/button';
-  import { Actions, } from '@smui/card';
+	import Button, { Label } from '@smui/button';
+	import { Actions } from '@smui/card';
 	import { setDoc, doc } from 'firebase/firestore';
 	import Avatar from '$lib/components/Avatar.svelte';
 
@@ -59,9 +59,9 @@
 	</Actions>
 {:else}
 	<p>
-	<Avatar />
-	{$store.auth.email}</p>
+		<Avatar />
+		{$store.auth.email}
+	</p>
 	<p>{$store.auth.name}</p>
 	<Button on:click={signout} variant="raised">Sign Out</Button>
 {/if}
-

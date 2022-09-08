@@ -10,7 +10,7 @@ export async function pair(): Promise<BluetoothRemoteGATTServer> {
 	console.log('Device:', device);
 
 	if (!device.gatt) {
-		throw new Error("Device not valid");
+		throw new Error('Device not valid');
 	}
 	const server = await device.gatt.connect();
 	console.log('Server:', server);
