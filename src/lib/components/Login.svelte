@@ -3,7 +3,7 @@
 	import { store } from '$lib/store';
   import Button, { Label } from '@smui/button';
   import { Actions, } from '@smui/card';
-	import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
+	import { setDoc, doc } from 'firebase/firestore';
 	import Avatar from '$lib/components/Avatar.svelte';
 
 	const auth = firebase.auth;
@@ -12,7 +12,6 @@
 	import { error, signed_in, signed_out } from './auth';
 	onAuthStateChanged(auth, (user) => {
 		if (user) {
-			const uid = user.uid;
 			store.dispatch(
 				signed_in({
 					name: user.displayName,
