@@ -220,12 +220,6 @@
   	padding: 0.5em;
   }
 
-  .main-content {
-    overflow: auto;
-    padding: 16px;
-    height: 100%;
-    box-sizing: border-box;
-  }
   .mobile-margin {
   	margin-left: 0;
 	}
