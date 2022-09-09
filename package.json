@@ -60,7 +60,7 @@
 		"@smui/list": "^6.1.0",
 		"@smui/top-app-bar": "^6.1.0",
 		"@web/test-runner-playwright": "^0.8.10",
-		"cubing": "^0.29.0",
+		"cubing": "^0.29.1",
 		"firebase": "^9.9.3"
 	}
 }
