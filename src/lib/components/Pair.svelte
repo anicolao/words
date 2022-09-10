@@ -7,6 +7,8 @@
 
 	import Button from '@smui/button';
 
+	const connectCallback = (d: BluetoothDevice): void => {
+		store.dispatch(connect([d.id, !!d.gatt && d.gatt.connected])); };
 	onMount(async () => {
 		let page = window.location.pathname.substring(1);
 		store.dispatch(navigate_to(page));
@@ -14,17 +16,21 @@
 		const bluetoothSupported = navigator.bluetooth !== undefined;
 		const autoReconnectSupported = navigator.bluetooth.getDevices !== undefined;
 		store.dispatch(bluetooth_supported(bluetoothSupported));
-		store.dispatch(reconnect_supported(autoReconnectSupported));
-		const devices = await listKnownDevices();
-		store.dispatch(
-			known_cubes(
-				devices.map((d) => [d.id, d.name || 'Unknown Device', !!d.gatt && d.gatt.connected])
-			)
-		);
-		setupDevices(devices, (d: BluetoothDevice) =>
-			store.dispatch(connect([d.id, !!d.gatt && d.gatt.connected]))
-		);
+		if ($store.cubes.autoReconnectSupported !== true && autoReconnectSupported === true) {
+			store.dispatch(reconnect_supported(autoReconnectSupported));
+			const devices = await listKnownDevices();
+			store.dispatch(
+				known_cubes(
+					devices.map((d) => [d.id, d.name || 'Unknown Device', !!d.gatt && d.gatt.connected])
+				)
+			);
+			setupDevices(devices, connectCallback);
+		}
 	});
+
+	function pairHandler() {
+		pair(connectCallback);
+	}
 
 	$: cubes = $store.cubes.knownCubes;
 	$: connectedCubes = cubes.filter((x) => x[2]);
@@ -50,4 +56,4 @@
 		</ul>
 	{/if}
 {/if}
-<Button on:click={pair} variant="raised">Pair</Button>
+<Button on:click={pairHandler} variant="raised">Pair</Button>
