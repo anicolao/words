@@ -1,3 +1,5 @@
+import { read } from "./bluetooth";
+
 type CCType = (d: BluetoothDevice) => void;
 export async function pair(connectCallback: CCType): Promise<BluetoothRemoteGATTServer> {
 	const device = await navigator.bluetooth.requestDevice({
@@ -86,6 +88,17 @@ function connect(device: BluetoothDevice, connectCallback: CCType) {
 						});
 					})
 				);
+			});
+			queue = queue.then(() => {
+				console.log("Read device info");
+				const devInfo = {
+					id: device.id,
+					service: '0000180a-0000-1000-8000-00805f9b34fb',
+					characteristic: '00002a23-0000-1000-8000-00805f9b34fb'
+				}
+				const ret = read(devInfo);
+				console.log(ret);
+				return ret;
 			});
 			return queue;
 		})
