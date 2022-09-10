@@ -8,7 +8,7 @@ import {
 	reconnect_supported,
 	connect,
 	override
-} from './cubes';
+} from '$lib/components/cubes';
 import { describe, it } from 'vitest';
 
 describe('cubes', () => {

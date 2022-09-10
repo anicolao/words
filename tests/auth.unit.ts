@@ -1,6 +1,14 @@
 import { expect } from 'chai';
 
-import { auth, error, signed_in, signed_out, unknown, waiting, type AuthState } from './auth';
+import {
+	auth,
+	error,
+	signed_in,
+	signed_out,
+	unknown,
+	waiting,
+	type AuthState
+} from '$lib/components/auth';
 import { describe, it } from 'vitest';
 
 describe('auth', () => {

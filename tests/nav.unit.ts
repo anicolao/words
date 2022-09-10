@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { navigate_to, nav, initialState } from './nav';
+import { navigate_to, nav, initialState } from '$lib/components/nav';
 import { describe, it } from 'vitest';
 
 describe('navigation state', () => {
