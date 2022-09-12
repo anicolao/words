@@ -33,7 +33,8 @@ export function getCharacteristic(f: GATTCharacteristicDescriptor): Promise<Blue
 }
 
 export function read(f: GATTCharacteristicDescriptor) {
-    return queue.then(() => getCharacteristic(f).then(characteristic => characteristic.readValue()));
+    queue = queue.then(() => getCharacteristic(f).then(characteristic => characteristic.readValue()));
+    return queue;
 }
 
 export function write(f: GATTCharacteristicDescriptor, data: Uint8Array) {

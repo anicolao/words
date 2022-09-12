@@ -2,11 +2,14 @@ import * as toolkitRaw from '@reduxjs/toolkit';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { createAction, createReducer } = ((toolkitRaw as any).default ??
 	toolkitRaw) as typeof toolkitRaw;
+
+export type CubeInfo = [string, string, boolean];
 export interface CubesState {
 	bluetoothSupported: boolean;
 	autoReconnectSupported: boolean;
 	overrideUsingCubes: boolean;
-	knownCubes: [string, string, boolean][];
+	knownCubes: CubeInfo[];
+	connectedDevice?: CubeInfo;
 }
 
 export const bluetooth_supported = createAction<boolean>('bluetooth_supported');
@@ -19,7 +22,8 @@ export const initialState = {
 	bluetoothSupported: false,
 	autoReconnectSupported: false,
 	overrideUsingCubes: false,
-	knownCubes: []
+	knownCubes: [],
+	connectedDevice: undefined
 } as CubesState;
 
 export const cubes = createReducer(initialState, (r) => {
@@ -32,7 +36,9 @@ export const cubes = createReducer(initialState, (r) => {
 			const connectedState = action.payload[1];
 			const otherCubes = state.knownCubes.filter((x) => x[0] !== cubeId);
 			const thisCube = state.knownCubes.filter((x) => x[0] === cubeId)[0];
-			state.knownCubes = [...otherCubes, [thisCube[0], thisCube[1], connectedState]];
+			const info: CubeInfo = [thisCube[0], thisCube[1], connectedState];
+			state.knownCubes = [...otherCubes, info];
+			state.connectedDevice = info;
 			return state;
 		})
 		.addCase(bluetooth_supported, (state, action) => {

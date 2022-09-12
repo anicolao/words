@@ -1,5 +1,3 @@
-import { read } from "./bluetooth";
-
 type CCType = (d: BluetoothDevice) => void;
 export async function pair(connectCallback: CCType): Promise<BluetoothRemoteGATTServer> {
 	const device = await navigator.bluetooth.requestDevice({
@@ -17,17 +15,6 @@ export async function pair(connectCallback: CCType): Promise<BluetoothRemoteGATT
 	connect(device, connectCallback);
 
 	return device.gatt;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getSupportedProperties(characteristic: BluetoothRemoteGATTCharacteristic) {
-	const supportedProperties: string[] = [];
-	for (const p in characteristic.properties) {
-		if ((characteristic.properties as unknown as { [key: string]: boolean })[p] === true) {
-			supportedProperties.push(p.toUpperCase());
-		}
-	}
-	return '[' + supportedProperties.join(', ') + ']';
 }
 
 export async function listKnownDevices(): Promise<BluetoothDevice[]> {
@@ -63,47 +50,16 @@ function connect(device: BluetoothDevice, connectCallback: CCType) {
 		log('ignoring erroneous connect');
 		return;
 	}
+	log('Device connected: ', device);
 	device.gatt
 		.connect()
 		.then((server) => {
-			log('Connected: ', device);
 			connectCallback && connectCallback(device);
-			log('Getting Services...');
 			return server.getPrimaryServices();
-		})
-		.then((services) => {
-			log('Getting Characteristics...');
-			let queue = Promise.resolve();
-			services.forEach((service) => {
-				queue = queue.then(() =>
-					service.getCharacteristics().then((characteristics) => {
-						log('> Service: ' + service.uuid);
-						characteristics.forEach((characteristic) => {
-							log(
-								'>> Characteristic: ' +
-									characteristic.uuid +
-									' ' +
-									getSupportedProperties(characteristic)
-							);
-						});
-					})
-				);
-			});
-			queue = queue.then(() => {
-				console.log("Read device info");
-				const devInfo = {
-					id: device.id,
-					service: '0000180a-0000-1000-8000-00805f9b34fb',
-					characteristic: '00002a23-0000-1000-8000-00805f9b34fb'
-				}
-				const ret = read(devInfo);
-				console.log(ret);
-				return ret;
-			});
-			return queue;
 		})
 		.catch((err) => {
 			log('Error: ', err);
+			throw err;
 		});
 }
 
