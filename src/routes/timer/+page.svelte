@@ -34,7 +34,7 @@
 		if (cube) {
 			cube.unwatchMoves();
 		}
-	})
+	});
 
 	let moveCount = 0;
 	let version = '_unknown';
@@ -42,20 +42,30 @@
 	let cube: GANCube | undefined;
 	let alg = new Alg();
 	async function addMove(model: any, move: string) {
-		const newAlg = experimentalAppendMove(alg, new Move(move), {
+		alg = experimentalAppendMove(alg, new Move(move), {
 			sameDirection: true,
 			wideMoves333: true,
 			sliceMoves333: true
 		});
-		model.timestampRequest.set("end");
-		model.catchUpMove.set({
-			move: new Move(move),
-			amount: 0
-		});
-		model.alg.set(newAlg);
-		alg = newAlg;
-		viewerAlg = newAlg.toString();
-		console.log("vA: ", viewerAlg);
+		// defer update until after transforms
+		setTimeout(() => {
+			model.timestampRequest.set('end');
+			const algNodes = Array.from(alg.childAlgNodes());
+			let lastMove = (algNodes[algNodes.length - 1] as Move);
+			if (!lastMove) lastMove = new Move(move);
+			else if (lastMove.amount > 1) {
+				lastMove = lastMove.modified({amount: 1});
+			} else if (lastMove.amount < -1) {
+				lastMove = lastMove.modified({amount: -1});
+			}
+			model.catchUpMove.set({
+				move: lastMove,
+				amount: 0
+			});
+			viewerAlg = alg.toString();
+			console.log('vA: ', viewerAlg);
+			model.alg.set(alg);
+		}, 100);
 	}
 	$: if ($store.cubes.connectedDevice !== currentDevice) {
 		async function useCurrentDevice() {
