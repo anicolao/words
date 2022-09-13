@@ -113,37 +113,42 @@ export class GANCube {
 	}
 
 	public async watchMoves(callback: MoveCallback) {
-		const handleMoves = async () => {
+		const pollMoveState = async () => {
 			if (!this.decrypt) {
 				this.decrypt = await getDecryptor(this.deviceDescriptor);
 			}
 			const encryptedMoves = await read(this.moves);
 			const decryptedMoves = await this.decrypt(new Uint8Array(encryptedMoves.buffer));
-			const arr = new Uint8Array(decryptedMoves.buffer);
-      this.updateOrientation(decryptedMoves);
-			if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
-				console.log('move count ', arr[12]);
-				let mc = arr[12];
-				if (mc < this.lastMoveCount) mc += 256;
-				const numMoves = mc - this.lastMoveCount;
-				console.log(`There were ${numMoves} this cycle`);
-				for (let i = arr.length - numMoves; i < arr.length; ++i) {
-					callback(arr[i]);
-				}
-			}
-      const rotationMove = this.facingToRotationMove[this.rotation];
-      if (rotationMove) {
-        this.rotation = "none";
-        callback(rotationMove);
-      }
-			this.lastMoveCount = arr[12];
-			if (this.watchingMoves) {
-				this.watchMoves(callback);
-			}
+			this.handleMoves(decryptedMoves, callback);
 		};
 		this.watchingMoves = true;
-		window.setTimeout(handleMoves, 10);
+		window.setTimeout(pollMoveState, 10);
 	}
+
+  private handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback) {
+    const arr = new Uint8Array(decryptedMoves.buffer);
+    this.updateOrientation(decryptedMoves);
+    if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
+      console.log('move count ', arr[12]);
+      let mc = arr[12];
+      if (mc < this.lastMoveCount)
+        mc += 256;
+      const numMoves = mc - this.lastMoveCount;
+      console.log(`There were ${numMoves} this cycle`);
+      for (let i = arr.length - numMoves; i < arr.length; ++i) {
+        callback(arr[i]);
+      }
+    }
+    const rotationMove = this.facingToRotationMove[this.rotation];
+    if (rotationMove) {
+      this.rotation = "none";
+      callback(rotationMove);
+    }
+    this.lastMoveCount = arr[12];
+    if (this.watchingMoves) {
+      this.watchMoves(callback);
+    }
+  }
 
 	public unwatchMoves() {
 		this.watchingMoves = false;
