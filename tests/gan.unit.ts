@@ -81,8 +81,10 @@ describe('GAN 356i', () => {
     { face: 0x0c, originalFace: "L", expectedFace: "L" },
     { face: 0x09, originalFace: "D", expectedFace: "F" },
     { face: 0x03, originalFace: "R", expectedFace: "R" },
+    { face: 0x05, originalFace: "R'", expectedFace: "R'" },
     { face: 0x00, originalFace: "U", expectedFace: "B" },
     { face: 0x0f, originalFace: "B", expectedFace: "D" },
+    { face: 0x26, originalFace: "z", expectedFace: "z" },
   ];
   for (const { face, originalFace, expectedFace } of faceCases) {
     it(`should not touch '${face}' moves`, () => {

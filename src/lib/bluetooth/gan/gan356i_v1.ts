@@ -24,11 +24,7 @@ export function getVersion(f: GATTDeviceDescriptor) {
 }
 
 export async function getVersionDecoded(f: GATTDeviceDescriptor) {
-	const value = await read({
-		...f,
-		service: UUIDs.infoService,
-		characteristic: UUIDs.versionCharacteristic
-	});
+	const value = await getVersion(f);
 	const versionBuffer = new Uint8Array(value.buffer);
 	return (((versionBuffer[0] << 8) + versionBuffer[1]) << 8) + versionBuffer[2];
 }
@@ -186,9 +182,6 @@ export class GANCube {
       return moveToRotation[originalMove];
     }
 		const faceIndex = colors.indexOf(move[0]);
-		if (faceIndex < 0) {
-			throw new Error('Failed to find face ' + originalMove);
-		}
 		const faces = 'ULFRBD';
 		const family = faces[stateData['CENTERS'].pieces.indexOf(faceIndex)];
 		if (move.length === 1) {
