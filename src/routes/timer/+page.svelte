@@ -10,11 +10,14 @@
 	import { Alg, Move } from 'cubing/alg';
 	import { experimentalAppendMove } from '$lib/cubing/alg/operation';
 	import type { KPuzzle } from 'cubing/kpuzzle';
+import { startAfter } from 'firebase/firestore';
 
 	let scramble = 'Scrambling...';
+	let remaining = 'Scrambling...';
 	async function newScramble() {
 		const s = await randomScrambleForEvent('333');
 		scramble = s.toString();
+		remaining = scramble;
 	}
 	newScramble();
 
@@ -41,12 +44,34 @@
 	let currentDevice: CubeInfo | undefined;
 	let cube: GANCube | undefined;
 	let alg = new Alg();
+	let startWhenReady = false;
+	let solving = false;
+	let started = new Date();
+	let ended = new Date();
+
 	async function addMove(model: any, move: string) {
 		alg = experimentalAppendMove(alg, new Move(move), {
 			sameDirection: true,
 			wideMoves333: true,
 			sliceMoves333: true
 		});
+		console.log(alg);
+		let inverted = Array.from(alg.invert().childAlgNodes());
+		inverted = inverted.concat(Array.from(new Alg(scramble).childAlgNodes()));
+		console.log("Catted: ", inverted.toString());
+		remaining = new Alg(inverted).simplify().toString();
+		console.log(`remaining: [${remaining}]`);
+		if (remaining.length === 0 && !solving) {
+			startWhenReady = true;
+		} else if (solving) {
+			ended = new Date();
+		} else if (startWhenReady) {
+			solving = true;
+			started = new Date();
+			ended = new Date();
+			startWhenReady = false;
+		}
+
 		// defer update until after transforms
 		setTimeout(() => {
 			model.timestampRequest.set('end');
@@ -94,6 +119,13 @@
 	{#if currentDevice}
 		<p>Cube: {currentDevice[1]} v{version}</p>
 	{/if}
+	{#if startWhenReady}
+	<p>Start when Ready!</p>
+	{:else if solving}
+	<p>Time: {ended.getTime() - started.getTime()}</p>
+	{:else}
 	<p>{scramble}</p>
+	<p>{remaining}</p>
 	<p>{viewerAlg}</p>
+	{/if}
 </Content>
