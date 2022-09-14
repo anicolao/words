@@ -139,10 +139,17 @@ export class GANCube {
 				callback(arr[i]);
 			}
 		}
+
 		const rotationMove = this.facingToRotationMove[this.rotation];
 		if (rotationMove) {
 			this.rotation = 'none';
-			callback(rotationMove);
+			// two rotaton moves packed in one number
+			if (rotationMove > 0x00ff) {
+				callback(rotationMove >> 8);
+				callback(rotationMove & 0x00ff);
+			} else {
+				callback(rotationMove);
+			}
 		}
 		this.lastMoveCount = arr[12];
 		if (this.watchingMoves) {
@@ -214,16 +221,22 @@ export class GANCube {
 
 		// put some dead space in so that the orientation doesn't
 		// flip back and forth due to sensor noise
-		const threshold = Math.PI / 4 + 0.15;
+		const threshold = Math.PI / 4 - 0.15;
 		for (let i = 0; i < this.quaternionToOrientationMap.length; ++i) {
 			const facingAngle = this.quaternionToOrientationMap[i].q;
 			const faces = this.quaternionToOrientationMap[i].facing;
 			const offset = this.orientation.angleTo(facingAngle);
 			if (Math.abs(offset) < threshold) {
 				if (faces !== this.facing) {
-					console.log(`Rotated to ${faces} from ${this.facing}`);
 					this.rotation = `${faces}<${this.facing}`;
-					this.facing = faces;
+					const rotationMove = this.facingToRotationMove[this.rotation];
+					if (rotationMove) {
+						console.log(`Will rotate to ${faces} from ${this.facing}`);
+						this.facing = faces;
+					} else {
+						// impossible now that we allow two cube rotations
+						console.error(`Don't know how to rotate to ${faces} from ${this.facing}`);
+					}
 				}
 			}
 		}
@@ -236,7 +249,7 @@ export class GANCube {
 
 	private quaternionToOrientationMap: { q: Quaternion; facing: string }[] = [];
 	private facing = 'WG';
-	private rotation = 'WG<WG';
+	private rotation = 'none';
 	private facings: string[] = [];
 	private facingToRotationMove: { [k: string]: number } = {};
 	public kpuzzleToFacing = function (state: KState) {
@@ -323,6 +336,23 @@ export class GANCube {
 				const endFacing = this.kpuzzleToFacing(endState);
 				const key = `${endFacing}<${startFacing}`;
 				this.facingToRotationMove[key] = moveToNumber[move];
+			});
+		});
+		// find all remaining orientation changes by considering
+		// two recognizableCubeRotations in a row and recording the
+		// first unique option
+		this.facings.map((startFacing) => {
+			recognizableCubeRotations.map((move1) => {
+				recognizableCubeRotations.map((move2) => {
+					const endState = facingStates[startFacing].applyMove(move1).applyMove(move2);
+					const endFacing = this.kpuzzleToFacing(endState);
+					if (endFacing !== startFacing) {
+						const key = `${endFacing}<${startFacing}`;
+						if (!this.facingToRotationMove[key]) {
+							this.facingToRotationMove[key] = (moveToNumber[move1] << 8) | moveToNumber[move2];
+						}
+					}
+				});
 			});
 		});
 	}
