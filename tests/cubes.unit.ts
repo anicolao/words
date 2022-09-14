@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { describe, it } from 'vitest';
 
 import {
 	initialState,
@@ -9,7 +10,6 @@ import {
 	connect,
 	override
 } from '$lib/components/cubes';
-import { describe, it } from 'vitest';
 
 describe('cubes', () => {
 	it('can set the list of known cubes', () => {

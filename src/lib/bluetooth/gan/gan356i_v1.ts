@@ -3,11 +3,12 @@ import {
 	type GATTCharacteristicDescriptor,
 	type GATTDeviceDescriptor
 } from '$lib/bluetooth/bluetooth';
-import { cube3x3x3KPuzzleDefinition } from '$lib/third_party/hack';
 import { importKey, unsafeDecryptBlock } from '$lib/third_party/unsafe-raw-aes';
-import { type KStateData, type KState, KPuzzle } from 'cubing/kpuzzle';
-import { Quaternion, Vector3 } from "three";
+import { cube3x3x3 } from 'cubing/puzzles';
+import type { KStateData, KState } from 'cubing/kpuzzle';
+import { Quaternion, Vector3 } from 'three';
 
+const kpuzzle = await cube3x3x3.kpuzzle();
 const UUIDs = {
 	ganCubeService: '0000fff0-0000-1000-8000-00805f9b34fb',
 	physicalStateCharacteristic: '0000fff5-0000-1000-8000-00805f9b34fb',
@@ -92,9 +93,9 @@ export class GANCube {
 	private lastMoveCount;
 	private watchingMoves = false;
 
-  private homeOrientationKnown = false;
-  private homeOrientation = new Quaternion();
-  private orientation = new Quaternion();
+	private homeOrientationKnown = false;
+	private homeOrientation = new Quaternion();
+	private orientation = new Quaternion();
 
 	public constructor(f: GATTDeviceDescriptor) {
 		this.deviceDescriptor = f;
@@ -104,7 +105,7 @@ export class GANCube {
 			service: UUIDs.ganCubeService,
 			characteristic: UUIDs.physicalStateCharacteristic
 		};
-    this.initQuaternionToOrientationMap();
+		this.initQuaternionToOrientationMap();
 	}
 
 	public async getVersionAsString() {
@@ -125,30 +126,29 @@ export class GANCube {
 		window.setTimeout(pollMoveState, 10);
 	}
 
-  private handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback) {
-    const arr = new Uint8Array(decryptedMoves.buffer);
-    this.updateOrientation(decryptedMoves);
-    if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
-      console.log('move count ', arr[12]);
-      let mc = arr[12];
-      if (mc < this.lastMoveCount)
-        mc += 256;
-      const numMoves = mc - this.lastMoveCount;
-      console.log(`There were ${numMoves} this cycle`);
-      for (let i = arr.length - numMoves; i < arr.length; ++i) {
-        callback(arr[i]);
-      }
-    }
-    const rotationMove = this.facingToRotationMove[this.rotation];
-    if (rotationMove) {
-      this.rotation = "none";
-      callback(rotationMove);
-    }
-    this.lastMoveCount = arr[12];
-    if (this.watchingMoves) {
-      this.watchMoves(callback);
-    }
-  }
+	private handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback) {
+		const arr = new Uint8Array(decryptedMoves.buffer);
+		this.updateOrientation(decryptedMoves);
+		if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
+			console.log('move count ', arr[12]);
+			let mc = arr[12];
+			if (mc < this.lastMoveCount) mc += 256;
+			const numMoves = mc - this.lastMoveCount;
+			console.log(`There were ${numMoves} this cycle`);
+			for (let i = arr.length - numMoves; i < arr.length; ++i) {
+				callback(arr[i]);
+			}
+		}
+		const rotationMove = this.facingToRotationMove[this.rotation];
+		if (rotationMove) {
+			this.rotation = 'none';
+			callback(rotationMove);
+		}
+		this.lastMoveCount = arr[12];
+		if (this.watchingMoves) {
+			this.watchMoves(callback);
+		}
+	}
 
 	public unwatchMoves() {
 		this.watchingMoves = false;
@@ -171,21 +171,21 @@ export class GANCube {
 			0x0f: 'B',
 			0x11: "B'"
 		};
-    const moveToRotation: { [k: number]: string } = {
-      0x20: "x",
-      0x21: "x'",
-      0x22: "x2",
-      0x23: "y",
-      0x24: "y'",
-      0x25: "y2",
-      0x26: "z",
-      0x27: "z'",
-      0x28: "z2",
-    };
+		const moveToRotation: { [k: number]: string } = {
+			0x20: 'x',
+			0x21: "x'",
+			0x22: 'x2',
+			0x23: 'y',
+			0x24: "y'",
+			0x25: 'y2',
+			0x26: 'z',
+			0x27: "z'",
+			0x28: 'z2'
+		};
 		const move = moveToColor[originalMove];
-    if (!move && moveToRotation[originalMove]) {
-      return moveToRotation[originalMove];
-    }
+		if (!move && moveToRotation[originalMove]) {
+			return moveToRotation[originalMove];
+		}
 		const faceIndex = colors.indexOf(move[0]);
 		const faces = 'ULFRBD';
 		const family = faces[stateData['CENTERS'].pieces.indexOf(faceIndex)];
@@ -195,149 +195,137 @@ export class GANCube {
 		return family + "'";
 	}
 
-  public updateOrientation(decryptedMoves: Uint8Array): Quaternion {
-    const dataView = new DataView(decryptedMoves.buffer);
-    let x = dataView.getInt16(0, true) / 16384;
-    let y = dataView.getInt16(2, true) / 16384;
-    let z = dataView.getInt16(4, true) / 16384;
-    [x, y, z] = [-y, z, -x];
-    const wSquared = 1 - (x * x + y * y + z * z);
-    const w = wSquared > 0 ? Math.sqrt(wSquared) : 0;
-    const quat = new Quaternion(x, y, z, w);
+	public updateOrientation(decryptedMoves: Uint8Array): Quaternion {
+		const dataView = new DataView(decryptedMoves.buffer);
+		let x = dataView.getInt16(0, true) / 16384;
+		let y = dataView.getInt16(2, true) / 16384;
+		let z = dataView.getInt16(4, true) / 16384;
+		[x, y, z] = [-y, z, -x];
+		const wSquared = 1 - (x * x + y * y + z * z);
+		const w = wSquared > 0 ? Math.sqrt(wSquared) : 0;
+		const quat = new Quaternion(x, y, z, w);
 
-    if (!this.homeOrientationKnown) {
-      this.homeOrientation = quat.clone().invert();
-      this.homeOrientationKnown = true;
-    }
+		if (!this.homeOrientationKnown) {
+			this.homeOrientation = quat.clone().invert();
+			this.homeOrientationKnown = true;
+		}
 
-    this.orientation = quat.clone().multiply(this.homeOrientation.clone());
+		this.orientation = quat.clone().multiply(this.homeOrientation.clone());
 
-    // put some dead space in so that the orientation doesn't
-    // flip back and forth due to sensor noise
-    const threshold = Math.PI / 4 - 0.15;
-    for (let i = 0; i < this.quaternionToOrientationMap.length; ++i) {
-      const facingAngle = this.quaternionToOrientationMap[i].q;
-      const faces = this.quaternionToOrientationMap[i].facing;
-      const offset = this.orientation.angleTo(facingAngle);
-      if (Math.abs(offset) < threshold) {
-        if (faces !== this.facing) {
-          console.log(`Rotated to ${faces} from ${this.facing}`);
-          this.rotation = `${faces}<${this.facing}`;
-          this.facing = faces;
-        }
-      }
-    }
-    return this.orientation;
-  }
+		// put some dead space in so that the orientation doesn't
+		// flip back and forth due to sensor noise
+		const threshold = Math.PI / 4 + 0.15;
+		for (let i = 0; i < this.quaternionToOrientationMap.length; ++i) {
+			const facingAngle = this.quaternionToOrientationMap[i].q;
+			const faces = this.quaternionToOrientationMap[i].facing;
+			const offset = this.orientation.angleTo(facingAngle);
+			if (Math.abs(offset) < threshold) {
+				if (faces !== this.facing) {
+					console.log(`Rotated to ${faces} from ${this.facing}`);
+					this.rotation = `${faces}<${this.facing}`;
+					this.facing = faces;
+				}
+			}
+		}
+		return this.orientation;
+	}
 
-  public getFacing() {
-    return this.facing;
-  }
+	public getFacing() {
+		return this.facing;
+	}
 
-  private quaternionToOrientationMap: { q: Quaternion; facing: string }[] = [];
-  private facing = "WG";
-  private rotation = "WG<WG";
-  private facings: string[] = [];                                            
-  private facingToRotationMove: { [k: string]: number } = {}; 
-  public kpuzzleToFacing = function (state: KState) {
-    const colours = "WOGRBY";
-    const centers = state.stateData["CENTERS"].pieces;
-    const axisToIndex = { x: 3, y: 0, z: 2 };
-    const topIndex = centers[axisToIndex["y"]];
-    const frontIndex = centers[axisToIndex["z"]];
-    const topFace = colours[topIndex];
-    const frontFace = colours[frontIndex];
-    return topFace + frontFace;
-  };
+	private quaternionToOrientationMap: { q: Quaternion; facing: string }[] = [];
+	private facing = 'WG';
+	private rotation = 'WG<WG';
+	private facings: string[] = [];
+	private facingToRotationMove: { [k: string]: number } = {};
+	public kpuzzleToFacing = function (state: KState) {
+		const colours = 'WOGRBY';
+		const centers = state.stateData['CENTERS'].pieces;
+		const axisToIndex = { x: 3, y: 0, z: 2 };
+		const topIndex = centers[axisToIndex['y']];
+		const frontIndex = centers[axisToIndex['z']];
+		const topFace = colours[topIndex];
+		const frontFace = colours[frontIndex];
+		return topFace + frontFace;
+	};
 
-  private initQuaternionToOrientationMap() {
-    const def = cube3x3x3KPuzzleDefinition;
-		const kpuzzle: KPuzzle = new KPuzzle(def);
-    const WGOrientation = new Quaternion(0, 0, 0, 1);
-    const zMove = new Quaternion();
-    const yMove = new Quaternion();
-    const xMove = new Quaternion();
-    zMove.setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2);
-    yMove.setFromAxisAngle(new Vector3(0, 1, 0), -Math.PI / 2);
-    xMove.setFromAxisAngle(new Vector3(0, 0, 1), -Math.PI / 2);
-    const facingStates: { [key: string]: KState } = {};
-    let currentOrientation = WGOrientation;
-    let state: KState = kpuzzle.startState();
-    // centers is in "ULFRBD" order
-    let centers = state.stateData["CENTERS"].pieces;
-    // so rotations correspond to ULFRDB order
-    const rotations = [
-      yMove,
-      xMove.clone().invert(),
-      zMove,
-      xMove,
-      zMove.clone().invert(),
-      yMove.clone().invert(),
-    ];
-    function rotateCube(axis: string) {
-      const axisToIndex: { [key: string]: number } = { x: 3, y: 0, z: 2 };
-      const move = rotations[centers[axisToIndex[axis]]];
-      currentOrientation = currentOrientation.clone().multiply(move);
-      state = state.applyMove(axis);
-      centers = state.stateData["CENTERS"].pieces;
-    }
-    for (let zxRotation = 0; zxRotation < 6; ++zxRotation) {
-      if (zxRotation > 0 && zxRotation < 4) {
-        rotateCube("z");
-      } else if (zxRotation == 4) {
-        rotateCube("z");
-        rotateCube("x");
-      } else if (zxRotation == 5) {
-        rotateCube("x");
-        rotateCube("x");
-      }
-      for (let yRotation = 0; yRotation < 4; ++yRotation) {
-        if (yRotation > 0) {
-          rotateCube("y");
-        }
-        const currentFacing = this.kpuzzleToFacing(state);
-        this.facings.push(currentFacing);
-        facingStates[currentFacing] = state;
-        this.quaternionToOrientationMap.push({
-          q: currentOrientation,
-          facing: currentFacing,
-        });
-      }
-      rotateCube("y");
-    }
-    // For every facing, generate all the cube rotations from that
-    // facing that we want to recognize.
-    const recognizableCubeRotations = [
-      "x",
-      "x'",
-      "x2",
-      "y",
-      "y'",
-      "y2",
-      "z",
-      "z'",
-      "z2",
-    ];
-    const moveToNumber: { [k: string]: number } = {
-      "x": 0x20,
-      "x'": 0x21,
-      "x2": 0x22,
-      "y": 0x23,
-      "y'": 0x24,
-      "y2": 0x25,
-      "z": 0x26,
-      "z'": 0x27,
-      "z2": 0x28,
-    };
-    this.facings.map((startFacing) => {
-      recognizableCubeRotations.map((move) => {
-        const endState = facingStates[startFacing].applyMove(move);
-        const endFacing = this.kpuzzleToFacing(endState);
-        const key = `${endFacing}<${startFacing}`;
-        this.facingToRotationMove[key] = moveToNumber[move];
-      });
-    });
-  };
+	private initQuaternionToOrientationMap() {
+		const WGOrientation = new Quaternion(0, 0, 0, 1);
+		const zMove = new Quaternion();
+		const yMove = new Quaternion();
+		const xMove = new Quaternion();
+		zMove.setFromAxisAngle(new Vector3(1, 0, 0), Math.PI / 2);
+		yMove.setFromAxisAngle(new Vector3(0, 1, 0), -Math.PI / 2);
+		xMove.setFromAxisAngle(new Vector3(0, 0, 1), -Math.PI / 2);
+		const facingStates: { [key: string]: KState } = {};
+		let currentOrientation = WGOrientation;
+		let state: KState = kpuzzle.startState();
+		// centers is in "ULFRBD" order
+		let centers = state.stateData['CENTERS'].pieces;
+		// so rotations correspond to ULFRDB order
+		const rotations = [
+			yMove,
+			xMove.clone().invert(),
+			zMove,
+			xMove,
+			zMove.clone().invert(),
+			yMove.clone().invert()
+		];
+		function rotateCube(axis: string) {
+			const axisToIndex: { [key: string]: number } = { x: 3, y: 0, z: 2 };
+			const move = rotations[centers[axisToIndex[axis]]];
+			currentOrientation = currentOrientation.clone().multiply(move);
+			state = state.applyMove(axis);
+			centers = state.stateData['CENTERS'].pieces;
+		}
+		for (let zxRotation = 0; zxRotation < 6; ++zxRotation) {
+			if (zxRotation > 0 && zxRotation < 4) {
+				rotateCube('z');
+			} else if (zxRotation == 4) {
+				rotateCube('z');
+				rotateCube('x');
+			} else if (zxRotation == 5) {
+				rotateCube('x');
+				rotateCube('x');
+			}
+			for (let yRotation = 0; yRotation < 4; ++yRotation) {
+				if (yRotation > 0) {
+					rotateCube('y');
+				}
+				const currentFacing = this.kpuzzleToFacing(state);
+				this.facings.push(currentFacing);
+				facingStates[currentFacing] = state;
+				this.quaternionToOrientationMap.push({
+					q: currentOrientation,
+					facing: currentFacing
+				});
+			}
+			rotateCube('y');
+		}
+		// For every facing, generate all the cube rotations from that
+		// facing that we want to recognize.
+		const recognizableCubeRotations = ['x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
+		const moveToNumber: { [k: string]: number } = {
+			x: 0x20,
+			"x'": 0x21,
+			x2: 0x22,
+			y: 0x23,
+			"y'": 0x24,
+			y2: 0x25,
+			z: 0x26,
+			"z'": 0x27,
+			z2: 0x28
+		};
+		this.facings.map((startFacing) => {
+			recognizableCubeRotations.map((move) => {
+				const endState = facingStates[startFacing].applyMove(move);
+				const endFacing = this.kpuzzleToFacing(endState);
+				const key = `${endFacing}<${startFacing}`;
+				this.facingToRotationMove[key] = moveToNumber[move];
+			});
+		});
+	}
 }
 
 /*

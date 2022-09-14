@@ -8,10 +8,10 @@ import {
 	GANCube
 } from '$lib/bluetooth/gan/gan356i_v1';
 import { Alg } from 'cubing/alg';
-import { KPuzzle } from 'cubing/kpuzzle';
-import { cube3x3x3KPuzzleDefinition } from '$lib/third_party/hack';
+import { cube3x3x3 } from 'cubing/puzzles';
 
-describe('GAN 356i', () => {
+describe('GAN 356i', async () => {
+	const kpuzzle = await cube3x3x3.kpuzzle();
 	afterEach(() => {
 		//vi.restoreAllMocks();
 	});
@@ -67,59 +67,57 @@ describe('GAN 356i', () => {
 	}
 
 	function validateTransform({ from, to, afterRotations }: TestCase) {
-    const def = cube3x3x3KPuzzleDefinition;
-		const kp: KPuzzle = new KPuzzle(def);
-		const startState = kp.startState();
+		const startState = kpuzzle.startState();
 		const state = afterRotations ? startState.applyAlg(afterRotations) : startState;
 		const newMove = GANCube.colorToFaceMove(from, state.stateData);
 		expect(newMove).to.equal(to);
 	}
 
-  // after an X rotation , ULFRBD <- FLDRUB
-  const faceCases = [
-    { face: 0x06, originalFace: "F", expectedFace: "U" },
-    { face: 0x0c, originalFace: "L", expectedFace: "L" },
-    { face: 0x09, originalFace: "D", expectedFace: "F" },
-    { face: 0x03, originalFace: "R", expectedFace: "R" },
-    { face: 0x05, originalFace: "R'", expectedFace: "R'" },
-    { face: 0x00, originalFace: "U", expectedFace: "B" },
-    { face: 0x0f, originalFace: "B", expectedFace: "D" },
-    { face: 0x26, originalFace: "z", expectedFace: "z" },
-  ];
-  for (const { face, originalFace, expectedFace } of faceCases) {
-    it(`should not touch '${face}' moves`, () => {
-      validateTransform({ from: face, to: originalFace });
-    });
+	// after an X rotation , ULFRBD <- FLDRUB
+	const faceCases = [
+		{ face: 0x06, originalFace: 'F', expectedFace: 'U' },
+		{ face: 0x0c, originalFace: 'L', expectedFace: 'L' },
+		{ face: 0x09, originalFace: 'D', expectedFace: 'F' },
+		{ face: 0x03, originalFace: 'R', expectedFace: 'R' },
+		{ face: 0x05, originalFace: "R'", expectedFace: "R'" },
+		{ face: 0x00, originalFace: 'U', expectedFace: 'B' },
+		{ face: 0x0f, originalFace: 'B', expectedFace: 'D' },
+		{ face: 0x26, originalFace: 'z', expectedFace: 'z' }
+	];
+	for (const { face, originalFace, expectedFace } of faceCases) {
+		it(`should not touch '${face}' moves`, () => {
+			validateTransform({ from: face, to: originalFace });
+		});
 
-    it(`should modify '${face}' to '${expectedFace}' moves with x rotation`, () => {
-      validateTransform({
-        from: face,
-        to: expectedFace,
-        afterRotations: new Alg("x"),
-      });
-    });
-  }
+		it(`should modify '${face}' to '${expectedFace}' moves with x rotation`, () => {
+			validateTransform({
+				from: face,
+				to: expectedFace,
+				afterRotations: new Alg('x')
+			});
+		});
+	}
 
-  it("should throw an error on unexpected faces", () => {
-    expect(() =>
-      validateTransform({ from: 0x42, to: "M" }),
-    ).to.throw("Cannot read properties of undefined");
-  });
+	it('should throw an error on unexpected faces', () => {
+		expect(() => validateTransform({ from: 0x42, to: 'M' })).to.throw(
+			'Cannot read properties of undefined'
+		);
+	});
 
-  describe("validate rotation", () => {
-    it("call updateOrientation and validate", () => {
-      const ganCube = new GANCube(dummyDevice);
-      // we think this rotation goes from WG -> YG
-      const homeState = new Uint8Array([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3,
-      ]);
-      ganCube.updateOrientation(homeState);
-      expect(ganCube.getFacing()).to.equal("WG");
-      const array = new Uint8Array([
-        0x0, 0x0, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3,
-      ]);
-      ganCube.updateOrientation(array);
-      expect(ganCube.getFacing()).to.equal("YG");
-    });
-  });
+	describe('validate rotation', () => {
+		it('call updateOrientation and validate', () => {
+			const ganCube = new GANCube(dummyDevice);
+			// we think this rotation goes from WG -> YG
+			const homeState = new Uint8Array([
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
+			]);
+			ganCube.updateOrientation(homeState);
+			expect(ganCube.getFacing()).to.equal('WG');
+			const array = new Uint8Array([
+				0x0, 0x0, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
+			]);
+			ganCube.updateOrientation(array);
+			expect(ganCube.getFacing()).to.equal('YG');
+		});
+	});
 });
