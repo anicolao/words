@@ -59,7 +59,7 @@ import { startAfter } from 'firebase/firestore';
 		let inverted = Array.from(alg.invert().childAlgNodes());
 		inverted = inverted.concat(Array.from(new Alg(scramble).childAlgNodes()));
 		console.log("Catted: ", inverted.toString());
-		remaining = new Alg(inverted).simplify().toString();
+		remaining = new Alg(inverted).simplify({collapseMoves: true, quantumMoveOrder: () => 4}).toString();
 		console.log(`remaining: [${remaining}]`);
 		if (remaining.length === 0 && !solving) {
 			startWhenReady = true;
@@ -74,7 +74,7 @@ import { startAfter } from 'firebase/firestore';
 		}
 
 		// defer update until after transforms
-		setTimeout(() => {
+		setTimeout(async () => {
 			model.timestampRequest.set('end');
 			const algNodes = Array.from(alg.childAlgNodes());
 			let lastMove = (algNodes[algNodes.length - 1] as Move);
@@ -91,6 +91,8 @@ import { startAfter } from 'firebase/firestore';
 			viewerAlg = alg.toString();
 			console.log('vA: ', viewerAlg);
 			model.alg.set(alg);
+			const state = await model.currentState.get();
+			isSolved = state.experimentalIsSolved({ignorePuzzleOrientation: true, ignoreCenterOrientation: true});
 		}, 100);
 	}
 	$: if ($store.cubes.connectedDevice !== currentDevice) {
@@ -114,6 +116,7 @@ import { startAfter } from 'firebase/firestore';
 	}
 
 	let viewerAlg = '';
+	let isSolved = true;
 </script>
 
 <Content id="main-content">
@@ -128,5 +131,6 @@ import { startAfter } from 'firebase/firestore';
 	<p>{scramble}</p>
 	<p>{remaining}</p>
 	<p>{viewerAlg}</p>
+	<p>{isSolved}</p>
 	{/if}
 </Content>
