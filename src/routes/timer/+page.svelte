@@ -67,6 +67,7 @@ import { startAfter } from 'firebase/firestore';
 			ended = new Date();
 		} else if (startWhenReady) {
 			solving = true;
+			cube?.setTrackingRotations(true);
 			started = new Date();
 			ended = new Date();
 			startWhenReady = false;

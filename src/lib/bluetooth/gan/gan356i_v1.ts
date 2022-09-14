@@ -92,6 +92,7 @@ export class GANCube {
 	private moves: GATTCharacteristicDescriptor;
 	private lastMoveCount;
 	private watchingMoves = false;
+	private trackingRotation = false;
 
 	private homeOrientationKnown = false;
 	private homeOrientation = new Quaternion();
@@ -126,7 +127,7 @@ export class GANCube {
 		window.setTimeout(pollMoveState, 10);
 	}
 
-	private handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback) {
+	public handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback) {
 		const arr = new Uint8Array(decryptedMoves.buffer);
 		this.updateOrientation(decryptedMoves);
 		if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
@@ -231,8 +232,13 @@ export class GANCube {
 					this.rotation = `${faces}<${this.facing}`;
 					const rotationMove = this.facingToRotationMove[this.rotation];
 					if (rotationMove) {
-						console.log(`Will rotate to ${faces} from ${this.facing}`);
-						this.facing = faces;
+						if (this.trackingRotation) {
+							console.log(`Will rotate to ${faces} from ${this.facing}`);
+							this.facing = faces;
+						} else {
+							console.log(`Ignoring rotate to ${faces} from ${this.facing}`);
+							this.rotation = 'none';
+						}
 					} else {
 						// impossible now that we allow two cube rotations
 						console.error(`Don't know how to rotate to ${faces} from ${this.facing}`);
@@ -241,6 +247,10 @@ export class GANCube {
 			}
 		}
 		return this.orientation;
+	}
+
+	public setTrackingRotations(flag: boolean) {
+		this.trackingRotation = flag;
 	}
 
 	public getFacing() {

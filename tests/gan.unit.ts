@@ -107,6 +107,7 @@ describe('GAN 356i', async () => {
 	describe('validate rotation', () => {
 		it('call updateOrientation and validate', () => {
 			const ganCube = new GANCube(dummyDevice);
+			ganCube.setTrackingRotations(true);
 			// we think this rotation goes from WG -> YG
 			const homeState = new Uint8Array([
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
@@ -118,6 +119,26 @@ describe('GAN 356i', async () => {
 			]);
 			ganCube.updateOrientation(array);
 			expect(ganCube.getFacing()).to.equal('YG');
+		});
+
+		it('ignores orientation by default', () => {
+			const ganCube = new GANCube(dummyDevice);
+			// we think this rotation goes from WG -> YG
+			const homeState = new Uint8Array([
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
+			]);
+			const callback = () => { expect(true).to.be.false; };
+			ganCube.handleMoves(homeState, callback); 
+			expect(ganCube.getFacing()).to.equal('WG');
+			const array = new Uint8Array([
+				0x0, 0x0, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
+			]);
+			ganCube.handleMoves(array, callback); 
+			expect(ganCube.getFacing()).to.equal('WG');
+			ganCube.handleMoves(homeState, callback); 
+			expect(ganCube.getFacing()).to.equal('WG');
+			ganCube.handleMoves(array, callback); 
+			expect(ganCube.getFacing()).to.equal('WG');
 		});
 	});
 });
