@@ -8,7 +8,14 @@
 	import Button from '@smui/button';
 
 	const connectCallback = (d: BluetoothDevice): void => {
-		store.dispatch(connect([d.id, !!d.gatt && d.gatt.connected])); };
+		store.dispatch(
+			known_cubes([
+				...$store.cubes.knownCubes,
+				[d.id, d.name || 'Unknown Device', !!d.gatt && d.gatt.connected]
+			])
+		);
+		store.dispatch(connect([d.id, !!d.gatt && d.gatt.connected]));
+	};
 	onMount(async () => {
 		let page = window.location.pathname.substring(1);
 		store.dispatch(navigate_to(page));
