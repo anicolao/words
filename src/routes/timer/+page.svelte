@@ -155,42 +155,48 @@
 	$: timerTenths = timerInTenths % 10;
 </script>
 
-<div class="center-content">
-	<Content id="main-content">
-		<div class="center-content">
-			{#if !currentDevice}
-				<Pair />
-			{/if}
-			{#if startWhenReady}
-				<p class="tenths">Start when ready!</p>
-			{:else if solving}
-				<p>
-					<span class="seconds">{timerSecs}.</span><span class="tenths">{timerTenths}</span>
-				</p>
-			{:else}
-				<ul>
-					{#each algView as { node, state }}
-						<li class={state}>{node}</li>
-					{/each}
-				</ul>
-			{/if}
-			<div class="center-content" id="twisty-content" />
-		</div>
-	</Content>
+<div class="content-row">
+	<div class="center-content">
+		<Content id="main-content">
+			<div class="center-content">
+				{#if !currentDevice}
+					<Pair />
+				{/if}
+				{#if startWhenReady}
+					<p class="tenths">Start when ready!</p>
+				{:else if solving}
+					<p>
+						<span class="seconds">{timerSecs}.</span><span class="tenths">{timerTenths}</span>
+					</p>
+				{:else}
+					<ul>
+						{#each algView as { node, state }}
+							<li class={state}>{node}</li>
+						{/each}
+					</ul>
+				{/if}
+				<div class="center-content" id="twisty-content" />
+			</div>
+		</Content>
+	</div>
 </div>
 
 <style>
+	.content-row {
+		display: flex;
+		flex-direction: row;
+	}
 	.executed {
 		color: grey;
 	}
 
 	.seconds {
 		font-size: 120px;
-		font-family:Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+		font-family: Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 	}
 	.tenths {
 		font-size: 60px;
-		font-family:Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+		font-family: Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 	}
 
 	.first {
