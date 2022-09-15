@@ -14,6 +14,7 @@
 		if (user) {
 			store.dispatch(
 				signed_in({
+					uid: user.uid,
 					name: user.displayName,
 					email: user.email,
 					photo: user.photoURL,
@@ -24,6 +25,7 @@
 			if (user.email) {
 				// always true
 				setDoc(doc(firebase.firestore, 'users', user.email), {
+					uid: user.uid,
 					name: user.displayName,
 					email: user.email,
 					photo: user.photoURL,

@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 //import { getAnalytics } from 'firebase/analytics';
 //
 // TODO: Add SDKs for Firebase products that you want to use
@@ -30,4 +30,6 @@ const firebase = {
 	firestore: getFirestore()
 };
 
+connectFirestoreEmulator(firebase.firestore, 'localhost', 8080);
+	
 export default firebase;

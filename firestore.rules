@@ -5,7 +5,18 @@ service cloud.firestore {
       allow read, write: if false;
     }
     match /users/{document=**} {
-      allow read, write: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow write: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow read: if request.auth != null && (request.auth.uid == resource.data.uid || request.data.email == resource.data.email);
     }
+
+    match /{name=**}/requests/{action} {
+      // Read all collections named 'requests' in entire db where the target is the current user.
+      allow read: if request.auth.uid == resource.data.target;
+    }
+    match /from/{uid}/to/{uid2}/requests/{action} {
+      // Force data's creator to be uid, and data's target to be uid2.
+      allow write: if uid == request.auth.uid && request.resource.data.creator == request.auth.uid && request.resource.data.target == uid2;
+		}
   }
 }
