@@ -11,6 +11,7 @@
 	import { experimentalAppendMove } from '$lib/cubing/alg/operation';
 	import type { KPuzzle } from 'cubing/kpuzzle';
 	import { startAfter } from 'firebase/firestore';
+	import Pair from '$lib/components/Pair.svelte';
 
 	let scramble = new Alg();
 	let remaining = new Alg();
@@ -22,7 +23,7 @@
 
 	const twistyPlayer: TwistyPlayer = new TwistyPlayer();
 	onMount(async () => {
-		let contentElem = document.querySelector('#main-content');
+		let contentElem = document.querySelector('#twisty-content');
 		if (contentElem) {
 			twistyPlayer.background = 'none';
 			twistyPlayer.visualization = 'PG3D';
@@ -129,10 +130,8 @@
 			let firstNode = x as Move;
 			let comparisonNode = remainingNodes[0] as Move;
 			if (firstNode.family == comparisonNode.family) {
-				if (firstNode.amount == comparisonNode.amount)
-					state = 'first';
-				else
-					state = 'partial';
+				if (firstNode.amount == comparisonNode.amount) state = 'first';
+				else state = 'partial';
 			} else {
 				state = 'correction';
 				node = comparisonNode;
@@ -148,33 +147,37 @@
 			if (rafStart === 0) {
 				rafStart = rafTime;
 			}
-			rafTimer = (rafTime - rafStart);
+			rafTimer = rafTime - rafStart;
 		});
 	}
-	$: timerInTenths = Math.round((rafTimer)/100);
-	$: timerSecs = Math.floor(timerInTenths/10);
-	$: timerTenths = timerInTenths%10;
+	$: timerInTenths = Math.round(rafTimer / 100);
+	$: timerSecs = Math.floor(timerInTenths / 10);
+	$: timerTenths = timerInTenths % 10;
 </script>
 
-<Content id="main-content">
-	{#if currentDevice}
-		<p>Cube: {currentDevice[1]} v{version}</p>
-	{/if}
-	{#if startWhenReady}
-	<p>Start when Ready!</p>
-	{:else if solving}
-		<p>Time: {ended.getTime() - started.getTime()}</p>
-		<p>Timer: <span class="seconds">{timerSecs}</span>.<span class="tenths">{timerTenths}</span> </p>
-		<p>{isSolved}</p>
-	{:else}
-		<ul>
-			{#each algView as { node, state }}
-				<li class={state}>{node}</li>
-			{/each}
-		</ul>
-		<p>{isSolved}</p>
-	{/if}
-</Content>
+<div class="center-content">
+	<Content id="main-content">
+		<div class="center-content">
+			{#if !currentDevice}
+				<Pair />
+			{/if}
+			{#if startWhenReady}
+				<p class="tenths">Start when ready!</p>
+			{:else if solving}
+				<p>
+					<span class="seconds">{timerSecs}.</span><span class="tenths">{timerTenths}</span>
+				</p>
+			{:else}
+				<ul>
+					{#each algView as { node, state }}
+						<li class={state}>{node}</li>
+					{/each}
+				</ul>
+			{/if}
+			<div class="center-content" id="twisty-content" />
+		</div>
+	</Content>
+</div>
 
 <style>
 	.executed {
@@ -182,31 +185,33 @@
 	}
 
 	.seconds {
-		font-size: large;
+		font-size: 120px;
+		font-family:Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 	}
 	.tenths {
-		font-size: medium;
+		font-size: 60px;
+		font-family:Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 	}
 
 	.first {
 		background-color: yellow;
 		border-radius: 0.2em;
 		border: 1px solid black;
-		content: "X";
+		content: 'X';
 	}
 
 	.partial {
 		background-color: lime;
 		border-radius: 0.2em;
 		border: 1px solid black;
-		content: "X";
+		content: 'X';
 	}
 
 	.correction {
 		background-color: orange;
 		border-radius: 0.2em;
 		border: 1px solid black;
-		content: "X";
+		content: 'X';
 	}
 
 	.remaining {
@@ -218,6 +223,9 @@
 		margin-block-end: 0;
 		margin-block-start: 0;
 		padding-inline-start: 0;
+		text-align: center;
+		padding-top: 3em;
+		padding-bottom: 2em;
 	}
 	li {
 		font-family: sans-serif;
@@ -226,5 +234,26 @@
 		padding-top: 0.2em;
 		padding-bottom: 0.2em;
 		padding: 0.4em;
+	}
+
+	.app-content {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.center-content {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		flex-direction: column;
+	}
+
+	div {
+		width: 100%;
+	}
+
+	#twisty-content {
+		padding-bottom: 120px;
 	}
 </style>
