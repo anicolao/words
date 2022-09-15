@@ -10,13 +10,12 @@
 	import { Alg, Move } from 'cubing/alg';
 	import { experimentalAppendMove } from '$lib/cubing/alg/operation';
 	import type { KPuzzle } from 'cubing/kpuzzle';
-import { startAfter } from 'firebase/firestore';
+	import { startAfter } from 'firebase/firestore';
 
-	let scramble = 'Scrambling...';
-	let remaining = 'Scrambling...';
+	let scramble = new Alg();
+	let remaining = new Alg();
 	async function newScramble() {
-		const s = await randomScrambleForEvent('333');
-		scramble = s.toString();
+		scramble = await randomScrambleForEvent('333');
 		remaining = scramble;
 	}
 	newScramble();
@@ -58,10 +57,9 @@ import { startAfter } from 'firebase/firestore';
 		console.log(alg);
 		let inverted = Array.from(alg.invert().childAlgNodes());
 		inverted = inverted.concat(Array.from(new Alg(scramble).childAlgNodes()));
-		console.log("Catted: ", inverted.toString());
-		remaining = new Alg(inverted).simplify({collapseMoves: true, quantumMoveOrder: () => 4}).toString();
+		remaining = new Alg(inverted).simplify({ collapseMoves: true, quantumMoveOrder: () => 4 });
 		console.log(`remaining: [${remaining}]`);
-		if (remaining.length === 0 && !solving) {
+		if (remaining.isIdentical(new Alg()) && !solving) {
 			startWhenReady = true;
 		} else if (solving) {
 			ended = new Date();
@@ -77,22 +75,24 @@ import { startAfter } from 'firebase/firestore';
 		setTimeout(async () => {
 			model.timestampRequest.set('end');
 			const algNodes = Array.from(alg.childAlgNodes());
-			let lastMove = (algNodes[algNodes.length - 1] as Move);
+			let lastMove = algNodes[algNodes.length - 1] as Move;
 			if (!lastMove) lastMove = new Move(move);
 			else if (lastMove.amount > 1) {
-				lastMove = lastMove.modified({amount: 1});
+				lastMove = lastMove.modified({ amount: 1 });
 			} else if (lastMove.amount < -1) {
-				lastMove = lastMove.modified({amount: -1});
+				lastMove = lastMove.modified({ amount: -1 });
 			}
 			model.catchUpMove.set({
 				move: lastMove,
 				amount: 0
 			});
-			viewerAlg = alg.toString();
-			console.log('vA: ', viewerAlg);
+			viewerAlg = alg;
 			model.alg.set(alg);
 			const state = await model.currentState.get();
-			isSolved = state.experimentalIsSolved({ignorePuzzleOrientation: true, ignoreCenterOrientation: true});
+			isSolved = state.experimentalIsSolved({
+				ignorePuzzleOrientation: true,
+				ignoreCenterOrientation: true
+			});
 		}, 100);
 	}
 	$: if ($store.cubes.connectedDevice !== currentDevice) {
@@ -115,8 +115,45 @@ import { startAfter } from 'firebase/firestore';
 		useCurrentDevice();
 	}
 
-	let viewerAlg = '';
+	let viewerAlg = new Alg();
 	let isSolved = true;
+
+	$: remainingNodes = Array.from(remaining.childAlgNodes());
+	$: algView = Array.from(scramble.childAlgNodes()).map((x, i, a) => {
+		let state = 'remaining';
+		let node = x;
+		if (i < a.length - remainingNodes.length) {
+			state = 'executed';
+		}
+		if (i == a.length - remainingNodes.length) {
+			let firstNode = x as Move;
+			let comparisonNode = remainingNodes[0] as Move;
+			if (firstNode.family == comparisonNode.family) {
+				if (firstNode.amount == comparisonNode.amount)
+					state = 'first';
+				else
+					state = 'partial';
+			} else {
+				state = 'correction';
+				node = comparisonNode;
+			}
+		}
+		return { node, state };
+	});
+
+	let rafTimer = 0;
+	let rafStart = 0;
+	$: if (solving && !isSolved && rafTimer > -1) {
+		requestAnimationFrame((rafTime) => {
+			if (rafStart === 0) {
+				rafStart = rafTime;
+			}
+			rafTimer = (rafTime - rafStart);
+		});
+	}
+	$: timerInTenths = Math.round((rafTimer)/100);
+	$: timerSecs = Math.floor(timerInTenths/10);
+	$: timerTenths = timerInTenths%10;
 </script>
 
 <Content id="main-content">
@@ -126,11 +163,68 @@ import { startAfter } from 'firebase/firestore';
 	{#if startWhenReady}
 	<p>Start when Ready!</p>
 	{:else if solving}
-	<p>Time: {ended.getTime() - started.getTime()}</p>
+		<p>Time: {ended.getTime() - started.getTime()}</p>
+		<p>Timer: <span class="seconds">{timerSecs}</span>.<span class="tenths">{timerTenths}</span> </p>
+		<p>{isSolved}</p>
 	{:else}
-	<p>{scramble}</p>
-	<p>{remaining}</p>
-	<p>{viewerAlg}</p>
-	<p>{isSolved}</p>
+		<ul>
+			{#each algView as { node, state }}
+				<li class={state}>{node}</li>
+			{/each}
+		</ul>
+		<p>{isSolved}</p>
 	{/if}
 </Content>
+
+<style>
+	.executed {
+		color: grey;
+	}
+
+	.seconds {
+		font-size: large;
+	}
+	.tenths {
+		font-size: medium;
+	}
+
+	.first {
+		background-color: yellow;
+		border-radius: 0.2em;
+		border: 1px solid black;
+		content: "X";
+	}
+
+	.partial {
+		background-color: lime;
+		border-radius: 0.2em;
+		border: 1px solid black;
+		content: "X";
+	}
+
+	.correction {
+		background-color: orange;
+		border-radius: 0.2em;
+		border: 1px solid black;
+		content: "X";
+	}
+
+	.remaining {
+		color: green;
+	}
+
+	ul {
+		display: inline-block;
+		margin-block-end: 0;
+		margin-block-start: 0;
+		padding-inline-start: 0;
+	}
+	li {
+		font-family: sans-serif;
+		font-size: large;
+		display: inline-block;
+		padding-top: 0.2em;
+		padding-bottom: 0.2em;
+		padding: 0.4em;
+	}
+</style>
