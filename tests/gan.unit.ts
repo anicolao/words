@@ -117,12 +117,13 @@ describe('GAN 356i', async () => {
 			const array = new Uint8Array([
 				0x0, 0x0, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
 			]);
+			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			const nullcallback = () => {};
 			ganCube.handleMoves(array, nullcallback);
 			expect(ganCube.getFacing()).to.equal('YG');
 		});
 
-		const facingToQuaterions = {
+		const facingToQuaterions: { [key: string]: [number, number, number] } = {
 			WG: [0, 0, 0],
 			WR: [0, -Math.sqrt(2) / 2, 0],
 			WB: [0, -1, 0],
@@ -170,6 +171,7 @@ describe('GAN 356i', async () => {
 			const homeState = new Uint8Array([
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
 			]);
+			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			const nullcallback = () => {};
 			ganCube.updateOrientation(homeState);
 			expect(ganCube.getFacing()).to.equal('WG');
@@ -187,6 +189,7 @@ describe('GAN 356i', async () => {
 				const homeState = new Uint8Array([
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
 				]);
+				// eslint-disable-next-line @typescript-eslint/no-empty-function
 				const nullcallback = () => {};
 				ganCube.updateOrientation(homeState);
 				expect(ganCube.getFacing()).to.equal('WG');
@@ -238,7 +241,9 @@ describe('GAN 356i', async () => {
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 253, 12, 6, 6, 6, 5, 3
 				]);
 				let count = 0;
-				const countcallback = () => { count++ };
+				const countcallback = () => {
+					count++;
+				};
 				ganCube.handleMoves(homeState, countcallback);
 				expect(count).to.equal(0);
 				homeState[12] += numMoves;
