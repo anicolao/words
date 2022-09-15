@@ -43,6 +43,7 @@
 	let alg = new Alg();
 	let startWhenReady = false;
 	let solving = false;
+	let solution: { move: string, timestamp: number}[] = [];
 
 	async function addMove(model: any, move: string) {
 		alg = experimentalAppendMove(alg, new Move(move), {
@@ -50,6 +51,10 @@
 			wideMoves333: true,
 			sliceMoves333: true
 		});
+		let solutionMoves = Array.from(alg.childAlgNodes());
+		solution = solution.slice(0, solutionMoves.length-1);
+		solution.push({ move: solutionMoves[solutionMoves.length-1].toString(), timestamp: rafTimer})
+
 		let inverted = Array.from(alg.invert().childAlgNodes());
 		inverted = inverted.concat(Array.from(new Alg(scramble).childAlgNodes()));
 		remaining = new Alg(inverted).simplify({ collapseMoves: true, quantumMoveOrder: () => 4 });
@@ -141,7 +146,7 @@
 	}
 	$: if (isSolved) {
 		console.log("***** SOLVED *****");
-		console.log({ rafTimer, timerInTenths, alg, moves: `[${alg.toString()}]` })
+		console.log({ rafTimer, timerInTenths, alg, moves: `[${alg.toString()}]`, solution })
 		console.log("******************")
 	}
 
