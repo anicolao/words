@@ -134,8 +134,12 @@ export class GANCube {
 			console.log('move count ', arr[12]);
 			let mc = arr[12];
 			if (mc < this.lastMoveCount) mc += 256;
-			const numMoves = mc - this.lastMoveCount;
-			console.log(`There were ${numMoves} this cycle`);
+			const numMoves = Math.min(mc - this.lastMoveCount, 6);
+			if (mc - this.lastMoveCount <= 6) {
+				console.log(`Saw ${numMoves} move${numMoves > 1 ? "s" : ""} this cycle`);
+			} else {
+				console.error(`There were ${mc - this.lastMoveCount} moves! We dropped ${mc - this.lastMoveCount - numMoves}!`);
+			}
 			for (let i = arr.length - numMoves; i < arr.length; ++i) {
 				callback(arr[i]);
 			}

@@ -229,5 +229,26 @@ describe('GAN 356i', async () => {
 			ganCube.handleMoves(array, fail);
 			expect(ganCube.getFacing()).to.equal('WG');
 		});
+
+		function moveTest(numMoves: number) {
+			it(`handles from ${numMoves} consecutive moves`, () => {
+				const ganCube = new GANCube(dummyDevice);
+				ganCube.setTrackingRotations(true);
+				const homeState = new Uint8Array([
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 253, 12, 6, 6, 6, 5, 3
+				]);
+				let count = 0;
+				const countcallback = () => { count++ };
+				ganCube.handleMoves(homeState, countcallback);
+				expect(count).to.equal(0);
+				homeState[12] += numMoves;
+				homeState[12] %= 256;
+				ganCube.handleMoves(homeState, countcallback);
+				expect(count).to.equal(Math.min(numMoves, 6));
+			});
+		}
+		for (let i = 0; i < 9; ++i) {
+			moveTest(i);
+		}
 	});
 });
