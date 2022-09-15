@@ -8,6 +8,7 @@ import { cube3x3x3 } from 'cubing/puzzles';
 import type { KStateData, KState } from 'cubing/kpuzzle';
 import { Quaternion, Vector3 } from 'three';
 
+const kpuzzle = await cube3x3x3.kpuzzle();
 const UUIDs = {
 	ganCubeService: '0000fff0-0000-1000-8000-00805f9b34fb',
 	physicalStateCharacteristic: '0000fff5-0000-1000-8000-00805f9b34fb',
@@ -276,7 +277,7 @@ export class GANCube {
 		return topFace + frontFace;
 	};
 
-	private async initQuaternionToOrientationMap() {
+	private initQuaternionToOrientationMap() {
 		const WGOrientation = new Quaternion(0, 0, 0, 1);
 		const zMove = new Quaternion();
 		const yMove = new Quaternion();
@@ -286,7 +287,6 @@ export class GANCube {
 		xMove.setFromAxisAngle(new Vector3(0, 0, 1), -Math.PI / 2);
 		const facingStates: { [key: string]: KState } = {};
 		let currentOrientation = WGOrientation;
-		const kpuzzle = await cube3x3x3.kpuzzle();
 		let state: KState = kpuzzle.startState();
 		// centers is in "ULFRBD" order
 		let centers = state.stateData['CENTERS'].pieces;
