@@ -117,8 +117,95 @@ describe('GAN 356i', async () => {
 			const array = new Uint8Array([
 				0x0, 0x0, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
 			]);
-			ganCube.updateOrientation(array);
+			const nullcallback = () => {};
+			ganCube.handleMoves(array, nullcallback);
 			expect(ganCube.getFacing()).to.equal('YG');
+		});
+
+		const facingToQuaterions = {
+			WG: [0, 0, 0],
+			WR: [0, -Math.sqrt(2) / 2, 0],
+			WB: [0, -1, 0],
+			WO: [0, Math.sqrt(2) / 2, 0], // negatives
+			OG: [Math.sqrt(2) / 2, 0, 0], // negs
+			OW: [0.5, -0.5, 0.5],
+			OB: [0, Math.sqrt(2) / 2, -Math.sqrt(2) / 2],
+			OY: [0.5, 0.5, -0.5],
+			YG: [1, 0, 0],
+			YO: [Math.sqrt(2) / 2, 0, Math.sqrt(2) / 2],
+			YB: [0, 0, 1],
+			YR: [-Math.sqrt(2) / 2, 0, Math.sqrt(2) / 2],
+			RG: [-Math.sqrt(2) / 2, 0, 0],
+			RY: [-0.5, -0.5, -0.5],
+			RB: [0, -Math.sqrt(2) / 2, -Math.sqrt(2) / 2],
+			RW: [-0.5, 0.5, 0.5], // negs
+			GY: [0, 0, -Math.sqrt(2) / 2], // negs
+			GR: [0.5, -0.5, -0.5], // negs
+			GW: [-Math.sqrt(2) / 2, Math.sqrt(2) / 2, 0],
+			GO: [-0.5, 0.5, -0.5],
+			BW: [0, 0, Math.sqrt(2) / 2], // negs
+			BR: [-0.5, -0.5, 0.5], // negs
+			BY: [Math.sqrt(2) / 2, Math.sqrt(2) / 2, 0],
+			BO: [0.5, 0.5, 0.5]
+		};
+
+		function quatToInvertedBytes(q: [number, number, number]) {
+			const x = q[0];
+			const y = q[1];
+			const z = q[2];
+			const max = 16384;
+			return [-z, -x, y]
+				.map((q) => Math.floor(q * max))
+				.map((x) => [x & 0x00ff, (x & 0x00ff00) >> 8])
+				.flat();
+		}
+
+		function encodeFacing(facing: string) {
+			return quatToInvertedBytes(facingToQuaterions[facing]);
+		}
+
+		it('call updateOrientation for two moves and validate', () => {
+			const ganCube = new GANCube(dummyDevice);
+			ganCube.setTrackingRotations(true); //? [0,0.5,Math.sqrt(2)/2].map(x => Math.floor(x*16384))
+			const homeState = new Uint8Array([
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
+			]);
+			const nullcallback = () => {};
+			ganCube.updateOrientation(homeState);
+			expect(ganCube.getFacing()).to.equal('WG');
+			const tail = [0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3];
+			const array = new Uint8Array([...encodeFacing('GO'), ...tail]);
+			ganCube.handleMoves(array, nullcallback);
+			expect(ganCube.getFacing()).to.equal('GO');
+		});
+
+		function orientationTest({ from, to }: { [k: string]: string }) {
+			it(`handles from WG to ${from} to ${to}`, () => {
+				const ganCube = new GANCube(dummyDevice);
+				ganCube.setTrackingRotations(true);
+				// set up WG.
+				const homeState = new Uint8Array([
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
+				]);
+				const nullcallback = () => {};
+				ganCube.updateOrientation(homeState);
+				expect(ganCube.getFacing()).to.equal('WG');
+				const tail = [0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3];
+				const array = new Uint8Array([...encodeFacing(from), ...tail]);
+				ganCube.handleMoves(array, nullcallback);
+				expect(ganCube.getFacing()).to.equal(from);
+				const move2 = new Uint8Array([...encodeFacing(to), ...tail]);
+				ganCube.handleMoves(move2, nullcallback);
+				expect(ganCube.getFacing()).to.equal(to);
+			});
+		}
+		const facings = Object.keys(facingToQuaterions);
+		facings.forEach((f1) => {
+			facings.forEach((f2) => {
+				if (f1 !== f2) {
+					orientationTest({ from: f1, to: f2 });
+				}
+			});
 		});
 
 		it('ignores orientation by default', () => {
@@ -127,17 +214,19 @@ describe('GAN 356i', async () => {
 			const homeState = new Uint8Array([
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
 			]);
-			const callback = () => { expect(true).to.be.false; };
-			ganCube.handleMoves(homeState, callback); 
+			const fail = () => {
+				expect(true).to.be.false;
+			};
+			ganCube.handleMoves(homeState, fail);
 			expect(ganCube.getFacing()).to.equal('WG');
 			const array = new Uint8Array([
 				0x0, 0x0, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
 			]);
-			ganCube.handleMoves(array, callback); 
+			ganCube.handleMoves(array, fail);
 			expect(ganCube.getFacing()).to.equal('WG');
-			ganCube.handleMoves(homeState, callback); 
+			ganCube.handleMoves(homeState, fail);
 			expect(ganCube.getFacing()).to.equal('WG');
-			ganCube.handleMoves(array, callback); 
+			ganCube.handleMoves(array, fail);
 			expect(ganCube.getFacing()).to.equal('WG');
 		});
 	});

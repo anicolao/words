@@ -211,7 +211,7 @@ export class GANCube {
 		[x, y, z] = [-y, z, -x];
 		const wSquared = 1 - (x * x + y * y + z * z);
 		const w = wSquared > 0 ? Math.sqrt(wSquared) : 0;
-		const quat = new Quaternion(x, y, z, w);
+		const quat = new Quaternion(x, y, z, w).normalize();
 
 		if (!this.homeOrientationKnown) {
 			this.homeOrientation = quat.clone().invert();
