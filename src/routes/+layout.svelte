@@ -23,6 +23,7 @@
 		collection,
 		collectionGroup,
 		onSnapshot,
+		orderBy,
 		query,
 		where,
 		type Unsubscribe
@@ -31,7 +32,7 @@
 	import { add_scramble, add_solve } from '$lib/components/solves';
 
 	$: open = width > 720;
-	$: active = $store.nav.active;
+	$: active = $store.nav.active.split('/')[0];
 
 	function setActive(value: string) {
 		store.dispatch(navigate_to(value));
@@ -45,6 +46,7 @@
 		unknown: 'Unknown',
 		timer: 'Speed Solving',
 		trending_down: 'Efficient Solving',
+		history_edu: 'Solve Analysis',
 		school: 'Roux Academy',
 		account_circle: 'Profile',
 		bluetooth: 'Cubes'
@@ -60,7 +62,7 @@
 	$: if ($store.auth.signedIn && !unsubSolves) {
 		if (!unsubScrambles) {
 			const scrambles = collection(firebase.firestore, 'scrambles');
-			unsubScrambles = onSnapshot(query(scrambles), (querySnapshot) => {
+			unsubScrambles = onSnapshot(query(scrambles, orderBy('timestamp')), (querySnapshot) => {
 				querySnapshot.docChanges().forEach((change) => {
 					if (change.type === 'added') {
 						let doc = change.doc;
@@ -74,13 +76,14 @@
 			// always true
 			const solves = collectionGroup(firebase.firestore, 'solves');
 			unsubSolves = onSnapshot(
-				query(solves, where('creator', '==', $store.auth.uid)),
+				query(solves, where('creator', '==', $store.auth.uid), orderBy('timestamp')),
 				(querySnapshot) => {
 					querySnapshot.docChanges().forEach((change) => {
 						if (change.type === 'added') {
 							let doc = change.doc;
 							store.dispatch(
 								add_solve({
+									solveId: doc.id,
 									scramble: doc.data().scramble,
 									moves: doc.data().moves,
 									time: doc.data().time
@@ -196,6 +199,14 @@
 					>
 						<Graphic class="material-icons" aria-hidden="true">trending_down</Graphic>
 						<Text>{textLookup('trending_down')}</Text>
+					</Item>
+					<Item
+						href="javascript:void(0)"
+						on:click={() => setActive('history_edu')}
+						activated={active === 'history_edu'}
+					>
+						<Graphic class="material-icons" aria-hidden="true">history_edu</Graphic>
+						<Text>{textLookup('history_edu')}</Text>
 					</Item>
 					<Item
 						href="javascript:void(0)"

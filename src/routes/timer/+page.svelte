@@ -13,6 +13,7 @@
 	import Pair from '$lib/components/Pair.svelte';
 	import firebase from '$lib/firebase';
 	import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+	import { goto } from '$app/navigation';
 
 	let scramble = new Alg();
 	let remaining = new Alg();
@@ -163,22 +164,26 @@
 			rafTimer = rafTime - rafStart;
 		});
 	}
+	async function storeScramble() {
+		isStored = true;
+		const scrambleString = scramble.toString();
+		const scrambleId = $store.solves.scrambleToId[scrambleString];
+		const storedSolve = {
+			scrambleId,
+			scramble: scrambleString,
+			moves: solution,
+			time: timerInTenths,
+			creator: $store.auth.uid
+		};
+		const doc = await addDoc(collection(firebase.firestore, 'scrambles', scrambleId, 'solves'), {
+			...storedSolve,
+			timestamp: serverTimestamp()
+		});
+		goto('history_edu/' + doc.id);
+	}
 	$: if (isSolved) {
 		if (!isStored) {
-			isStored = true;
-			const scrambleString = scramble.toString();
-			const scrambleId = $store.solves.scrambleToId[scrambleString];
-			const storedSolve = {
-				scrambleId,
-				scramble: scrambleString,
-				moves: solution,
-				time: timerInTenths,
-				creator: $store.auth.uid
-			};
-			addDoc(collection(firebase.firestore, 'scrambles', scrambleId, 'solves'), {
-				...storedSolve,
-				timestamp: serverTimestamp()
-			});
+			storeScramble();
 		}
 	}
 
