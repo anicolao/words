@@ -5,7 +5,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { TwistyPlayer } from 'cubing/twisty';
 	import { store } from '$lib/store';
-	import type { CubeInfo } from '$lib/components/cubes';
+	import { known_version, type CubeInfo } from '$lib/components/cubes';
 	import { GANCube } from '$lib/bluetooth/gan/gan356i_v1';
 	import { Alg, Move } from 'cubing/alg';
 	import { experimentalAppendMove } from '$lib/cubing/alg/operation';
@@ -118,6 +118,8 @@
 			currentDevice = $store.cubes.connectedDevice;
 			if (currentDevice) {
 				cube = new GANCube({ id: currentDevice[0] });
+				const version = await cube.getVersionAsString();
+				store.dispatch(known_version({id: currentDevice[0], version }));
 				const model = twistyPlayer.experimentalModel;
 				const kp: KPuzzle = await twistyPlayer.experimentalModel.kpuzzle.get();
 				const ksNew = kp.startState();

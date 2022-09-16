@@ -40,6 +40,7 @@
 	}
 
 	$: cubes = $store.cubes.knownCubes;
+	$: versions = $store.cubes.cubeIdToVersionMap;
 	$: connectedCubes = cubes.filter((x) => x[2]);
 	$: disconnectedCubes = cubes.filter((x) => !x[2]);
 </script>
@@ -49,7 +50,13 @@
 		Currently connected:
 		<ul>
 			{#each connectedCubes as cube}
-				<li>{cube[1]}</li>
+				<li>{cube[1]}
+				{#if versions[cube[0]]}
+				  (v{versions[cube[0]]})
+				{:else}
+				  (do a solve first to see cube version)
+				{/if}
+				</li>
 			{/each}
 		</ul>
 	{/if}
