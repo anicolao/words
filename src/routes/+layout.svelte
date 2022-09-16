@@ -91,6 +91,10 @@
 							);
 						}
 					});
+				},
+				(error) => {
+					console.log("solves query failing: ");
+					console.error(error);
 				}
 			);
 		}
