@@ -11,11 +11,26 @@
 	import { experimentalAppendMove } from '$lib/cubing/alg/operation';
 	import type { KPuzzle } from 'cubing/kpuzzle';
 	import Pair from '$lib/components/Pair.svelte';
+	import firebase from '$lib/firebase';
+	import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 	let scramble = new Alg();
 	let remaining = new Alg();
+
+	async function saveNewScramble() {
+		const newScramble = await randomScrambleForEvent('333');
+		const setup = newScramble.toString();
+		const storedScramble = { setup, creator: $store.auth.uid };
+		addDoc(collection(firebase.firestore, 'scrambles'), {
+			...storedScramble,
+			timestamp: serverTimestamp()
+		});
+	}
+	$: if ($store.auth.uid && $store.solves.unattempted.length === 0) {
+		saveNewScramble();
+	}
 	async function newScramble() {
-		scramble = await randomScrambleForEvent('333');
+		scramble = new Alg($store.solves.unattempted[0]);
 		remaining = scramble;
 	}
 	newScramble();
@@ -43,7 +58,7 @@
 	let alg = new Alg();
 	let startWhenReady = false;
 	let solving = false;
-	let solution: { move: string, timestamp: number}[] = [];
+	let solution: { move: string; timestamp: number }[] = [];
 
 	async function addMove(model: any, move: string) {
 		alg = experimentalAppendMove(alg, new Move(move), {
@@ -52,8 +67,11 @@
 			sliceMoves333: true
 		});
 		let solutionMoves = Array.from(alg.childAlgNodes());
-		solution = solution.slice(0, solutionMoves.length-1);
-		solution.push({ move: solutionMoves[solutionMoves.length-1].toString(), timestamp: rafTimer})
+		solution = solution.slice(0, solutionMoves.length - 1);
+		solution.push({
+			move: solutionMoves[solutionMoves.length - 1].toString(),
+			timestamp: rafTimer
+		});
 
 		let inverted = Array.from(alg.invert().childAlgNodes());
 		inverted = inverted.concat(Array.from(new Alg(scramble).childAlgNodes()));
@@ -112,6 +130,7 @@
 	}
 
 	let isSolved = false;
+	let isStored = false;
 
 	$: remainingNodes = Array.from(remaining.childAlgNodes());
 	$: algView = Array.from(scramble.childAlgNodes()).map((x, i, a) => {
@@ -145,9 +164,22 @@
 		});
 	}
 	$: if (isSolved) {
-		console.log("***** SOLVED *****");
-		console.log({ rafTimer, timerInTenths, alg, moves: `[${alg.toString()}]`, solution })
-		console.log("******************")
+		if (!isStored) {
+			isStored = true;
+			const scrambleString = scramble.toString();
+			const scrambleId = $store.solves.scrambleToId[scrambleString];
+			const storedSolve = {
+				scrambleId,
+				scramble: scrambleString,
+				moves: solution,
+				time: timerInTenths,
+				creator: $store.auth.uid
+			};
+			addDoc(collection(firebase.firestore, 'scrambles', scrambleId, 'solves'), {
+				...storedSolve,
+				timestamp: serverTimestamp()
+			});
+		}
 	}
 
 	$: timerInTenths = Math.round(rafTimer / 100);

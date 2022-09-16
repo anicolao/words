@@ -1,7 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { store } from './store';
 //import { getAnalytics } from 'firebase/analytics';
 //
 // TODO: Add SDKs for Firebase products that you want to use
@@ -27,7 +28,26 @@ const firebase = {
 	app: initializeApp(firebaseConfig),
 	auth: getAuth(),
 	google_auth_provider: new GoogleAuthProvider(),
-	firestore: getFirestore()
+	firestore: getFirestore(),
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	dispatch: (action: any) => {
+		const user = store.getState().auth;
+		if (user.email) {
+			firebase.request(user.email, action);
+		}
+	},
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	request: (to: string, action: any) => {
+		const user = store.getState().auth;
+		if (user.uid) {
+			addDoc(collection(firebase.firestore, 'from', user.uid, 'to', to, 'requests'),
+				{ ...action, creator: user.uid, target: to, timestamp: serverTimestamp() })
+				.catch((message) => {
+					console.error(message);
+				});
+		}
+	}
+
 };
 
 connectFirestoreEmulator(firebase.firestore, 'localhost', 8080);

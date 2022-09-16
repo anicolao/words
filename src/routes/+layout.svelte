@@ -19,6 +19,16 @@
 	import List, { Item, Text, Graphic, Separator, Subheader } from '@smui/list';
 	import { H6 } from '@smui/common/elements';
 	import { navigate_to } from '$lib/components/nav';
+	import {
+		collection,
+		collectionGroup,
+		onSnapshot,
+		query,
+		where,
+		type Unsubscribe
+	} from 'firebase/firestore';
+	import firebase from '$lib/firebase';
+	import { add_scramble, add_solve } from '$lib/components/solves';
 
 	$: open = width > 720;
 	$: active = $store.nav.active;
@@ -44,6 +54,54 @@
 	}
 
 	let loading = true;
+
+	let unsubSolves: Unsubscribe | undefined;
+	let unsubScrambles: Unsubscribe | undefined;
+	$: if ($store.auth.signedIn && !unsubSolves) {
+		if (!unsubScrambles) {
+			const scrambles = collection(firebase.firestore, 'scrambles');
+			unsubScrambles = onSnapshot(query(scrambles), (querySnapshot) => {
+				querySnapshot.docChanges().forEach((change) => {
+					if (change.type === 'added') {
+						let doc = change.doc;
+						store.dispatch(add_scramble({ scramble: doc.data().setup, id: doc.id }));
+					}
+				});
+			});
+		}
+
+		if ($store.auth.uid && !unsubSolves) {
+			// always true
+			const solves = collectionGroup(firebase.firestore, 'solves');
+			unsubSolves = onSnapshot(
+				query(solves, where('creator', '==', $store.auth.uid)),
+				(querySnapshot) => {
+					querySnapshot.docChanges().forEach((change) => {
+						if (change.type === 'added') {
+							let doc = change.doc;
+							store.dispatch(
+								add_solve({
+									scramble: doc.data().scramble,
+									moves: doc.data().moves,
+									time: doc.data().time
+								})
+							);
+						}
+					});
+				}
+			);
+		}
+	}
+
+	$: if (unsubSolves && !$store.auth.signedIn) {
+		unsubSolves();
+		unsubSolves = undefined;
+	}
+
+	$: if (unsubScrambles && !$store.auth.signedIn) {
+		unsubScrambles();
+		unsubScrambles = undefined;
+	}
 </script>
 
 <svelte:window bind:innerWidth={width} />
