@@ -24,7 +24,7 @@ describe('scrambles', () => {
         const scramble = "L R' L";
         const id = "abcd-ef";
         const time = 5;
-        let nextState = solves(initialState, add_solve({scramble, moves: [], time}));
+        let nextState = solves(initialState, add_solve({scramble, moves: [], time, solveId: id}));
         nextState = solves(nextState, add_scramble({ scramble, id }));
         expect(nextState.allScrambles.length).to.equal(1);
         expect(nextState.allScrambles[0]).to.equal(scramble);
@@ -37,7 +37,7 @@ describe('scrambles', () => {
         const id = "abcd-ef";
         const time = 5;
         let nextState = solves(initialState, add_scramble({ scramble, id }));
-        nextState = solves(nextState, add_solve({scramble, moves: [], time}));
+        nextState = solves(nextState, add_solve({scramble, moves: [], time, solveId: id}));
         expect(nextState.allScrambles.length).to.equal(1);
         expect(nextState.allScrambles[0]).to.equal(scramble);
         expect(nextState.unattempted.length).to.equal(0);

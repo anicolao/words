@@ -24,11 +24,15 @@
 	$: if (allSolves.length >= 100) {
 		computeAoN(100);
 	}
+
+	function averageKeys(): number[] {
+		return Object.keys(averages).map(x => Number(x));
+	}
 </script>
 
 <Content>
 	<table class="ao" cellspacing="0">
-		{#each Object.keys(averages) as key}
+		{#each averageKeys() as key}
 		<tr><td>Ao{key}</td><td>{Math.round(averages[key])/10}</td></tr>
 		{/each}
 	</table>

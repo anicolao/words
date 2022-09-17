@@ -7,7 +7,7 @@
 	import { TwistyPlayer } from 'cubing/twisty';
 	import Cube from '$lib/components/Cube.svelte';
 
-	function toArray(any) {
+	function toArray(any: ArrayLike<unknown> | Iterable<unknown>) {
 		if (any) return Array.from(any);
 		return [];
 	}
