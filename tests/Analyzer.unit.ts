@@ -41,4 +41,39 @@ describe('Analyzer breaks solves into good phases', () => {
 		expect(result.length).to.equal(5);
 		console.log('solve analyzed in ', Date.now() - t, ' ms');
 	});
+
+	it('analyzes another solve', async () => {
+		const scramble = "F3 D L2' B L D' R' D' B L B2' R U R R' U R' R2 D2' L2' D2' L' D2' R' U2";
+		const solution =
+			"L x' z L2' x' U' y' M2 y r x' x U U2' R' U M' x x' U2 M2' r' U' R2 M' M x' l' U M' U' r U2 F R' F' R U R U' R' U R U R' F' R U R' U' R' F R2 U' R2' r M' U M U2 M' U M' U2 M U2 M U' M2 U";
+		const t = Date.now();
+		const result = get_roux_stages(scramble, solution);
+        expect(result[0].solution.toString()).to.equal("L x' z L2 x' U' y' M2 "); // first block: 8 moves
+        expect(result[1].solution.toString()).to.equal("y r x' x U U2 R' U M' x x' U2 M2 r' U' R2 "); // second square: 16 moves
+        expect(result[2].solution.toString()).to.equal("M' M x' l' U M' U' r "); // last pair: 8 moves
+        expect(result[3].solution.toString()).to.equal("U2 F R' F' R U R U' R' U R U R' F' R U R' U' R' F R2 U' R2 r "); // CMLL: 24 moves
+        expect(result[4].solution.toString()).to.equal("M' U M U2 M' U M' U2 M U2 M U' M2 U "); // LSE: 14 moves
+
+		console.log(result.map((s) => [s.solution.toString(), s.stage]));
+		expect(result.length).to.equal(5);
+		console.log('solve analyzed in ', Date.now() - t, ' ms');
+	});
+
+	it('originally failed on this solve', async () => {
+		const scramble = "L2 U B' R' B L U L2 F R2 U L2 U' F2 U2 D' B2 U2 F2 R'";
+		const solution =
+			"F R L' R L' L F2' B2' F2 L' L F' F L F L' B' x' z x' B z' L' U2 L2 x' z2 x y' x2 D U' D' B' B2 U' D x L2 D x' D F2 D' L D' x D B' F x' D F D' L3 D' x D' F B L B' x' L' U' F U F' L' L U L U' F' U L U' L' U' F U2 L' U2' D F F' U' D R2 D' U F2 U D' L U' D F U D' L2 D' U B' x F' B F' B x2 y D R L' F2 R' L D2";
+		const t = Date.now();
+		const result = get_roux_stages(scramble, solution);
+		console.log({ scramble, solution });
+		console.log(result.map((s) => [s.solution.toString(), s.stage]));
+        expect(result[0].solution.toString()).to.equal("F R L' R L' L F2 B2 F2 L' L F' F L F L' B' x' z x' B z' L' U2 L2 x' z2 x y' x2 D U' D' B' B2 U' D x L2 D "); // first block
+        expect(result[1].solution.toString()).to.equal("x' D F2 D' L D' x D B' F x' D F D' "); // ss
+        expect(result[2].solution.toString()).to.equal("L' D' x D' F "); // lp
+        expect(result[3].solution.toString()).to.equal("B L B' x' L' U' F U F' L' L U L U' F' U L U' L' U' F U2 L' U2 D "); // cmll
+        expect(result[4].solution.toString()).to.equal("F F' U' D R2 D' U F2 U D' L U' D F U D' L2 D' U B' x F' B F' B x2 y D R L' F2 R' L D2 "); // lse
+
+		expect(result.length).to.equal(5);
+		console.log('solve analyzed in ', Date.now() - t, ' ms');
+	});
 });

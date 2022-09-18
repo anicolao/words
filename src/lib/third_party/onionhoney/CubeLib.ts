@@ -9,6 +9,8 @@ const C_MOD = 3;
 const E_MOD = 2;
 const T_MOD = 1;
 
+//const idMove = /[A-Z]4/i;
+
 export class CubieCube {
     cp: number[] = [];
     co: number[] = [];
@@ -481,6 +483,7 @@ export class MoveSeq {
         let token = ""
         const comment_idx = str.search(/\/\//)
         if (comment_idx > -1) str = str.slice(0, comment_idx)
+        str = str.replaceAll("3", "'").replaceAll("''", "").replaceAll("2'", "2") //.replaceAll(idMove, "");
         for (let i = 0; i < str.length; i++) {
             const ch = str[i]
             if (ch === '2' || ch === '\'') {
