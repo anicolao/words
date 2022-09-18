@@ -56,7 +56,17 @@ const cstimer_edges_coord : Array<EdgeCoord> = [
     [F, R], [F,L], [B,L], [B,R]
 ]
 
-export {corners_coord, edges_coord, centers_coord, cstimer_corners_coord, cstimer_edges_coord }
+const kcenters_coord : Array<CenterCoord> = [
+    [U], [L], [F], [R], [B], [D]
+];
+const kcorners_coord : Array<CornerCoord> = [
+    [U,F,R], [U,R,B], [U,B,L], [U,L,F], [D,R,F], [D,F,L], [D,L,B], [D,B,R]
+];
+const kedges_coord: Array<EdgeCoord> = [
+ [U,F], [U,R], [U,B], [U,L], [D,F], [D,R], [D,B], [D,L], [F,R], [F,L], [B,R], [B,L]
+];
+
+export {kcenters_coord, kcorners_coord, kedges_coord, corners_coord, edges_coord, centers_coord, cstimer_corners_coord, cstimer_edges_coord }
 
 export type FaceletMapping = [Face[], Face[]][]
 

@@ -1073,7 +1073,7 @@ function CoordInit() {
 	}
 }					
 
-function randomCube() {
+export function randomCube() {
 	var eperm;
 	var cperm;
 	do {
@@ -1290,7 +1290,7 @@ function phase2(edge, esym, corn, csym, mid, maxl, depth, lm) {
 
 var initialized = false;
 
-function initialize() {
+export function initialize() {
 	if (initialized) {
 		return;
 	}
@@ -1299,7 +1299,7 @@ function initialize() {
 	initialized = true;
 }
 
-function solve(c) {
+export function solve(c) {
 	initialize();
 	const cc = new CubieCube();
 	cc.cp = c.cp;
@@ -1309,6 +1309,8 @@ function solve(c) {
 	return Solve(cc);
 };
 
+/*
 module.exports.initialize = initialize;
 module.exports.solve = solve;
 module.exports.randomCube = randomCube;
+*/

@@ -1,16 +1,16 @@
-import { Pruner, PrunerConfig, PrunerT } from './Pruner';
-import { FbdrSolver, SolverT, FsSolver, SsSolver, SsDpSolver, SbSolver, FbSolver, FbssSolver, LpsbSolver, Min2PhaseSolver, LSESolver, EOLRSolver} from './Solver';
+import { Pruner, type PrunerConfig, type PrunerT } from './Pruner';
+import { FbdrSolver, type SolverT, FsSolver, SsSolver, SsDpSolver, SbSolver, FbSolver, FbssSolver, LpsbSolver, Min2PhaseSolver, LSESolver, EOLRSolver} from './Solver';
 
-let all_solvers = [
+const all_solvers = [
 "fbdr","fb", "fs-front", "fs-back", "ss-front", "ss-back", "min2phase",
 "lse", "eolrac", "eolrmc", "eolr", "eolrac-b", "eolrmc-b", "eolr-b", "sb" ]
 
-let CachedPruner = function() {
-    let cache : Map<string, PrunerT> = new Map()
+const CachedPruner = function() {
+    const cache : Map<string, PrunerT> = new Map()
     function get(pc: PrunerConfig) {
-        let pcs = JSON.stringify(pc)
+        const pcs = JSON.stringify(pc)
         if (!cache.has(pcs)) {
-            let pruner = Pruner(pc)
+            const pruner = Pruner(pc)
             cache.set(pcs, pruner)
             return pruner
         } else {
@@ -20,8 +20,8 @@ let CachedPruner = function() {
     return { get }
 }()
 
-let CachedSolver = function() {
-    let cache : Map<string, SolverT> = new Map()
+const CachedSolver = function() {
+    const cache : Map<string, SolverT> = new Map()
     function get(s: string) {
         if (!cache.has(s)) {
             switch (s) {

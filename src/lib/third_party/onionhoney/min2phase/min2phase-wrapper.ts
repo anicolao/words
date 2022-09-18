@@ -1,5 +1,6 @@
-import {initialize, solve as min2phaseSolve, Min2PhaseCube} from "./min2phase.js"
-import { CubieCube } from "../CubeLib";
+import {initialize, solve as min2phaseSolve } from "./min2phase.js"
+import type { Min2PhaseCube } from "./min2phase.js";
+import type { CubieCube } from "../CubeLib";
 
 export {initialize}
 

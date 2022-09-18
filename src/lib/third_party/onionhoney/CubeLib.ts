@@ -1,5 +1,5 @@
 import type { MoveT, OriChg, PermChg, StickerT, StickerExtT, CornerCoord, EdgeCoord, CenterCoord } from "./Defs";
-import { cstimer_corners_coord, cstimer_edges_coord, centers_coord } from "./Defs";
+import { cstimer_corners_coord, cstimer_edges_coord, centers_coord, kcorners_coord, kedges_coord, kcenters_coord } from "./Defs";
 import { u, d, f, b, l, r, m, e, s} from "./Defs";
 import { type FaceletT, type FaceletCubeT, corners_coord, edges_coord, u_face, f_face, color_map } from "./Defs";
 import { Typ, Face, C, E, T, U, D, F, B, L, R } from "./Defs";
@@ -254,6 +254,12 @@ export class CubieCube {
     to_cstimer_cube() {
         const facelet_mapping = this._to_facelet_mapping(corners_coord, edges_coord, centers_coord)
         const cube = this._from_facelet_mapping(facelet_mapping, cstimer_corners_coord, cstimer_edges_coord, centers_coord)
+        return cube
+    }
+
+    to_kstate_cube() {
+        const facelet_mapping = this._to_facelet_mapping(corners_coord, edges_coord, centers_coord)
+        const cube = this._from_facelet_mapping(facelet_mapping, kcorners_coord, kedges_coord, centers_coord)
         return cube
     }
 
