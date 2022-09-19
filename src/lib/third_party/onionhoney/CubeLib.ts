@@ -362,6 +362,7 @@ export class Move {
         return [move,
             new Move().from_moves([move, move], move.name + "2"),
             new Move().from_moves([move, move, move], move.name + "'"),
+            new Move().from_moves([move, move, move], move.name + "3"),
         ]
     }
 
@@ -381,12 +382,19 @@ export class Move {
         const rws = make_rot_set(rw)
         const lw = new Move([new Move(l), new Move(m)], "l")
         const lws = make_rot_set(lw)
-        const uw = new Move([new Move(u), new Move(e)], "u")
+        const uw = new Move([new Move(u), es[2]], "u")
         const uws = make_rot_set(uw)
+
+        const bw = new Move([new Move(b), ss[2]], "b")
+        const bws = make_rot_set(bw)
+        const dw = new Move([new Move(d), new Move(e)], "d")
+        const dws = make_rot_set(dw)
+        const fw = new Move([new Move(f), new Move(s)], "f")
+        const fws = make_rot_set(fw)
 
         const x = new Move([new Move(r), ls[2], ms[2]], "x")
         const xs = make_rot_set(x)
-        const y = new Move([new Move(u), new Move(e), ds[2]], "y")
+        const y = new Move([new Move(u), es[2], ds[2]], "y")
         const ys = make_rot_set(y)
         const z = new Move([x, y, x, x, x], "z")
         const zs = make_rot_set(z)
@@ -396,7 +404,7 @@ export class Move {
             id,
             us, fs, rs, ls, ds, bs, ms, es, ss,
             xs, ys, zs,
-            rws, lws, uws
+            rws, lws, uws, bws, dws, fws
         ].flat()
         const moves_dict: { [key: string]: Move } = Object.create({})
         moves.forEach(m => moves_dict[m.name] = m)
@@ -483,14 +491,27 @@ export class MoveSeq {
         let token = ""
         const comment_idx = str.search(/\/\//)
         if (comment_idx > -1) str = str.slice(0, comment_idx)
-        str = str.replaceAll("3", "'").replaceAll("''", "").replaceAll("2'", "2") //.replaceAll(idMove, "");
+        str = str.replaceAll("2'", "2").replaceAll("3'", "") //.replaceAll(idMove, "");
         for (let i = 0; i < str.length; i++) {
             const ch = str[i]
-            if (ch === '2' || ch === '\'') {
-                if (token.length === 1) {
+            if ((ch >= '0' && ch <= '9') || ch === '\'') {
+                let app = str[i];
+                if (app !== "'") {
+                    let n = Number(app);
+                    n = n % 4;
+                    app = "" + n;
+                    if (app === '1') app = "";
+                    token += app;
+                } else if (token.length === 1) {
                     token += str[i];
-                    tokens.push(token)
-                    token = ""
+                    console.log(` --> token ${token}`)
+                } else {
+                    let app = token[1];
+                    let n = 24-Number(app);
+                    n %= 4;
+                    app = "" + n;
+                    if (app === '1') app = "";
+                    token = token[0] + app;
                 }
             } else if (ch === ' ') {
                 if (token.length > 0) {
