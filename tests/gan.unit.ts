@@ -182,8 +182,8 @@ describe('GAN 356i', async () => {
 		});
 
 		function orientationTest({ from, to }: { [k: string]: string }) {
+			const ganCube = new GANCube(dummyDevice);
 			it(`handles from WG to ${from} to ${to}`, () => {
-				const ganCube = new GANCube(dummyDevice);
 				ganCube.setTrackingRotations(true);
 				// set up WG.
 				const homeState = new Uint8Array([
