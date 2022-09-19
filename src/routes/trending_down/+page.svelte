@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Content } from '@smui/card';
+	import Scramble from "$lib/components/Scramble.svelte";
 </script>
 
-<Content>Efficient Solving</Content>
+<Scramble origin="trending_down" />
