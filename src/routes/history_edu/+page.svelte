@@ -39,7 +39,7 @@
 	<table cellspacing="0">
 		{#each allSolves as solve, i}
 			<tr class={i%2 ? "odd" : "even"} on:click={() => goto('history_edu/' + solve.solveId)}
-				><td>{i}</td><td>{solve.time / 10}</td><td>{solve.moves.length}</td>
+				><td>{allSolves.length - i}</td><td>{solve.time / 10}</td><td>{solve.moves.length}</td>
 				<td>
 					<Button on:click={() => goto('history_edu/' + solve.solveId)}>
 						<Label>Analysis</Label>
