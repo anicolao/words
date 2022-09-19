@@ -195,7 +195,7 @@
 			...storedSolve,
 			timestamp: serverTimestamp()
 		});
-		goto('history_edu/' + doc.id);
+		goto('history_edu/' + doc.id + '?from=timer');
 	}
 	$: if (isSolved) {
 		if (!isStored) {

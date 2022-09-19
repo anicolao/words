@@ -12,6 +12,7 @@
 		return [];
 	}
 	const solveId = $page.params.slug;
+	const sourcePage = $page.url.searchParams.get('from') || 'timer';
 	$: solve = $store.solves.solveIdToSolve[solveId];
 	$: time = solve && solve.time / 10;
 	$: moveCount = solve?.moves.filter(x => x.timestamp > 0).length + 1;
@@ -24,8 +25,8 @@
 	$: stages = get_roux_stages(scrambleString, solutionString);
 
 	function next() {
-		console.log("navigate to timing");
-		goto('/timer');
+		console.log("navigate to ", sourcePage);
+		goto('/' + sourcePage);
 	}
 
 	const translation = {
