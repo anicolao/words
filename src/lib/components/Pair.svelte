@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { connectSmartPuzzle } from 'cubing/bluetooth';
 	import { pair, listKnownDevices, setupDevices } from '$lib/bluetooth/pair';
 	import { bluetooth_supported, known_cubes, reconnect_supported, connect } from './cubes';
 	import { navigate_to } from '$lib/components/nav';
@@ -39,6 +40,16 @@
 		pair(connectCallback);
 	}
 
+	async function legacyPairHandler() {
+		const cube = await connectSmartPuzzle();
+		console.log(`connected to ${cube.name()}`, cube);
+		const fakeId = 'legacy_' + cube.name();
+		store.dispatch(known_cubes([[fakeId, 'Legacy: ' + cube.name(), true]]));
+		store.dispatch(connect([fakeId, true]));
+		(globalThis as any).legacyCubes = (globalThis as any).legacyCubes || {};
+		(globalThis as any).legacyCubes[fakeId] = cube;
+	}
+
 	$: cubes = $store.cubes.knownCubes;
 	$: versions = $store.cubes.cubeIdToVersionMap;
 	$: connectedCubes = cubes.filter((x) => x[2]);
@@ -50,12 +61,13 @@
 		Currently connected:
 		<ul>
 			{#each connectedCubes as cube}
-				<li>{cube[1]}
-				{#if versions[cube[0]]}
-				  (v{versions[cube[0]]})
-				{:else}
-				  (do a solve first to see cube version)
-				{/if}
+				<li>
+					{cube[1]}
+					{#if versions[cube[0]]}
+						(v{versions[cube[0]]})
+					{:else}
+						(do a solve first to see cube version)
+					{/if}
 				</li>
 			{/each}
 		</ul>
@@ -70,4 +82,5 @@
 		</ul>
 	{/if}
 {/if}
-<Button on:click={pairHandler} variant="raised">Pair</Button>
+<Button on:click={pairHandler} variant="raised">Pair GAN 356i v1</Button>
+<Button on:click={legacyPairHandler} variant="raised">Pair Other Cubes</Button>

@@ -14,6 +14,7 @@
 	import firebase from '$lib/firebase';
 	import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 	import { goto } from '$app/navigation';
+	import type { BluetoothPuzzle, MoveEvent } from 'cubing/dist/types/bluetooth';
 
 	let scramble = new Alg();
 	let remaining = new Alg();
@@ -67,6 +68,9 @@
 			wideMoves333: true,
 			sliceMoves333: true
 		});
+		processAlg(model);
+	}
+	async function processAlg(model: any) {
 		let solutionMoves = Array.from(alg.childAlgNodes());
 		solution = solution.slice(0, solutionMoves.length - 1);
 		solution.push({
@@ -116,7 +120,7 @@
 	$: if ($store.cubes.connectedDevice !== currentDevice) {
 		async function useCurrentDevice() {
 			currentDevice = $store.cubes.connectedDevice;
-			if (currentDevice) {
+			if (currentDevice && currentDevice[0].slice(0, 6) !== "legacy") {
 				cube = new GANCube({ id: currentDevice[0] });
 				const version = await cube.getVersionAsString();
 				store.dispatch(known_version({id: currentDevice[0], version }));
@@ -126,6 +130,16 @@
 				cube.watchMoves((move: number) => {
 					const face = GANCube.colorToFaceMove(move, ksNew.applyAlg(alg).stateData);
 					addMove(model, face);
+				});
+			} else if (currentDevice) {
+				console.log("Legacy bluetooth path enabled for ", currentDevice);
+				const cube = (globalThis as any).legacyCubes[currentDevice[0]] as BluetoothPuzzle;
+				const model = twistyPlayer.experimentalModel;
+				cube.addAlgLeafListener((e: MoveEvent) => {
+					console.log({ e, move: new Move(e.latestAlgLeaf.toString()), s: e.latestAlgLeaf.toString()  });
+					const move =  new Move(e.latestAlgLeaf.toString());
+					alg = experimentalAppendMove(alg, move);
+					processAlg(model);
 				});
 			}
 		}

@@ -23,6 +23,7 @@ export async function listKnownDevices(): Promise<BluetoothDevice[]> {
 }
 
 export async function setupDevices(devices: BluetoothDevice[], connectCallback: CCType) {
+	/* disable auto reconnect while we are supporting the legacy path
 	for (const device of devices) {
 		const abortController = new AbortController();
 		const log = console.log;
@@ -43,6 +44,7 @@ export async function setupDevices(devices: BluetoothDevice[], connectCallback: 
 			log('Device: ', device.name, ' already connected.');
 		}
 	}
+	*/
 }
 function connect(device: BluetoothDevice, connectCallback: CCType) {
 	const log = console.log;
