@@ -7,6 +7,23 @@
 	export let controlPanel = 'none';
 	export let scramble = '';
 	export let solve = '';
+	export let playHead = 0;
+
+	$: if (playHead >= 0) {
+		const p = async () => {
+			console.log({ playHead });
+			twistyPlayer.pause();
+			const timestampPromise = (async (): Promise<any> => {
+				const indexer = await twistyPlayer.experimentalModel.indexer.get();
+				const offset = 250;
+				return (indexer.indexToMoveStartTimestamp(playHead) ?? -offset) + offset;
+			})();
+			twistyPlayer.experimentalModel.timestampRequest.set(
+				await timestampPromise // TODO
+			);
+		};
+		p();
+	}
 	onMount(async () => {
 		let contentElem = document.querySelector('#twisty-content');
 		if (contentElem) {
@@ -26,4 +43,10 @@
 	});
 </script>
 
-<div id="twisty-content"/>
+<div id="twisty-content" />
+
+<style>
+	div {
+		text-align: -webkit-center;
+	}
+</style>

@@ -1,5 +1,15 @@
 <script>
 	import { scaleLinear } from 'd3-scale';
+	import { createEventDispatcher } from 'svelte';
+
+	const eventDispatch = createEventDispatcher();
+
+	/**
+	 * @param {string} name
+	 */
+	function sendEvent(name) {
+		eventDispatch('message', name);
+	}
 
 	export let points = [
 		{ xValue: 1990, yValue: 16.7 },
@@ -17,10 +27,6 @@
 	export let width = 500;
 	export let height = 200;
 
-	function formatMobile(tick) {
-		return "'" + tick.toString().slice(-2);
-	}
-
 	$: xScale = scaleLinear()
 		.domain([0, xTicks.length])
 		.range([padding.left, width - padding.right]);
@@ -33,8 +39,14 @@
 	$: barWidth = innerWidth / xTicks.length;
 	const barSpacing = 12;
 
-	export let heading = "US Birthrate by Year";
+	export let heading = 'US Birthrate by Year';
 	export let axisLabel = ' per 10,000 people';
+
+	function clicked(label) {
+		return () => {
+			sendEvent(label);
+		};
+	}
 </script>
 
 <h2>{heading}</h2>
@@ -45,8 +57,8 @@
 		<g class="axis y-axis">
 			{#each yTicks as tick}
 				<g class="tick tick-{tick}" transform="translate(0, {yScale(tick)})">
-					<line x2="100%"></line>
-					<text y="-4">{tick} {tick === yTicks[yTicks.length-1] ? axisLabel : ''}</text>
+					<line x2="100%" />
+					<text y="-4">{tick} {tick === yTicks[yTicks.length - 1] ? axisLabel : ''}</text>
 				</g>
 			{/each}
 		</g>
@@ -55,19 +67,20 @@
 		<g class="axis x-axis">
 			{#each points as point, i}
 				<g class="tick" transform="translate({xScale(i)},{height})">
-					<text x="{barWidth/2}" y="-4">{point.xValue}</text>
+					<text x={barWidth / 2} y="-0.5em">{point.xValue}</text>
 				</g>
 			{/each}
 		</g>
 
-		<g class='bars'>
+		<g class="bars">
 			{#each points as point, i}
 				<rect
-					x="{xScale(i) + barSpacing/2}"
-					y="{yScale(point.yValue)}"
-					width="{barWidth - barSpacing}"
-					height="{yScale(0) - yScale(point.yValue)}"
-				></rect>
+					on:click={clicked(point.xValue)}
+					x={xScale(i) + barSpacing / 2}
+					y={yScale(point.yValue)}
+					width={barWidth - barSpacing}
+					height={yScale(0) - yScale(point.yValue)}
+				/>
 			{/each}
 		</g>
 	</svg>
@@ -92,7 +105,7 @@
 
 	.tick {
 		font-family: Helvetica, Arial;
-		font-size: .725em;
+		font-size: 0.725em;
 		font-weight: 200;
 	}
 
@@ -114,10 +127,13 @@
 		text-anchor: middle;
 	}
 
+	.bars rect:hover {
+		fill: #80dd80;
+	}
+
 	.bars rect {
 		fill: green;
 		stroke: none;
 		opacity: 0.65;
 	}
 </style>
-
