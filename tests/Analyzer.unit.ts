@@ -1,11 +1,8 @@
 import { expect } from 'chai';
 import { describe, it } from 'vitest';
 
-import { CubieCube, FaceletCube, MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
+import { CubieCube, MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
 import { analyze_roux_solve, get_roux_stages } from '$lib/third_party/onionhoney/Analyzer';
-
-import { Alg } from 'cubing/alg';
-import { cube3x3x3 } from 'cubing/puzzles';
 
 describe('Analyzer breaks solves into good phases', () => {
 	it('analyzes a roux solve', () => {

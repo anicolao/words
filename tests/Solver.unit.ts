@@ -1,8 +1,7 @@
-import { expect } from 'chai';
-import { describe, it } from 'vitest';
+import { it } from 'vitest';
 
 import { FbdrSolver } from '$lib/third_party/onionhoney/Solver'
-import { CubieCube, FaceletCube } from '$lib/third_party/onionhoney/CubeLib'
+import { CubieCube } from '$lib/third_party/onionhoney/CubeLib'
 import { SeqEvaluator } from "$lib/third_party/onionhoney/Evaluator"
 import { CachedSolver } from '$lib/third_party/onionhoney/CachedSolver'
 import { cartesianProduct } from '$lib/third_party/onionhoney/Math'

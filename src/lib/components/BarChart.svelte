@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { scaleLinear } from 'd3-scale';
 	import { createEventDispatcher } from 'svelte';
 
@@ -7,20 +7,20 @@
 	/**
 	 * @param {string} name
 	 */
-	function sendEvent(name) {
+	function sendEvent(name: string) {
 		eventDispatch('message', name);
 	}
 
 	export let points = [
-		{ xValue: 1990, yValue: 16.7 },
-		{ xValue: 1995, yValue: 14.6 },
-		{ xValue: 2000, yValue: 14.4 },
-		{ xValue: 2005, yValue: 14 },
-		{ xValue: 2010, yValue: 13 },
-		{ xValue: 2015, yValue: 12.4 }
+		{ xValue: '1990', yValue: 16.7 },
+		{ xValue: '1995', yValue: 14.6 },
+		{ xValue: '2000', yValue: 14.4 },
+		{ xValue: '2005', yValue: 14 },
+		{ xValue: '2010', yValue: 13 },
+		{ xValue: '2015', yValue: 12.4 }
 	];
 
-	export let xTicks = [1990, 1995, 2000, 2005, 2010, 2015];
+	export let xTicks: string[] = ['1990', '1995', '2000', '2005', '2010', '2015'];
 	export let yTicks = [0, 5, 10, 15, 20];
 	export let padding = { top: 20, right: 15, bottom: 20, left: 25 };
 
@@ -42,7 +42,7 @@
 	export let heading = 'US Birthrate by Year';
 	export let axisLabel = ' per 10,000 people';
 
-	function clicked(label) {
+	function clicked(label: string) {
 		return () => {
 			sendEvent(label);
 		};

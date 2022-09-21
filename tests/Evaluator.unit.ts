@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import { describe, it } from 'vitest';
+import { it } from 'vitest';
 
 import { DPEvaluator } from "$lib/third_party/onionhoney/Evaluator";
 import { MoveSeq } from "$lib/third_party/onionhoney/CubeLib";

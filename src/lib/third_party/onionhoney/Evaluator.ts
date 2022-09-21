@@ -7,7 +7,7 @@ export abstract class Evaluator {
 export class SeqEvaluator extends Evaluator {
     name = "sequential";
     static moveCost_gen() {
-        let pairs: [string, number][] = [
+        const pairs: [string, number][] = [
             ["U", 0.8], ["U'", 0.8], ["U2", 1.0],
             ["R", 0.8], ["R'", 0.8], ["R2", 1.2],
             ["r", 1], ["r'", 1], ["r2", 1.3],
@@ -19,14 +19,14 @@ export class SeqEvaluator extends Evaluator {
             ["S", 1.7], ["S'", 1.7], ["S2", 3.0],
             ["E", 1.5], ["E'", 1.5], ["E2", 2.4],
         ];
-        let costMap = new Map(pairs);
+        const costMap = new Map(pairs);
         return costMap;
     }
     static moveCost = SeqEvaluator.moveCost_gen();
 
     evaluate(moves: MoveSeq) {
         let sum = 0;
-        for (let m of moves.moves) {
+        for (const m of moves.moves) {
             const value = (SeqEvaluator.moveCost.get(m.name)) || 1.4;
             sum += value;
         }
@@ -39,7 +39,7 @@ export class QTMEvaluator extends Evaluator {
     name = "qtm";
     evaluate(moves: MoveSeq) {
         let sum = 0;
-        for (let m of moves.moves) {
+        for (const m of moves.moves) {
             sum += m.name[1] === "2" ? 2 : 1;
         }
         return sum;
@@ -59,9 +59,9 @@ export class TwoGramEvaluator extends Evaluator {
     static meter = two_gram_meter as {[s: string]: string};
     evaluate(moves_input: MoveSeq) {
         let score = 0
-        let moves = ["", ...moves_input.moves.map(x => x.name), ""]
+        const moves = ["", ...moves_input.moves.map(x => x.name), ""]
         for (let i =0; i < moves.length - 1; i++) {
-            let two_gram = moves[i] + moves[i + 1]
+            const two_gram = moves[i] + moves[i + 1]
             let curr_score = Number.parseFloat(TwoGramEvaluator.meter[two_gram])
             if (Number.isNaN(curr_score)) {
                 curr_score = 0.3;
@@ -86,7 +86,7 @@ export class DPEvaluator extends Evaluator {
     static moveCost_gen() {
         const HI = 10
         // TODO: Add combo move + regripk some might be fast
-        let pairs: {[move: string]: number[]} = {
+        const pairs: {[move: string]: number[]} = {
             // array representing cost of performing move at grip 
             // easiest quarter moves are evaluated at 1 (RUFBDrM'), harder at 1.5 (M), 
                // forced ones at 3
@@ -123,7 +123,7 @@ export class DPEvaluator extends Evaluator {
     }
     static moveCost = DPEvaluator.moveCost_gen();
     static moveTransition_gen(): {[key: string]: number[]}{
-        let {R_AWAY, R2_AWAY, HOME, Rp_AWAY, DEAD_END} = DPGrip
+        const {R_AWAY, R2_AWAY, HOME, Rp_AWAY, DEAD_END} = DPGrip
         return {
             //     HOME  ,  R_AWAY , Rp_AWAY ,  R2_AWAY
             "R":  [R_AWAY,  R2_AWAY, HOME    , DEAD_END],
@@ -139,7 +139,7 @@ export class DPEvaluator extends Evaluator {
 
     static regripCost_gen() {
         const HI = 10
-        let pairs: number[][] = [
+        const pairs: number[][] = [
             // HOME
             [0, 2, 2, 3],
             // R AWAY
@@ -197,7 +197,7 @@ export class DPEvaluator extends Evaluator {
             }
         }
         let current_grip = optimal_ending_grip
-        let optimal_plan: [number, number][] = [[current_grip, current_grip]]
+        const optimal_plan: [number, number][] = [[current_grip, current_grip]]
         for (let i = len; i >= 1; i--) {
             const [previous_grip, previous_shifted_grip] = DP_path[i][current_grip]
             optimal_plan.push([previous_grip, previous_shifted_grip])
@@ -205,14 +205,14 @@ export class DPEvaluator extends Evaluator {
         }
         optimal_plan.reverse()
 
-        let grip_str = [
+        const grip_str = [
             "HOME", "R GRIP", "R' GRIP", "R2 GRIP"
         ]
         let desc = `start from ${grip_str[optimal_plan[0][0]]}` 
         let current_segment : string[] = []
         for (let i = 0; i < len; i++) {
-            let [g1, g2] = optimal_plan[i]
-            let move = moves_input.moves[i].name
+            const [g1, g2] = optimal_plan[i]
+            const move = moves_input.moves[i].name
             if (g1 === g2) current_segment.push(move)
             else {
                 desc += `, do ${current_segment.join(" ")}, regrip to ${grip_str[g2]}`
@@ -236,12 +236,12 @@ export class MovementEvaluator extends Evaluator {
     name = "movement";
     evaluate(moves_input: MoveSeq) {
         let cube = new CubieCube()
-        let moves = moves_input.inv().moves
+        const moves = moves_input.inv().moves
         //let fb_corners = [4, 5]
         //let fb_edges = [5, 8, 9]
         let movement = 0
         for (let i = 0; i < moves.length - 1; i++) {
-            let cube1 = cube.apply_one(moves[i])
+            const cube1 = cube.apply_one(moves[i])
             let stationary = 0
             for (let j = 0; j < 8; j++) {
                 if ((cube.cp[j] === 4 || cube.cp[j] === 5) && (cube.cp[j] === cube1.cp[j])) {

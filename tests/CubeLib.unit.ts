@@ -1,15 +1,15 @@
 import { expect } from 'chai';
-import { describe, it } from 'vitest';
+import { it } from 'vitest';
 
 import { CubieCube, Move, MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
 import { CubeUtil } from "$lib/third_party/onionhoney/CubeLib";
 import { centers_coord, corners_coord, edges_coord, Face } from '$lib/third_party/onionhoney/Defs';
 
 it('loads and prints cube state successfully', () => {
-    let cubie = new CubieCube().apply("R U R")
+    const cubie = new CubieCube().apply("R U R")
     //let cube = FaceletCube.from_cubie(cubie)
    // console.log(FaceletCube.to_unfolded_cube_str(cube))
-    cubie = cubie.apply("R'U'R'")
+    cubie.apply("R'U'R'")
     // let cube = FaceletCube.from_cubie(cubie)
     //console.log(FaceletCube.to_unfolded_cube_str(cube))
 

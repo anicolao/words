@@ -8,6 +8,7 @@
 	import IconButton from '@smui/icon-button';
 	import List, { Item, Text } from '@smui/list';
 	import { get_roux_stages } from '$lib/third_party/onionhoney/Analyzer';
+	import { stringify } from 'postcss';
 
 	function toArray(any: ArrayLike<unknown> | Iterable<unknown>) {
 		if (any) return Array.from(any);
@@ -36,7 +37,7 @@
 		goto('/' + sourcePage);
 	}
 
-	const translation = {
+	const translation: { [k: string]: string } = {
 		fb: 'First block',
 		ss: 'Square',
 		sp: 'Last pair',
@@ -44,16 +45,17 @@
 		lse: 'LSE'
 	};
 
-	const headings = {
+	const headings: { [k: string]: string } = {
 		moves: 'Moves by stage',
 		times: 'Times by stage'
 	};
-	const yAxisLabels = {
+	const yAxisLabels: { [k: string]: string } = {
 		moves: ' moves',
 		times: ' seconds'
 	};
 	$: stageKeys = Object.keys(stages);
-	$: solveData = [];
+	type DataPoint = { xValue: any; yValue: number; };
+	$: solveData = [] as DataPoint[];
 	const timings: { [k: string]: number } = {};
 	function makeDataTable(displayMode: string) {
 		solveData = [];
@@ -69,7 +71,8 @@
 					yValue = timing;
 				}
 			}
-			solveData.push({ xValue: translation[s.stage], yValue });
+			let data: DataPoint = { xValue: translation[s.stage], yValue };
+			solveData.push(data);
 			startTimeOffset = endOffset;
 		});
 		console.log({ stages, solveData });
