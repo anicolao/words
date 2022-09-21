@@ -1,4 +1,4 @@
-import { CubieCube } from '../CubeLib';
+import type { CubieCube } from '../CubeLib';
 
 export abstract class Min2PhaseSolver {
 	abstract initialize: () => Promise<void>;

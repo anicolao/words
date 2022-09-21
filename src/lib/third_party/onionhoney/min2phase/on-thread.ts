@@ -1,8 +1,6 @@
-import { Sequence } from 'alg';
-import { Transformation } from 'kpuzzle';
-import { Min2PhaseSolver } from './min2phase-solver';
+import type { Min2PhaseSolver } from './min2phase-solver';
 import { initialize, solve } from './min2phase-wrapper';
-import { CubieCube } from '../CubeLib';
+import type { CubieCube } from '../CubeLib';
 
 export class OnThreadMin2Phase implements Min2PhaseSolver {
 	async initialize(): Promise<void> {

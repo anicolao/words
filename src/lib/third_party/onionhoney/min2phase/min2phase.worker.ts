@@ -1,5 +1,5 @@
 import { initialize as wrappedInitialize, solve as wrappedSolve } from './min2phase-wrapper';
-import { CubieCube } from '../CubeLib';
+import type { CubieCube } from '../CubeLib';
 
 export async function initialize(): Promise<void> {
 	return wrappedInitialize();
