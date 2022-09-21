@@ -17,7 +17,7 @@ describe('scrambles', () => {
         expect(nextState.allScrambles[0]).to.equal(scramble);
         expect(nextState.unattempted.length).to.equal(1);
         expect(nextState.unattempted[0]).to.equal(scramble);
-        expect(Object.keys(nextState.scrambleToSolve).length).to.equal(0);
+        expect(Object.keys(nextState.scrambleToSolveIds).length).to.equal(0);
     });
 
     it('can add a scramble after its time is recorded', () => {
@@ -29,7 +29,7 @@ describe('scrambles', () => {
         expect(nextState.allScrambles.length).to.equal(1);
         expect(nextState.allScrambles[0]).to.equal(scramble);
         expect(nextState.unattempted.length).to.equal(0);
-        expect(Object.keys(nextState.scrambleToSolve).length).to.equal(1);
+        expect(Object.keys(nextState.scrambleToSolveIds).length).to.equal(1);
     });
 
     it('can filter scramble when a new time is recorded', () => {
@@ -41,7 +41,7 @@ describe('scrambles', () => {
         expect(nextState.allScrambles.length).to.equal(1);
         expect(nextState.allScrambles[0]).to.equal(scramble);
         expect(nextState.unattempted.length).to.equal(0);
-        expect(Object.keys(nextState.scrambleToSolve).length).to.equal(1);
+        expect(Object.keys(nextState.scrambleToSolveIds).length).to.equal(1);
     });
 
 });

@@ -12,10 +12,10 @@ export interface Solve {
 }
 export interface SolvesState {
 	allScrambles: string[];
-	allSolves: Solve[];
+	allSolveIds: string[];
 	unattempted: string[];
 	scrambleToId: { [scramble: string]: string };
-	scrambleToSolve: { [scramble: string]: Solve[] };
+	scrambleToSolveIds: { [scramble: string]: string[] };
 	solveIdToSolve: { [id: string]: Solve };
 }
 
@@ -24,28 +24,28 @@ export const add_solve = createAction<Solve>('add_solve');
 
 export const initialState = {
 	allScrambles: [],
-	allSolves: [],
+	allSolveIds: [],
 	unattempted: [],
 	scrambleToId: {},
-	scrambleToSolve: {},
+	scrambleToSolveIds: {},
 	solveIdToSolve: {}
 } as SolvesState;
 
 export const solves = createReducer(initialState, (r) => {
 	r.addCase(add_scramble, (state, action) => {
 		state.allScrambles.push(action.payload.scramble);
-		if (!state.scrambleToSolve[action.payload.scramble]) {
+		if (!state.scrambleToSolveIds[action.payload.scramble]) {
 			state.unattempted.push(action.payload.scramble);
 		}
 		state.scrambleToId[action.payload.scramble] = action.payload.id;
 		return state;
 	}).addCase(add_solve, (state, action) => {
 		state.unattempted = state.unattempted.filter((x) => x !== action.payload.scramble);
-		state.allSolves.push(action.payload);
-		if (!state.scrambleToSolve[action.payload.scramble]) {
-			state.scrambleToSolve[action.payload.scramble] = [];
+		state.allSolveIds.push(action.payload.solveId);
+		if (!state.scrambleToSolveIds[action.payload.scramble]) {
+			state.scrambleToSolveIds[action.payload.scramble] = [];
 		}
-		state.scrambleToSolve[action.payload.scramble].push(action.payload);
+		state.scrambleToSolveIds[action.payload.scramble].push(action.payload.solveId);
 		state.solveIdToSolve[action.payload.solveId] = action.payload;
 		return state;
 	});

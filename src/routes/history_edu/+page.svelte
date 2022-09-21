@@ -3,7 +3,6 @@
 	import { store } from '$lib/store';
 	import Button, { Label } from '@smui/button';
 	import { goto } from '$app/navigation';
-	import { solves } from '$lib/components/solves';
 
 	let averages: {[key: number]: number} = {};
 	function computeAoN(n: number) {
@@ -14,7 +13,7 @@
 		aSolves.map(x => totalTime += x.time);
 		averages[n] = totalTime / aSolves.length;
 	}
-	$: allSolves = Array.from($store.solves.allSolves).reverse();
+	$: allSolves = $store.solves.allSolveIds.map(id => $store.solves.solveIdToSolve[id]).reverse();
 	$: if (allSolves.length >= 5) {
 		computeAoN(5);
 	}
