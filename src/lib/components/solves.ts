@@ -19,7 +19,7 @@ export interface SolvesState {
 	solveIdToSolve: { [id: string]: Solve };
 }
 
-export const add_scramble = createAction<{scramble: string, id: string}>('add_scramble');
+export const add_scramble = createAction<{ scramble: string; id: string }>('add_scramble');
 export const add_solve = createAction<Solve>('add_solve');
 
 export const initialState = {

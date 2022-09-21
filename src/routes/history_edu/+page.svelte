@@ -4,16 +4,16 @@
 	import Button, { Label } from '@smui/button';
 	import { goto } from '$app/navigation';
 
-	let averages: {[key: number]: number} = {};
+	let averages: { [key: number]: number } = {};
 	function computeAoN(n: number) {
 		const nSolves = allSolves.slice(0, n).sort();
-		const discard = Math.ceil(0.1*n);
+		const discard = Math.ceil(0.1 * n);
 		const aSolves = nSolves.slice(discard, -discard);
 		let totalTime = 0;
-		aSolves.map(x => totalTime += x.time);
+		aSolves.map((x) => (totalTime += x.time));
 		averages[n] = totalTime / aSolves.length;
 	}
-	$: allSolves = $store.solves.allSolveIds.map(id => $store.solves.solveIdToSolve[id]).reverse();
+	$: allSolves = $store.solves.allSolveIds.map((id) => $store.solves.solveIdToSolve[id]).reverse();
 	$: if (allSolves.length >= 5) {
 		computeAoN(5);
 	}
@@ -25,19 +25,21 @@
 	}
 
 	function averageKeys(): number[] {
-		return Object.keys(averages).map(x => Number(x));
+		return Object.keys(averages).map((x) => Number(x));
 	}
 </script>
 
 <Content>
 	<table class="ao" cellspacing="0">
 		{#each averageKeys() as key}
-		<tr><td>Ao{key}</td><td>{Math.round(averages[key])/10}</td></tr>
+			<tr><td>Ao{key}</td><td>{Math.round(averages[key]) / 10}</td></tr>
 		{/each}
 	</table>
 	<table cellspacing="0">
 		{#each allSolves as solve, i}
-			<tr class={i%2 ? "odd" : "even"} on:click={() => goto('history_edu/' + solve.solveId + '?from=history_edu')}
+			<tr
+				class={i % 2 ? 'odd' : 'even'}
+				on:click={() => goto('history_edu/' + solve.solveId + '?from=history_edu')}
 				><td>{allSolves.length - i}</td><td>{solve.time / 10}</td><td>{solve.moves.length}</td>
 				<td>
 					<Button on:click={() => goto('history_edu/' + solve.solveId)}>

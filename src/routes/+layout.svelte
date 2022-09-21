@@ -37,7 +37,7 @@
 	function setActive(value: string) {
 		store.dispatch(navigate_to(value));
 		open = false || width > 720;
-		goto("/" + value);
+		goto('/' + value);
 	}
 
 	let width = 0;
@@ -93,7 +93,7 @@
 					});
 				},
 				(error) => {
-					console.log("solves query failing: ");
+					console.log('solves query failing: ');
 					console.error(error);
 				}
 			);

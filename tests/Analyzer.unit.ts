@@ -29,11 +29,13 @@ describe('Analyzer breaks solves into good phases', () => {
 			"U' D x2 z' F2 u' x x' l U' L M U2 M F' U U2' L' U' l x L' R D2 L' R L' R2 x' U l' B L' B' L U L U' L' M L' R B L R' U M' M L' R B R L' D2 R L' x U M R L' B' R L' D2 L' R";
 		const t = Date.now();
 		const result = get_roux_stages(scramble, solution);
-        expect(result[0].solution.toString()).to.equal("U' D x2 z' F2 u' x x' l U' L M U2 M F' "); // fb
-        expect(result[1].solution.toString()).to.equal("U U2 L' U' l "); // ss                                                                                                                                   
-        expect(result[2].solution.toString()).to.equal("x L' R D2 L' R L' R2 x' U l' "); // sp                                                                                                                   
-        expect(result[3].solution.toString()).to.equal("B L' B' L U L U' L' "); // cmll                                                                                                                          
-        expect(result[4].solution.toString()).to.equal("M L' R B L R' U M' M L' R B R L' D2 R L' x U M R L' B' R L' D2 L' R "); // lse 
+		expect(result[0].solution.toString()).to.equal("U' D x2 z' F2 u' x x' l U' L M U2 M F' "); // fb
+		expect(result[1].solution.toString()).to.equal("U U2 L' U' l "); // ss
+		expect(result[2].solution.toString()).to.equal("x L' R D2 L' R L' R2 x' U l' "); // sp
+		expect(result[3].solution.toString()).to.equal("B L' B' L U L U' L' "); // cmll
+		expect(result[4].solution.toString()).to.equal(
+			"M L' R B L R' U M' M L' R B R L' D2 R L' x U M R L' B' R L' D2 L' R "
+		); // lse
 		console.log(result.map((s) => [s.solution.toString(), s.stage]));
 		expect(result.length).to.equal(5);
 		console.log('solve analyzed in ', Date.now() - t, ' ms');
@@ -45,11 +47,13 @@ describe('Analyzer breaks solves into good phases', () => {
 			"L x' z L2' x' U' y' M2 y r x' x U U2' R' U M' x x' U2 M2' r' U' R2 M' M x' l' U M' U' r U2 F R' F' R U R U' R' U R U R' F' R U R' U' R' F R2 U' R2' r M' U M U2 M' U M' U2 M U2 M U' M2 U";
 		const t = Date.now();
 		const result = get_roux_stages(scramble, solution);
-        expect(result[0].solution.toString()).to.equal("L x' z L2 x' U' y' M2 "); // first block: 8 moves
-        expect(result[1].solution.toString()).to.equal("y r x' x U U2 R' U M' x x' U2 M2 r' U' R2 "); // second square: 16 moves
-        expect(result[2].solution.toString()).to.equal("M' M x' l' U M' U' r "); // last pair: 8 moves
-        expect(result[3].solution.toString()).to.equal("U2 F R' F' R U R U' R' U R U R' F' R U R' U' R' F R2 U' R2 r "); // CMLL: 24 moves
-        expect(result[4].solution.toString()).to.equal("M' U M U2 M' U M' U2 M U2 M U' M2 U "); // LSE: 14 moves
+		expect(result[0].solution.toString()).to.equal("L x' z L2 x' U' y' M2 "); // first block: 8 moves
+		expect(result[1].solution.toString()).to.equal("y r x' x U U2 R' U M' x x' U2 M2 r' U' R2 "); // second square: 16 moves
+		expect(result[2].solution.toString()).to.equal("M' M x' l' U M' U' r "); // last pair: 8 moves
+		expect(result[3].solution.toString()).to.equal(
+			"U2 F R' F' R U R U' R' U R U R' F' R U R' U' R' F R2 U' R2 r "
+		); // CMLL: 24 moves
+		expect(result[4].solution.toString()).to.equal("M' U M U2 M' U M' U2 M U2 M U' M2 U "); // LSE: 14 moves
 
 		console.log(result.map((s) => [s.solution.toString(), s.stage]));
 		expect(result.length).to.equal(5);
@@ -64,11 +68,17 @@ describe('Analyzer breaks solves into good phases', () => {
 		const result = get_roux_stages(scramble, solution);
 		console.log({ scramble, solution });
 		console.log(result.map((s) => [s.solution.toString(), s.stage]));
-        expect(result[0].solution.toString()).to.equal("F R L' R L' L F2 B2 F2 L' L F' F L F L' B' x' z x' B z' L' U2 L2 x' z2 x y' x2 D U' D' B' B2 U' D x L2 D "); // first block
-        expect(result[1].solution.toString()).to.equal("x' D F2 D' L D' x D B' F x' D F D' "); // ss
-        expect(result[2].solution.toString()).to.equal("L3 D' x D' F "); // lp
-        expect(result[3].solution.toString()).to.equal("B L B' x' L' U' F U F' L' L U L U' F' U L U' L' U' F U2 L' U2 D "); // cmll
-        expect(result[4].solution.toString()).to.equal("F F' U' D R2 D' U F2 U D' L U' D F U D' L2 D' U B' x F' B F' B x2 y D R L' F2 R' L D2 "); // lse
+		expect(result[0].solution.toString()).to.equal(
+			"F R L' R L' L F2 B2 F2 L' L F' F L F L' B' x' z x' B z' L' U2 L2 x' z2 x y' x2 D U' D' B' B2 U' D x L2 D "
+		); // first block
+		expect(result[1].solution.toString()).to.equal("x' D F2 D' L D' x D B' F x' D F D' "); // ss
+		expect(result[2].solution.toString()).to.equal("L3 D' x D' F "); // lp
+		expect(result[3].solution.toString()).to.equal(
+			"B L B' x' L' U' F U F' L' L U L U' F' U L U' L' U' F U2 L' U2 D "
+		); // cmll
+		expect(result[4].solution.toString()).to.equal(
+			"F F' U' D R2 D' U F2 U D' L U' D F U D' L2 D' U B' x F' B F' B x2 y D R L' F2 R' L D2 "
+		); // lse
 
 		expect(result.length).to.equal(5);
 		console.log('solve analyzed in ', Date.now() - t, ' ms');
@@ -82,11 +92,17 @@ describe('Analyzer breaks solves into good phases', () => {
 		const result = get_roux_stages(scramble, solution);
 		console.log({ scramble, solution });
 		console.log(result.map((s) => [s.solution.toString(), s.stage]));
-        expect(result[0].solution.toString()).to.equal("F R L' R L' L F2 B2 F2 L' L F' F L F L' B' x' z x' B z' L' U2 L2 x' z2 x y' x2 D U' D' B' B2 U' D x L2 D "); // first block
-        expect(result[1].solution.toString()).to.equal("x' D F2 D' L D' x D B' F x' D F D' "); // ss
-        expect(result[2].solution.toString()).to.equal("L3 D' x D' F "); // lp
-        expect(result[3].solution.toString()).to.equal("B L B' x' L' U' F U F' L' L U L U' F' U L U' L' U' F U2 L' U2 D "); // cmll
-        expect(result[4].solution.toString()).to.equal("F F' U' D R2 D' U F2 U D' L U' D F U D' L2 D' U B' x F' B F' B x2 y D R L' F2 R' L D2 "); // lse
+		expect(result[0].solution.toString()).to.equal(
+			"F R L' R L' L F2 B2 F2 L' L F' F L F L' B' x' z x' B z' L' U2 L2 x' z2 x y' x2 D U' D' B' B2 U' D x L2 D "
+		); // first block
+		expect(result[1].solution.toString()).to.equal("x' D F2 D' L D' x D B' F x' D F D' "); // ss
+		expect(result[2].solution.toString()).to.equal("L3 D' x D' F "); // lp
+		expect(result[3].solution.toString()).to.equal(
+			"B L B' x' L' U' F U F' L' L U L U' F' U L U' L' U' F U2 L' U2 D "
+		); // cmll
+		expect(result[4].solution.toString()).to.equal(
+			"F F' U' D R2 D' U F2 U D' L U' D F U D' L2 D' U B' x F' B F' B x2 y D R L' F2 R' L D2 "
+		); // lse
 
 		expect(result.length).to.equal(5);
 		console.log('solve analyzed in ', Date.now() - t, ' ms');
@@ -100,11 +116,17 @@ describe('Analyzer breaks solves into good phases', () => {
 		const result = get_roux_stages(scramble, solution);
 		console.log({ scramble, solution });
 		console.log(result.map((s) => [s.solution.toString(), s.stage]));
-        expect(result[0].solution.toString()).to.equal("F2 M' E' R' L B F' x y M' S M2 M x y' B r' B u' x' L' U M R3 M' U2 M' B' "); // first block: 28 moves
-        expect(result[1].solution.toString()).to.equal("R' U R L' B' x' R U R' L F L' U' L F L' "); // ss
-        expect(result[2].solution.toString()).to.equal("L R' F2 L' U L "); // lp
-        expect(result[3].solution.toString()).to.equal("F D R F R' F' D' F' x z R' F D R' D' R' D R D' F' D R D' R' D' F D F' "); // cmll
-        expect(result[4].solution.toString()).to.equal("z' U M' U R L' B2 L R' U M' U2 M U2 R L' B' B2 R L' D2 R L' x U2 "); // lse
+		expect(result[0].solution.toString()).to.equal(
+			"F2 M' E' R' L B F' x y M' S M2 M x y' B r' B u' x' L' U M R3 M' U2 M' B' "
+		); // first block: 28 moves
+		expect(result[1].solution.toString()).to.equal("R' U R L' B' x' R U R' L F L' U' L F L' "); // ss
+		expect(result[2].solution.toString()).to.equal("L R' F2 L' U L "); // lp
+		expect(result[3].solution.toString()).to.equal(
+			"F D R F R' F' D' F' x z R' F D R' D' R' D R D' F' D R D' R' D' F D F' "
+		); // cmll
+		expect(result[4].solution.toString()).to.equal(
+			"z' U M' U R L' B2 L R' U M' U2 M U2 R L' B' B2 R L' D2 R L' x U2 "
+		); // lse
 
 		expect(result.length).to.equal(5);
 		console.log('solve analyzed in ', Date.now() - t, ' ms');

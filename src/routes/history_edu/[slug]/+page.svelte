@@ -54,7 +54,7 @@
 		times: ' seconds'
 	};
 	$: stageKeys = Object.keys(stages);
-	type DataPoint = { xValue: any; yValue: number; };
+	type DataPoint = { xValue: any; yValue: number };
 	$: solveData = [] as DataPoint[];
 	const timings: { [k: string]: number } = {};
 	function makeDataTable(displayMode: string) {
