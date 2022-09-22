@@ -617,7 +617,6 @@ export class MoveSeq {
 					token += app;
 				} else if (token.length === 1) {
 					token += str[i];
-					console.log(` --> token ${token}`);
 				} else {
 					let app = token[1];
 					let n = 24 - Number(app);

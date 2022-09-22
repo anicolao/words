@@ -1,6 +1,7 @@
 import { CubeUtil, CubieCube, FaceletCube, Mask, Move, MoveSeq } from './CubeLib';
 import { CachedSolver } from './CachedSolver';
 import { getEvaluator } from './Evaluator';
+import { visualize } from '$lib/optimizer/optimizer';
 
 export type AnalyzerState = {
 	scramble: string;
@@ -45,14 +46,24 @@ function is_cmll_solved(cube: CubieCube, oris: MoveSeq[]) {
 		if (CubeUtil.is_cmll_solved(cpre)) return true;
 	}
 }
+export function prerotate_solves(cube: CubieCube, mask: Mask, oris: MoveSeq[]) {
+	for (const prerotate of oris) {
+		const cpre = cube.apply(prerotate);
+		if (CubeUtil.is_solved(cpre, mask)) return prerotate;
+	}
+	return undefined;
+}
 function is_solved(cube: CubieCube, mask: Mask, oris: MoveSeq[]) {
+	return prerotate_solves(cube, mask, oris) !== undefined;
+	/*
 	for (const prerotate of oris) {
 		const cpre = cube.apply(prerotate);
 		if (CubeUtil.is_solved(cpre, mask)) return true;
 	}
 	return false;
+	*/
 }
-function is_fb_solved(cube: CubieCube, oris: MoveSeq[]) {
+export function is_fb_solved(cube: CubieCube, oris: MoveSeq[]) {
 	for (const ori of oris) {
 		const cube1 = cube.changeBasis(ori).apply(ori.inv()); //? ori
 		if (is_solved(cube1, Mask.fb_mask, oris)) return ori;
@@ -143,7 +154,8 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 	return solution;
 }
 
-function solve(solver_str: string, cube: CubieCube, config: SolverConfig) {
+export function solve(solver_str: string, cube: CubieCube, config: SolverConfig) {
+	const v = visualize(cube);
 	const solver = CachedSolver.get(solver_str);
 	const { premoves, num_solution, upper_limit } = config;
 	const ev = getEvaluator(config.evaluator || 'sequential');
@@ -155,10 +167,12 @@ function solve(solver_str: string, cube: CubieCube, config: SolverConfig) {
 				.map((x: MoveSeq) => ({ premove: pm, solution: x, score: ev.evaluate(x) }))
 		)
 		.flat();
-	return solutions.sort((x, y) => x.score - y.score).slice(0, num_solution);
+	const ret = solutions.sort((x, y) => x.score - y.score).slice(0, num_solution);
+	//console.log({solver_str, config, v, soln: ret[0].solution.toString()})
+	return ret;
 }
 
-const get_oris = (ori: string, preori?: string) => {
+export const get_oris = (ori: string, preori?: string) => {
 	let oris: string[] = [];
 	if (ori === 'x2y') {
 		oris =
@@ -194,6 +208,8 @@ const get_oris = (ori: string, preori?: string) => {
 			"z'y'",
 			"z'y2"
 		];
+	} else {
+		oris = [ ori ];
 	}
 	return oris;
 };

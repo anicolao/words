@@ -6,9 +6,16 @@
 	import Cube from '$lib/components/Cube.svelte';
 	import BarChart from '$lib/components/BarChart.svelte';
 	import IconButton from '@smui/icon-button';
-	import List, { Item, Text } from '@smui/list';
-	import { get_roux_stages } from '$lib/third_party/onionhoney/Analyzer';
-	import { stringify } from 'postcss';
+	import { Item, Text } from '@smui/list';
+	import {
+		get_roux_stages,
+		type SolutionDesc,
+		type SolverConfig
+	} from '$lib/third_party/onionhoney/Analyzer';
+	import { CubieCube, FaceletCube, MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
+	import { solve as optimize } from '$lib/third_party/onionhoney/Analyzer';
+	import { SplineCurve } from 'three';
+	import { makeOptimizedData } from '$lib/optimizer/optimizer';
 
 	function toArray(any: ArrayLike<unknown> | Iterable<unknown>) {
 		if (any) return Array.from(any);
@@ -31,6 +38,14 @@
 		.join(' ');
 
 	$: stages = get_roux_stages(scrambleString, solutionString);
+	$: optimized = makeOptimizedData(scrambleString, stages) as {
+		orientation?: string;
+		stage: string;
+		premove: string;
+		solution: MoveSeq;
+		score: number;
+	}[][];
+	$: console.log({ stages, optimized });
 
 	function next() {
 		console.log('navigate to ', sourcePage);
@@ -76,6 +91,7 @@
 			startTimeOffset = endOffset;
 		});
 		console.log({ stages, solveData });
+		//console.log(JSON.stringify(stages));
 	}
 	$: makeDataTable(displayMode);
 	$: maxY = solveData
@@ -97,8 +113,21 @@
 	}
 	function copyText() {
 		let algStr = scrambleString + ' // Scramble\n';
-		stages.forEach((s) => {
-			algStr += s.solution + ' // ' + translation[s.stage] + '\n';
+		stages.forEach((s, i) => {
+			let quicker = '?';
+			if (optimized[i] && optimized[i].length) {
+				const spin = new MoveSeq(optimized[i][0]?.orientation || '');
+				const premoves = new MoveSeq(optimized[i][0].premove);
+				const moves = new MoveSeq(optimized[i][0].solution.moves);
+				const name = (x: { name: any }) => x.name;
+				quicker =
+					spin.moves.map(name).join(' ') +
+					' ' +
+					premoves.moves.map(name).join(' ') +
+					' ' +
+					moves.moves.map(name).join(' ');
+			}
+			algStr += s.solution + ' // ' + translation[s.stage] + ' *vs* ' + quicker + '\n';
 		});
 		navigator.clipboard.writeText(algStr);
 	}
@@ -146,9 +175,7 @@
 			{#each stages as stage, i}
 				<tr class={i % 2 ? 'odd' : 'even'} on:click={() => selectStage(translation[stage.stage])}>
 					<td align="left">{translation[stage.stage]}</td><td>{stage.solution.length()}</td>
-					<td>{timings[stage.stage]}</td><td align="left"
-						>{stage.solution}// {translation[stage.stage]}: {stage.solution.length()}</td
-					>
+					<td>{timings[stage.stage]}</td><td align="left">{stage.solution}</td>
 				</tr>
 			{/each}
 		</table>
