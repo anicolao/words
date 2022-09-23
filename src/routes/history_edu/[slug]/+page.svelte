@@ -12,11 +12,8 @@
 		type SolutionDesc,
 		type SolverConfig
 	} from '$lib/third_party/onionhoney/Analyzer';
-	import { CubieCube, FaceletCube, MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
-	import { solve as optimize } from '$lib/third_party/onionhoney/Analyzer';
-	import { SplineCurve } from 'three';
+	import { MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
 	import { makeOptimizedData } from '$lib/optimizer/optimizer';
-	import { addListener } from '@reduxjs/toolkit';
 
 	function toArray(any: ArrayLike<unknown> | Iterable<unknown>) {
 		if (any) return Array.from(any);
@@ -43,7 +40,7 @@
 	let alternateScramble = scrambleString;
 
 	$: stages = get_roux_stages(scrambleString, solutionString);
-	$: optimized = makeOptimizedData(scrambleString, stages) as {
+	$: optimized = [] /* makeOptimizedData(scrambleString, stages) */ as {
 		orientation?: string;
 		stage: string;
 		premove: string;
