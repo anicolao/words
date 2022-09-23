@@ -115,19 +115,15 @@
 		let algStr = scrambleString + ' // Scramble\n';
 		stages.forEach((s, i) => {
 			let quicker = '?';
+			algStr += s.solution + ' // ' + translation[s.stage];
 			if (optimized[i] && optimized[i].length) {
 				const spin = new MoveSeq(optimized[i][0]?.orientation || '');
 				const premoves = new MoveSeq(optimized[i][0].premove);
 				const moves = new MoveSeq(optimized[i][0].solution.moves);
-				const name = (x: { name: any }) => x.name;
-				quicker =
-					spin.moves.map(name).join(' ') +
-					' ' +
-					premoves.moves.map(name).join(' ') +
-					' ' +
-					moves.moves.map(name).join(' ');
+				quicker = spin + ' ' + premoves + ' ' + moves;
+				algStr += `(${s.solution.length()}) vs (${spin.moves.length+premoves.moves.length+moves.moves.length}) ` + quicker;
 			}
-			algStr += s.solution + ' // ' + translation[s.stage] + ' *vs* ' + quicker + '\n';
+			algStr += '\n';
 		});
 		navigator.clipboard.writeText(algStr);
 	}

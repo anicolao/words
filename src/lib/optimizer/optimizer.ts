@@ -60,7 +60,15 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 		console.log(visual);
 	}
 	for (let i = 1; rstages && i < rstages.length; ++i) {
-		if (i == 3) continue; // CMLL
+		if (i == 3) {
+			optimized.push([{
+				stage: 'cmll',
+				premove: '',
+				solution: new MoveSeq([]),
+				score: 0
+			}]);
+			continue; // CMLL
+		}
 		let ori = rstages[0].orientation || '';
 		const spin = new MoveSeq(ori);
 		let cube = new CubieCube().apply(scrambleString);
@@ -98,9 +106,9 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 				.map((sol) => ({
 					...sol,
 					stage: n
-				}))
-				.sort((x, y) => x.score - y.score)).flat()
+				}))).flat().sort((x, y) => x.score - y.score)
 		);
 	}
+	console.log(optimized[optimized.length-1].map(x => [x.stage, x.solution.length(), x.score]))
 	return optimized;
 }
