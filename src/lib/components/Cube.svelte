@@ -8,6 +8,30 @@
 	export let scramble = '';
 	export let solve = '';
 	export let playHead = 0;
+	export let stickering = '';
+
+	$: if (stickering) {
+		console.log("RESET STICKERING to: ", stickering);
+		/* this doesn't draw well at all.
+		if (stickering === 'cmll') {
+			twistyPlayer.experimentalStickering = 'CMLL';
+		} else if (stickering === 'lse') {
+			twistyPlayer.experimentalStickering = 'L6E';
+		} else {
+			twistyPlayer.experimentalStickering = 'full';
+		}
+		*/
+	} else {
+		console.log("CLEAR STICKERS");
+		twistyPlayer.experimentalStickering = 'full';
+	}
+
+	$: if (scramble) {
+		twistyPlayer.experimentalSetupAlg = scramble;
+	}
+	$: if (solve) {
+		twistyPlayer.alg = solve;
+	}
 
 	$: if (playHead >= 0) {
 		const p = async () => {

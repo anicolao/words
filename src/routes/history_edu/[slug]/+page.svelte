@@ -16,6 +16,7 @@
 	import { solve as optimize } from '$lib/third_party/onionhoney/Analyzer';
 	import { SplineCurve } from 'three';
 	import { makeOptimizedData } from '$lib/optimizer/optimizer';
+	import { addListener } from '@reduxjs/toolkit';
 
 	function toArray(any: ArrayLike<unknown> | Iterable<unknown>) {
 		if (any) return Array.from(any);
@@ -37,6 +38,10 @@
 		.slice(scrambleArray.length)
 		.join(' ');
 
+	$: cubeSS = scrambleString;
+	$: cubeAlg = solutionString;
+	let alternateScramble = scrambleString;
+
 	$: stages = get_roux_stages(scrambleString, solutionString);
 	$: optimized = makeOptimizedData(scrambleString, stages) as {
 		orientation?: string;
@@ -45,6 +50,7 @@
 		solution: MoveSeq;
 		score: number;
 	}[][];
+	let alternateSolution: SolutionDesc | undefined = undefined;
 	$: console.log({ stages, optimized });
 
 	function next() {
@@ -126,6 +132,7 @@
 			algStr += '\n';
 		});
 		navigator.clipboard.writeText(algStr);
+		selectStage('solved');
 	}
 
 	function handleStage(stageSelected: any) {
@@ -133,16 +140,42 @@
 	}
 	function selectStage(stageSelected: string) {
 		let startOffset = 0;
+		playHead = -1;
+		alternateSolution = undefined;
+		alternateScramble = scrambleString;
+		cubeSS = scrambleString;
+		cubeAlg = solutionString;
 		console.log('SHOW: ', stageSelected, ' scramble offset ', startOffset);
-		stages.forEach((s) => {
+		stages.forEach((s, i) => {
 			if (translation[s.stage] === stageSelected || s.stage === stageSelected) {
 				console.log('SHOW POSITION: ', startOffset, ' for ', stageSelected);
 				playHead = startOffset;
+				stickering = s.stage;
+				if (optimized[i] && optimized[i].length) {
+					alternateSolution = optimized[i][0];
+					alternateSolution.stage = s.stage;
+				} else {
+					alternateSolution = undefined;
+				}
+			} else if (alternateSolution === undefined) {
+				alternateScramble += s.premove + ' ' + s.solution;
 			}
 			startOffset += s.solution.length();
 		});
+		if (playHead === -1) {
+			playHead = startOffset;
+			stickering = '';
+		}
+	}
+	function playAlternate() {
+		cubeSS = alternateScramble;
+		const spin = new MoveSeq(alternateSolution?.orientation || '');
+		cubeAlg = spin + ' ' + alternateSolution?.premove + ' ' + alternateSolution?.solution;
+		playHead = 0;
+		console.log({cubeSS, cubeAlg, playHead})
 	}
 	let playHead = 0;
+	let stickering = '';
 </script>
 
 <div class="container">
@@ -173,9 +206,15 @@
 					<td align="left">{translation[stage.stage]}</td><td>{stage.solution.length()}</td>
 					<td>{timings[stage.stage]}</td><td align="left">{stage.solution}</td>
 				</tr>
+				{#if alternateSolution && alternateSolution.stage === stage.stage && alternateSolution.solution.length() > 0}
+				<tr class={'alternate'} on:click={() => playAlternate()}>
+					<td align="left"><em>vs: </em>{translation[stage.stage]}</td><td>{alternateSolution.solution.length()}</td>
+					<td>{Math.round(timings[stage.stage]*(alternateSolution.solution.length()/stage.solution.length()))}</td><td align="left">{alternateSolution.solution}</td>
+				</tr>
+				{/if}
 			{/each}
 		</table>
-		<Cube {playHead} scramble={scrambleString} solve={solutionString} controlPanel={'yes'} />
+		<Cube {playHead} {stickering} scramble={cubeSS} solve={cubeAlg} controlPanel={'yes'} />
 		<Button on:click={next}>
 			<Label>Next Scramble</Label>
 			<i class="material-icons" aria-hidden="true">arrow_forward</i>
@@ -211,6 +250,11 @@
 	}
 	.odd td {
 		background-color: #f0f0f0;
+	}
+
+	.alternate td {
+		font-weight: bold;
+		background-color: #a0d0a0;
 	}
 
 	table {
