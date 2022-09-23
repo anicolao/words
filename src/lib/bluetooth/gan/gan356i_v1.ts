@@ -131,13 +131,10 @@ export class GANCube {
 		const arr = new Uint8Array(decryptedMoves.buffer);
 		this.updateOrientation(decryptedMoves);
 		if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
-			console.log('move count ', arr[12]);
 			let mc = arr[12];
 			if (mc < this.lastMoveCount) mc += 256;
 			const numMoves = Math.min(mc - this.lastMoveCount, 6);
-			if (mc - this.lastMoveCount <= 6) {
-				console.log(`Saw ${numMoves} move${numMoves > 1 ? 's' : ''} this cycle`);
-			} else {
+			if (mc - this.lastMoveCount > 6) {
 				console.error(
 					`There were ${mc - this.lastMoveCount} moves! We dropped ${
 						mc - this.lastMoveCount - numMoves
