@@ -15,6 +15,7 @@
 	import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 	import { goto } from '$app/navigation';
 	import type { BluetoothPuzzle, MoveEvent } from 'cubing/dist/types/bluetooth';
+	import { Spherical, Vector3, type Quaternion } from 'three';
 
 	export let origin = 'timer';
 	let scramble = new Alg();
@@ -47,6 +48,7 @@
 			twistyPlayer.controlPanel = 'none';
 			twistyPlayer.backView = 'top-right';
 			twistyPlayer.hintFacelets = 'none';
+			twistyPlayer.cameraLatitudeLimit = 400;
 			contentElem.appendChild(twistyPlayer);
 		}
 	});
@@ -106,7 +108,7 @@
 			model.timestampRequest.set('end');
 			const algNodes = algArray;
 			let lastMove = algNodes[algNodes.length - 1] as Move;
-			if (!lastMove) lastMove = new Move(move);
+			if (!lastMove) lastMove = new Move('');
 			else if (lastMove.amount > 1) {
 				lastMove = lastMove.modified({ amount: 1 });
 			} else if (lastMove.amount < -1) {
@@ -129,10 +131,33 @@
 				const model = twistyPlayer.experimentalModel;
 				const kp: KPuzzle = await twistyPlayer.experimentalModel.kpuzzle.get();
 				const ksNew = kp.startState();
+				let spin = 0;
+				async function orientationCallback(q: Quaternion) {
+					//console.log({ q });
+					const orbit = await twistyPlayer.experimentalModel.twistySceneModel.orbitCoordinates.get();
+					const lat = Math.PI/8; //(90 - orbit.latitude) / 180 * Math.PI;
+					const lon = -Math.PI/4; //(orbit.longitude) / 180 * Math.PI;
+					const sphereCoords = new Spherical(orbit.distance, lat, lon)
+					sphereCoords.makeSafe();
+					const v3 = new Vector3(1, 1, 1);
+					//v3.setFromSpherical(sphereCoords);
+					v3.applyQuaternion(q.clone().invert());
+					sphereCoords.setFromVector3(v3);
+					const latitude = Math.PI/8; //sphereCoords.phi * 180 / Math.PI;
+					const longitude = spin/100; //sphereCoords.theta * 180 / Math.PI;
+					spin += 1;
+					spin %= 3;
+					const ori = {...orbit, distance: 6 + spin/100 //orbit.distance 
+					};
+					//console.log(ori)
+					twistyPlayer.experimentalModel.twistySceneModel.orbitCoordinatesRequest.set(ori);
+					const obj3d = await twistyPlayer.experimentalCurrentThreeJSPuzzleObject();
+					obj3d.setRotationFromQuaternion(q.clone());
+				}
 				cube.watchMoves((move: number) => {
 					const face = GANCube.colorToFaceMove(move, ksNew.applyAlg(alg).stateData);
 					addMove(model, face);
-				});
+				}, () => {});
 			} else if (currentDevice) {
 				console.log('Legacy bluetooth path enabled for ', currentDevice);
 				const cube = (globalThis as any).legacyCubes[currentDevice[0]] as BluetoothPuzzle;

@@ -119,7 +119,7 @@ describe('GAN 356i', async () => {
 			]);
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			const nullcallback = () => {};
-			ganCube.handleMoves(array, nullcallback);
+			ganCube.handleMoves(array, nullcallback, nullcallback);
 			expect(ganCube.getFacing()).to.equal('YG');
 		});
 
@@ -177,7 +177,7 @@ describe('GAN 356i', async () => {
 			expect(ganCube.getFacing()).to.equal('WG');
 			const tail = [0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3];
 			const array = new Uint8Array([...encodeFacing('GO'), ...tail]);
-			ganCube.handleMoves(array, nullcallback);
+			ganCube.handleMoves(array, nullcallback, nullcallback);
 			expect(ganCube.getFacing()).to.equal('GO');
 		});
 
@@ -195,10 +195,10 @@ describe('GAN 356i', async () => {
 				expect(ganCube.getFacing()).to.equal('WG');
 				const tail = [0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3];
 				const array = new Uint8Array([...encodeFacing(from), ...tail]);
-				ganCube.handleMoves(array, nullcallback);
+				ganCube.handleMoves(array, nullcallback, nullcallback);
 				expect(ganCube.getFacing()).to.equal(from);
 				const move2 = new Uint8Array([...encodeFacing(to), ...tail]);
-				ganCube.handleMoves(move2, nullcallback);
+				ganCube.handleMoves(move2, nullcallback, nullcallback);
 				expect(ganCube.getFacing()).to.equal(to);
 			});
 		}
@@ -220,16 +220,17 @@ describe('GAN 356i', async () => {
 			const fail = () => {
 				expect(true).to.be.false;
 			};
-			ganCube.handleMoves(homeState, fail);
+			const nullcallback = () => {};
+			ganCube.handleMoves(homeState, fail, nullcallback);
 			expect(ganCube.getFacing()).to.equal('WG');
 			const array = new Uint8Array([
 				0x0, 0x0, 0, 0x40, 0, 0, 0, 0, 0, 0, 0, 0, 140, 12, 6, 6, 6, 5, 3
 			]);
-			ganCube.handleMoves(array, fail);
+			ganCube.handleMoves(array, fail, nullcallback);
 			expect(ganCube.getFacing()).to.equal('WG');
-			ganCube.handleMoves(homeState, fail);
+			ganCube.handleMoves(homeState, fail, nullcallback);
 			expect(ganCube.getFacing()).to.equal('WG');
-			ganCube.handleMoves(array, fail);
+			ganCube.handleMoves(array, fail, nullcallback);
 			expect(ganCube.getFacing()).to.equal('WG');
 		});
 
@@ -244,11 +245,12 @@ describe('GAN 356i', async () => {
 				const countcallback = () => {
 					count++;
 				};
-				ganCube.handleMoves(homeState, countcallback);
+				const nullcallback = () => {};
+				ganCube.handleMoves(homeState, countcallback, nullcallback);
 				expect(count).to.equal(0);
 				homeState[12] += numMoves;
 				homeState[12] %= 256;
-				ganCube.handleMoves(homeState, countcallback);
+				ganCube.handleMoves(homeState, countcallback, nullcallback);
 				expect(count).to.equal(Math.min(numMoves, 6));
 			});
 		}

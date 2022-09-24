@@ -6,7 +6,7 @@ import {
 import { importKey, unsafeDecryptBlock } from '$lib/third_party/unsafe-raw-aes';
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { KStateData, KState } from 'cubing/kpuzzle';
-import { Quaternion, Vector3 } from 'three';
+import { Euler, Quaternion, Vector3 } from 'three';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
 const UUIDs = {
@@ -86,6 +86,7 @@ export async function getDecryptor(f: GATTDeviceDescriptor): Promise<Decryptor> 
 }
 
 export type MoveCallback = (move: number) => void;
+export type OrientationCallback = (orientation: Quaternion) => void;
 export class GANCube {
 	private deviceDescriptor;
 	private decrypt?: Decryptor;
@@ -114,22 +115,23 @@ export class GANCube {
 		return `${(version & 0xff0000) >> 16}.${(version & 0xff00) >> 8}.${version & 0xff}`;
 	}
 
-	public async watchMoves(callback: MoveCallback) {
+	public async watchMoves(callback: MoveCallback, ori: OrientationCallback) {
 		const pollMoveState = async () => {
 			if (!this.decrypt) {
 				this.decrypt = await getDecryptor(this.deviceDescriptor);
 			}
 			const encryptedMoves = await read(this.moves);
 			const decryptedMoves = await this.decrypt(new Uint8Array(encryptedMoves.buffer));
-			this.handleMoves(decryptedMoves, callback);
+			this.handleMoves(decryptedMoves, callback, ori);
 		};
 		this.watchingMoves = true;
 		window.setTimeout(pollMoveState, 10);
 	}
 
-	public handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback) {
+	public handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback, ori: OrientationCallback) {
 		const arr = new Uint8Array(decryptedMoves.buffer);
-		this.updateOrientation(decryptedMoves);
+		const facingQuat = this.updateOrientation(decryptedMoves);
+		ori(facingQuat);
 		if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
 			let mc = arr[12];
 			if (mc < this.lastMoveCount) mc += 256;
@@ -159,7 +161,7 @@ export class GANCube {
 		}
 		this.lastMoveCount = arr[12];
 		if (this.watchingMoves) {
-			this.watchMoves(callback);
+			this.watchMoves(callback, ori);
 		}
 	}
 
@@ -218,8 +220,16 @@ export class GANCube {
 		const w = wSquared > 0 ? Math.sqrt(wSquared) : 0;
 		const quat = new Quaternion(x, y, z, w).normalize();
 
+
 		if (!this.homeOrientationKnown) {
-			this.homeOrientation = quat.clone().invert();
+			const orient = new Euler(0, Math.PI/2, 0, "XYZ");
+			let hQuat = quat;
+			const oQ = new Quaternion();
+			oQ.setFromEuler(orient);
+			// as close as I've come to getting the orientation to work.
+			//hQuat = oQ.clone().multiply(quat);
+
+			this.homeOrientation = hQuat.clone().invert();
 			this.homeOrientationKnown = true;
 		}
 
