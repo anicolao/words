@@ -1,9 +1,31 @@
 type CCType = (d: BluetoothDevice) => void;
+export async function scan(connectCallback: CCType): Promise<BluetoothRemoteGATTServer> {
+	const scan = await navigator.bluetooth.requestLEScan({filters:[{ namePrefix: 'GAN'}], keepRepeatedDevices: true});
+	const log = console.log;
+	console.log(scan);
+	navigator.bluetooth.addEventListener('advertisementreceived', event => {
+		log('Advertisement received.');
+		log('  Device Name: ' + event.device.name);
+		log('  Device ID: ' + event.device.id);
+		log('  RSSI: ' + event.rssi);
+		log('  TX Power: ' + event.txPower);
+		log('  UUIDs: ' + event.uuids);
+		log({md: event.manufacturerData});
+		event.manufacturerData.forEach((vdv, key) => {
+			const hexString = [...new Uint8Array(vdv.buffer)].map(b => {
+				return b.toString(16).padStart(2, '0');
+			  }).join(' ');
+			log('Manufacturer data: ', { hex: hexString, buffer: vdv.buffer })
+		})
+	});
+}
+
 export async function pair(connectCallback: CCType): Promise<BluetoothRemoteGATTServer> {
 	const device = await navigator.bluetooth.requestDevice({
 		optionalServices: [
 			'0000180a-0000-1000-8000-00805f9b34fb',
-			'0000fff0-0000-1000-8000-00805f9b34fb'
+			'0000fff0-0000-1000-8000-00805f9b34fb',
+			'6e400001-b5a3-f393-e0a9-e50e24dc4179'
 		],
 		filters: [{ namePrefix: 'GAN' }]
 	});
@@ -23,7 +45,7 @@ export async function listKnownDevices(): Promise<BluetoothDevice[]> {
 }
 
 export async function setupDevices(devices: BluetoothDevice[], connectCallback: CCType) {
-	/* disable auto reconnect while we are supporting the legacy path
+	/* disable auto reconnect while we are supporting the legacy path 
 	for (const device of devices) {
 		const abortController = new AbortController();
 		const log = console.log;
@@ -32,10 +54,11 @@ export async function setupDevices(devices: BluetoothDevice[], connectCallback: 
 			device.addEventListener(
 				'advertisementreceived',
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				(): any => {
+				(event): any => {
 					log('ad: ', device);
 					abortController.abort();
 					connect(device, connectCallback);
+					log({md: event.manufacturerData});
 				},
 				true
 			);

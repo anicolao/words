@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { connectSmartPuzzle } from 'cubing/bluetooth';
-	import { pair, listKnownDevices, setupDevices } from '$lib/bluetooth/pair';
+	import { pair, listKnownDevices, setupDevices, scan } from '$lib/bluetooth/pair';
 	import { bluetooth_supported, known_cubes, reconnect_supported, connect } from './cubes';
 	import { navigate_to } from '$lib/components/nav';
 	import { store } from '$lib/store';
@@ -38,6 +38,9 @@
 
 	function pairHandler() {
 		pair(connectCallback);
+	}
+	function scanHandler() {
+		scan(connectCallback);
 	}
 
 	async function legacyPairHandler() {
@@ -82,5 +85,6 @@
 		</ul>
 	{/if}
 {/if}
+<Button on:click={scanHandler} variant="raised">Scan</Button>
 <Button on:click={pairHandler} variant="raised">Pair GAN 356i v1</Button>
 <Button on:click={legacyPairHandler} variant="raised">Pair Other Cubes</Button>
