@@ -5,7 +5,7 @@ import {
 	type GATTCharacteristicDescriptor,
 	type GATTDeviceDescriptor
 } from '$lib/bluetooth/bluetooth';
-import { importKey, unsafeDecryptBlock } from '$lib/third_party/unsafe-raw-aes';
+import { importKey, unsafeDecryptBlock, unsafeEncryptBlock } from '$lib/third_party/unsafe-raw-aes';
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { KStateData, KState } from 'cubing/kpuzzle';
 import { Euler, Quaternion, Vector3 } from 'three';
@@ -93,6 +93,26 @@ export async function getDecryptor(f: GATTDeviceDescriptor, keys: GANV2KeyInfo):
 		for (let i = 0; i < keys.iv.length; ++i) {
 			copy[i] ^= iv[i];
 		}
+
+		return copy;
+	};
+}
+
+export async function getEncryptor(f: GATTDeviceDescriptor, keys: GANV2KeyInfo): Promise<Decryptor> {
+	const rawKey = Uint8Array.from(keys.key);
+	const aesKey = await makeKey(f, rawKey);
+	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv));
+	return async (data: Uint8Array) => {
+		const copy = new Uint8Array(data);
+		for (let i = 0; i < keys.iv.length; ++i) {
+			copy[i] ^= iv[i];
+		}
+		copy.set(new Uint8Array(await unsafeEncryptBlock(aesKey, copy.slice(0, 16))), 0);
+		const offset = copy.length - 16;
+		for (let i = offset; i < copy.length; ++i) {
+			copy[i] ^= iv[i - offset];
+		}
+		copy.set(new Uint8Array(await unsafeEncryptBlock(aesKey, copy.slice(offset))), offset);
 
 		return copy;
 	};
