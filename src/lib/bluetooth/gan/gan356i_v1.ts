@@ -170,7 +170,7 @@ export class GANCube {
 		console.log('no longer watching moves');
 	}
 
-	static colorToFaceMove(originalMove: number, stateData: KStateData) {
+	public colorToFaceMove(originalMove: number, stateData: KStateData) {
 		const colors = 'WOGRBY';
 		const moveToColor: { [move: number]: string } = {
 			0x00: 'W',

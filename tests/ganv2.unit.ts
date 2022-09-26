@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { describe, it, vi } from 'vitest';
 
 import {
-	getRawKey, makeKeyArray, getDecryptor, makeKey, getEncryptor 
+	getRawKey, makeKeyArray, getDecryptor, makeKey, getEncryptor, GANCubeV2 
 } from '$lib/bluetooth/gan/gan356i_v2';
 
 
@@ -56,5 +56,14 @@ describe('GAN v2 encryption/decryption', () => {
 		const message = await crypt(data);
 
 		expect(message.toString()).to.equal(reference.encoded.toString());
+	})
+
+	it('can extract move info from moves messages', () => {
+		const m = new Uint8Array([35, 1, 136, 98, 24, 134, 8, 166, 24, 102, 14, 116, 20, 87, 255, 255, 255, 254, 185, 50]);
+		const cube = new GANCubeV2(dummyV2);
+		expect(cube.extractBits(m, 0, 4)).to.equal(2);
+		expect(cube.extractBits(m, 4, 8)).to.equal(48);
+		expect(cube.extractBits(m, 12, 5)).to.equal(3);
+		expect(cube.extractBits(m, 12 + 5, 5)).to.equal(2);
 	})
 })

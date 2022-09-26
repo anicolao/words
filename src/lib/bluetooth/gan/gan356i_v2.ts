@@ -1,4 +1,5 @@
 import {
+	getCharacteristic,
 	getServer,
 	getService,
 	read,
@@ -13,6 +14,7 @@ import { Euler, Quaternion, Vector3 } from 'three';
 const kpuzzle = await cube3x3x3.kpuzzle();
 const UUIDs = {
 	ganCubeService: '6e400001-b5a3-f393-e0a9-e50e24dc4179',
+	ganV2NotificationsCharacteristic: '28be4cb6-cd67-11e9-a32f-2a2ae2dbcce4',
 	physicalStateCharacteristic: '0000fff5-0000-1000-8000-00805f9b34fb',
 	actualAngleAndBatteryCharacteristic: '0000fff7-0000-1000-8000-00805f9b34fb',
 	faceletStatus1Characteristic: '0000fff2-0000-1000-8000-00805f9b34fb',
@@ -68,16 +70,6 @@ export async function makeKey(f: GATTDeviceDescriptor, rawKey: Uint8Array): Prom
 
 type Decryptor = (data: Uint8Array) => Promise<Uint8Array>;
 export async function getDecryptor(f: GATTDeviceDescriptor, keys: GANV2KeyInfo): Promise<Decryptor> {
-	function probablyDecodedCorrectly(data: Uint8Array): boolean {
-		return (
-			data[13] < 0x12 &&
-			data[14] < 0x12 &&
-			data[15] < 0x12 &&
-			data[16] < 0x12 &&
-			data[17] < 0x12 &&
-			data[18] < 0x12
-		);
-	}
 	const rawKey = Uint8Array.from(keys.key);
 	const aesKey = await makeKey(f, rawKey);
 	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv));
@@ -122,6 +114,7 @@ export class GANCubeV2 {
 	private deviceDescriptor;
 	private decrypt?: Decryptor;
 	private moves: GATTCharacteristicDescriptor;
+	private notifications: GATTCharacteristicDescriptor;
 	private lastMoveCount;
 	private watchingMoves = false;
 	private trackingRotation = false;
@@ -138,15 +131,46 @@ export class GANCubeV2 {
 			service: UUIDs.ganCubeService,
 			characteristic: UUIDs.physicalStateCharacteristic
 		};
+		this.notifications = {...this.deviceDescriptor, 
+		service: UUIDs.ganCubeService, 
+	    characteristic: UUIDs.ganV2NotificationsCharacteristic };
 		this.initQuaternionToOrientationMap();
 	}
 
 	public async getVersionAsString() {
-		const version = await getVersionDecoded(this.deviceDescriptor);
+		/*const version = await getVersionDecoded(this.deviceDescriptor);
 		return `${(version & 0xff0000) >> 16}.${(version & 0xff00) >> 8}.${version & 0xff}`;
+		*/
+		return 'unknown'
 	}
 
 	public async watchMoves(callback: MoveCallback, ori: OrientationCallback) {
+		console.log('unsure how to get version for GAN v2 protocol')
+		const n = await getCharacteristic(this.notifications);
+		console.log('start notifications')
+		await n.startNotifications();
+		console.log('add listener')
+		const keys = await getRawKey(this.deviceDescriptor);
+		console.log({ keys });
+		const decrypt = await getDecryptor(this.deviceDescriptor, keys)
+		n.addEventListener('characteristicvaluechanged', async (e) =>
+		{
+			const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
+			const decrypted = await decrypt(encrypted)
+
+			const message = this.extractBits(decrypted, 0, 4);
+			if (message === 1) return;
+			console.log('Message #', this.extractBits(decrypted, 0, 4));
+			if (message === 2) {
+				console.log("#2 is MOVES, count=", this.extractBits(decrypted, 4,8));
+				this.handleMoves(decrypted, callback, ori);
+			}
+		})
+		this.watchingMoves = true;
+		console.log('done')
+
+
+		/*
 		const pollMoveState = async () => {
 			if (!this.decrypt) {
 				this.decrypt = await getDecryptor(this.deviceDescriptor);
@@ -155,17 +179,38 @@ export class GANCubeV2 {
 			const decryptedMoves = await this.decrypt(new Uint8Array(encryptedMoves.buffer));
 			this.handleMoves(decryptedMoves, callback, ori);
 		};
-		this.watchingMoves = true;
 		window.setTimeout(pollMoveState, 10);
+		*/
+	}
+
+	public extractBits(buffer: Uint8Array, startBit: number, numBits: number) {
+		let byteNum = Math.floor(startBit/8);
+		let start = startBit % 8;
+		let byte = buffer[byteNum++] & 0x00ff;
+		byte = (byte << start) & 0x00ff;
+		byte = byte >> start;
+		let bitsRemaining = 8 - start;
+		while (numBits > bitsRemaining) {
+			byte = (byte << 8) | buffer[byteNum++];
+			numBits -= bitsRemaining;
+			bitsRemaining = 8;
+		}
+		byte = byte >> (bitsRemaining - numBits);
+		return byte;
 	}
 
 	public handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback, ori: OrientationCallback) {
 		const arr = new Uint8Array(decryptedMoves.buffer);
+		const curMoveCount = this.extractBits(decryptedMoves, 4,8);
 		const facingQuat = this.updateOrientation(decryptedMoves);
 		ori(facingQuat);
-		if (this.lastMoveCount !== arr[12] && this.lastMoveCount !== -1) {
-			let mc = arr[12];
+		if (this.lastMoveCount !== curMoveCount) {
+			let mc = curMoveCount;
 			if (mc < this.lastMoveCount) mc += 256;
+			if (this.lastMoveCount === -1) {
+				// assume 1 move ...
+				this.lastMoveCount = mc - 1;
+			}
 			const numMoves = Math.min(mc - this.lastMoveCount, 6);
 			if (mc - this.lastMoveCount > 6) {
 				console.error(
@@ -174,8 +219,12 @@ export class GANCubeV2 {
 					}!`
 				);
 			}
-			for (let i = arr.length - numMoves; i < arr.length; ++i) {
-				callback(arr[i]);
+			for (let i = 0; i < numMoves; ++i) {
+				const offset = numMoves - 1 - i;
+				const moveCode = this.extractBits(decryptedMoves, 12 + offset*5, 5);
+				const arr = Array.from(decryptedMoves);
+				console.log({moveCode, arr})
+				callback(moveCode);
 			}
 		}
 
@@ -190,10 +239,7 @@ export class GANCubeV2 {
 				callback(rotationMove);
 			}
 		}
-		this.lastMoveCount = arr[12];
-		if (this.watchingMoves) {
-			this.watchMoves(callback, ori);
-		}
+		this.lastMoveCount = curMoveCount;
 	}
 
 	public unwatchMoves() {
@@ -201,44 +247,9 @@ export class GANCubeV2 {
 		console.log('no longer watching moves');
 	}
 
-	static colorToFaceMove(originalMove: number, stateData: KStateData) {
-		const colors = 'WOGRBY';
-		const moveToColor: { [move: number]: string } = {
-			0x00: 'W',
-			0x02: "W'",
-			0x03: 'R',
-			0x05: "R'",
-			0x06: 'G',
-			0x08: "G'",
-			0x09: 'Y',
-			0x0b: "Y'",
-			0x0c: 'O',
-			0x0e: "O'",
-			0x0f: 'B',
-			0x11: "B'"
-		};
-		const moveToRotation: { [k: number]: string } = {
-			0x20: 'x',
-			0x21: "x'",
-			0x22: 'x2',
-			0x23: 'y',
-			0x24: "y'",
-			0x25: 'y2',
-			0x26: 'z',
-			0x27: "z'",
-			0x28: 'z2'
-		};
-		const move = moveToColor[originalMove];
-		if (!move && moveToRotation[originalMove]) {
-			return moveToRotation[originalMove];
-		}
-		const faceIndex = colors.indexOf(move[0]);
-		const faces = 'ULFRBD';
-		const family = faces[stateData['CENTERS'].pieces.indexOf(faceIndex)];
-		if (move.length === 1) {
-			return family;
-		}
-		return family + "'";
+	public colorToFaceMove(originalMove: number, stateData: KStateData) {
+		const mapped = [ "U", "U'", "R", "R'", "F", "F'", "D", "D'", "L",  "L'", "B",  "B'" ];
+		return mapped[originalMove];
 	}
 
 	public updateOrientation(decryptedMoves: Uint8Array): Quaternion {

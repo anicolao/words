@@ -166,7 +166,7 @@
 					obj3d.setRotationFromQuaternion(q.clone());
 				}
 				cube.watchMoves((move: number) => {
-					const face = GANCube.colorToFaceMove(move, ksNew.applyAlg(alg).stateData);
+					const face = cube.colorToFaceMove(move, ksNew.applyAlg(alg).stateData);
 					addMove(model, face);
 				}, () => {});
 			} else if (currentDevice) {
