@@ -2,7 +2,13 @@
 	import { onMount } from 'svelte';
 	import { connectSmartPuzzle } from 'cubing/bluetooth';
 	import { pair, listKnownDevices, setupDevices } from '$lib/bluetooth/pair';
-	import { bluetooth_supported, known_cubes, reconnect_supported, connect, known_md } from './cubes';
+	import {
+		bluetooth_supported,
+		known_cubes,
+		reconnect_supported,
+		connect,
+		known_md
+	} from './cubes';
 	import { navigate_to } from '$lib/components/nav';
 	import { store } from '$lib/store';
 
@@ -10,27 +16,32 @@
 	import { identity } from 'svelte/internal';
 	import firebase from '$lib/firebase';
 
-async function scan() {
-	const scan = await navigator.bluetooth.requestLEScan({filters:[{ namePrefix: 'GAN'}, {namePrefix: 'MG'}], keepRepeatedDevices: true});
-	const log = console.log;
-	console.log(scan);
-	navigator.bluetooth.addEventListener('advertisementreceived', event => {
-		log('Advertisement received.');
-		log('  Device Name: ' + event.device.name);
-		log('  Device ID: ' + event.device.id);
-		log('  RSSI: ' + event.rssi);
-		log('  TX Power: ' + event.txPower);
-		log('  UUIDs: ' + event.uuids);
-		log({md: event.manufacturerData});
-		event.manufacturerData.forEach((vdv) => {
-			const hexString = [...new Uint8Array(vdv.buffer)].map(b => {
-				return b.toString(16).padStart(2, '0');
-			  }).join(' ');
-			log('Manufacturer data: ', { hex: hexString, buffer: vdv.buffer })
-			firebase.dispatchDoc(event.device.id, known_md({ id: event.device.id, data: hexString}))
-		})
-	});
-}
+	async function scan() {
+		const scan = await navigator.bluetooth.requestLEScan({
+			filters: [{ namePrefix: 'GAN' }, { namePrefix: 'MG' }],
+			keepRepeatedDevices: true
+		});
+		const log = console.log;
+		console.log(scan);
+		navigator.bluetooth.addEventListener('advertisementreceived', (event) => {
+			log('Advertisement received.');
+			log('  Device Name: ' + event.device.name);
+			log('  Device ID: ' + event.device.id);
+			log('  RSSI: ' + event.rssi);
+			log('  TX Power: ' + event.txPower);
+			log('  UUIDs: ' + event.uuids);
+			log({ md: event.manufacturerData });
+			event.manufacturerData.forEach((vdv) => {
+				const hexString = [...new Uint8Array(vdv.buffer)]
+					.map((b) => {
+						return b.toString(16).padStart(2, '0');
+					})
+					.join(' ');
+				log('Manufacturer data: ', { hex: hexString, buffer: vdv.buffer });
+				firebase.dispatchDoc(event.device.id, known_md({ id: event.device.id, data: hexString }));
+			});
+		});
+	}
 
 	const connectCallback = (d: BluetoothDevice): void => {
 		store.dispatch(
@@ -58,6 +69,7 @@ async function scan() {
 			);
 			setupDevices(devices, connectCallback);
 		}
+		flags = window as any;
 	});
 
 	function pairHandler() {
@@ -82,6 +94,12 @@ async function scan() {
 	$: connectedCubes = cubes.filter((x) => x[2]);
 	$: disconnectedCubes = cubes.filter((x) => !x[2]);
 	$: mdKnown = $store.cubes.cubeIdToMDMap;
+	$: flags = {};
+
+	function modifyMD(e) {
+		console.log("Event: ", { e, id: e.target.id, value: e.target.value })
+		firebase.dispatchDoc(e.target.id, known_md({ id: e.target.id, data: e.target.value }));
+	}
 </script>
 
 {#if $store.cubes.autoReconnectSupported}
@@ -105,12 +123,33 @@ async function scan() {
 		<p>Wake up one of these cubes to automatically reconnect, or click if that doesn't work:</p>
 		<ul>
 			{#each disconnectedCubes as cube}
-			 {#if mdKnown[cube[0]]}
-				<li> <Button on:click={pairHandler} variant="raised">Pair {cube[1]}</Button> </li>
-			{/if}
+				{#if mdKnown[cube[0]]}
+					<li><Button on:click={pairHandler} variant="raised">Pair {cube[1]}</Button></li>
+				{/if}
 			{/each}
 		</ul>
 	{/if}
 {/if}
 <Button on:click={scanHandler} variant="raised">Scan</Button>
 <Button on:click={legacyPairHandler} variant="raised">Pair Other Cubes</Button>
+
+{#if flags.scarydebug}
+	<ul>
+		<div class="scarydebug">
+			Scary Debug UI:
+			{#each disconnectedCubes as cube}
+				<li><pre>{cube}</pre><br>
+				<input id="{cube[0]}" type="text" value={mdKnown[cube[0]]} on:change={modifyMD}/></li>
+			{/each}
+		</div>
+	</ul>
+{/if}
+
+<style>
+	.scarydebug {
+		background-color: white;
+		border: 2px dashed red;
+		margin: 3em;
+		padding: 1em;
+	}
+</style>
