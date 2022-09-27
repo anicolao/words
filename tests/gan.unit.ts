@@ -46,7 +46,7 @@ describe('GAN 356i', async () => {
 	function validateTransform({ from, to, afterRotations }: TestCase) {
 		const startState = kpuzzle.startState();
 		const state = afterRotations ? startState.applyAlg(afterRotations) : startState;
-		const newMove = GANCube.colorToFaceMove(from, state.stateData);
+		const newMove = new GANCube(dummyDevice).colorToFaceMove(from, state.stateData);
 		expect(newMove).to.equal(to);
 	}
 
