@@ -1,8 +1,6 @@
 import {
 	getCharacteristic,
-	getServer,
-	getService,
-	read,
+	write,
 	type GATTCharacteristicDescriptor,
 	type GATTDeviceDescriptor
 } from '$lib/bluetooth/bluetooth';
@@ -10,35 +8,19 @@ import { importKey, unsafeDecryptBlock, unsafeEncryptBlock } from '$lib/third_pa
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { KStateData, KState } from 'cubing/kpuzzle';
 import { Euler, Quaternion, Vector3 } from 'three';
+import type { MoveCallback, OrientationCallback } from './gan356i_v1';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
 const UUIDs = {
 	ganCubeService: '6e400001-b5a3-f393-e0a9-e50e24dc4179',
 	ganV2NotificationsCharacteristic: '28be4cb6-cd67-11e9-a32f-2a2ae2dbcce4',
-	physicalStateCharacteristic: '0000fff5-0000-1000-8000-00805f9b34fb',
-	actualAngleAndBatteryCharacteristic: '0000fff7-0000-1000-8000-00805f9b34fb',
-	faceletStatus1Characteristic: '0000fff2-0000-1000-8000-00805f9b34fb',
-	faceletStatus2Characteristic: '0000fff3-0000-1000-8000-00805f9b34fb',
-	infoService: '6e400001-b5a3-f393-e0a9-e50e24dc4179',
-	systemIDCharacteristic: '00002a23-0000-1000-8000-00805f9b34fb',
-	versionCharacteristic: '00002a28-0000-1000-8000-00805f9b34fb'
+	ganV2WriteCharacteristic: '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4'
 };
 
-function getVersion(f: GATTDeviceDescriptor) {
-	return read({ ...f, service: UUIDs.infoService, characteristic: UUIDs.versionCharacteristic });
-}
-
-async function getVersionDecoded(f: GATTDeviceDescriptor) {
-	const value = await getVersion(f);
-	const versionBuffer = new Uint8Array(value.buffer);
-	return (((versionBuffer[0] << 8) + versionBuffer[1]) << 8) + versionBuffer[2];
-}
-
-async function isProtocolEncrypted(f: GATTDeviceDescriptor) {
-	return (await getVersionDecoded(f)) >= 0x010008;
-}
-
 async function getDeviceKeyInfo(f: GATTDeviceDescriptor) {
+	// Ethan's i3 [0x9b, 0x71, 0x02, 0x34, 0x12, 0xab];
+	// iCarry [0x83, 0x36, 0x5D, 0x34, 0x12, 0xAB];
+	// Monster Go [ 0x32, 0x01, 0x5E, 0x34, 0x12, 0xAB ]
 	return [0x9b, 0x71, 0x02, 0x34, 0x12, 0xab];
 }
 
@@ -55,12 +37,15 @@ export async function getRawKey(f: GATTDeviceDescriptor): Promise<GANV2KeyInfo> 
 	};
 }
 
-export async function makeKeyArray(f: GATTDeviceDescriptor, rawKey: Uint8Array): Promise<Uint8Array> {
+export async function makeKeyArray(
+	f: GATTDeviceDescriptor,
+	rawKey: Uint8Array
+): Promise<Uint8Array> {
 	const keyXOR = await getDeviceKeyInfo(f);
 
 	const key = new Uint8Array(rawKey);
 	for (let i = 0; i < keyXOR.length; i++) {
-		key[i] = ((key[i]+keyXOR[i]) % 255);
+		key[i] = (key[i] + keyXOR[i]) % 255;
 	}
 	return key;
 }
@@ -69,7 +54,10 @@ export async function makeKey(f: GATTDeviceDescriptor, rawKey: Uint8Array): Prom
 }
 
 type Decryptor = (data: Uint8Array) => Promise<Uint8Array>;
-export async function getDecryptor(f: GATTDeviceDescriptor, keys: GANV2KeyInfo): Promise<Decryptor> {
+export async function getDecryptor(
+	f: GATTDeviceDescriptor,
+	keys: GANV2KeyInfo
+): Promise<Decryptor> {
 	const rawKey = Uint8Array.from(keys.key);
 	const aesKey = await makeKey(f, rawKey);
 	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv));
@@ -90,7 +78,10 @@ export async function getDecryptor(f: GATTDeviceDescriptor, keys: GANV2KeyInfo):
 	};
 }
 
-export async function getEncryptor(f: GATTDeviceDescriptor, keys: GANV2KeyInfo): Promise<Decryptor> {
+export async function getEncryptor(
+	f: GATTDeviceDescriptor,
+	keys: GANV2KeyInfo
+): Promise<Decryptor> {
 	const rawKey = Uint8Array.from(keys.key);
 	const aesKey = await makeKey(f, rawKey);
 	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv));
@@ -113,8 +104,9 @@ export async function getEncryptor(f: GATTDeviceDescriptor, keys: GANV2KeyInfo):
 export class GANCubeV2 {
 	private deviceDescriptor;
 	private decrypt?: Decryptor;
-	private moves: GATTCharacteristicDescriptor;
 	private notifications: GATTCharacteristicDescriptor;
+	private request: GATTCharacteristicDescriptor;
+	private encrypt?: Decryptor;
 	private lastMoveCount;
 	private watchingMoves = false;
 	private trackingRotation = false;
@@ -126,14 +118,16 @@ export class GANCubeV2 {
 	public constructor(f: GATTDeviceDescriptor) {
 		this.deviceDescriptor = f;
 		this.lastMoveCount = -1;
-		this.moves = {
-			...f,
+		this.notifications = {
+			...this.deviceDescriptor,
 			service: UUIDs.ganCubeService,
-			characteristic: UUIDs.physicalStateCharacteristic
+			characteristic: UUIDs.ganV2NotificationsCharacteristic
 		};
-		this.notifications = {...this.deviceDescriptor, 
-		service: UUIDs.ganCubeService, 
-	    characteristic: UUIDs.ganV2NotificationsCharacteristic };
+		this.request = {
+			...this.deviceDescriptor,
+			service: UUIDs.ganCubeService,
+			characteristic: UUIDs.ganV2WriteCharacteristic
+		};
 		this.initQuaternionToOrientationMap();
 	}
 
@@ -141,51 +135,53 @@ export class GANCubeV2 {
 		/*const version = await getVersionDecoded(this.deviceDescriptor);
 		return `${(version & 0xff0000) >> 16}.${(version & 0xff00) >> 8}.${version & 0xff}`;
 		*/
-		return 'unknown'
+		return 'unknown';
 	}
 
+	public async makeMessage(n: number) {
+		const message = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		message[0] = n;
+		const buffer = Uint8Array.from(message);
+		if (!this.encrypt) throw "No encryptor";
+		return this.encrypt(buffer);
+	}
 	public async watchMoves(callback: MoveCallback, ori: OrientationCallback) {
-		console.log('unsure how to get version for GAN v2 protocol')
 		const n = await getCharacteristic(this.notifications);
-		console.log('start notifications')
 		await n.startNotifications();
-		console.log('add listener')
 		const keys = await getRawKey(this.deviceDescriptor);
-		console.log({ keys });
-		const decrypt = await getDecryptor(this.deviceDescriptor, keys)
-		n.addEventListener('characteristicvaluechanged', async (e) =>
-		{
+		this.decrypt = await getDecryptor(this.deviceDescriptor, keys);
+		const decrypt = this.decrypt;
+		this.encrypt = await getEncryptor(this.deviceDescriptor, keys);
+		const requestState = await this.makeMessage(4);
+		write(this.request, requestState);
+		n.addEventListener('characteristicvaluechanged', async (e) => {
 			const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
-			const decrypted = await decrypt(encrypted)
+			const decrypted = await decrypt(encrypted);
 
 			const message = this.extractBits(decrypted, 0, 4);
-			if (message === 1) return;
+			const curMoveCount = this.extractBits(decrypted, 4, 8);
+			if (message === 1) {
+				return;
+			}
+			if (message === 4) {
+				if (this.lastMoveCount === -1) {
+					console.log('init move count to? ', curMoveCount);
+					this.lastMoveCount = curMoveCount;
+				}
+			}
 			console.log('Message #', this.extractBits(decrypted, 0, 4));
 			if (message === 2) {
-				console.log("#2 is MOVES, count=", this.extractBits(decrypted, 4,8));
+				console.log('#2 is MOVES, count=', this.extractBits(decrypted, 4, 8));
 				this.handleMoves(decrypted, callback, ori);
 			}
-		})
+		});
 		this.watchingMoves = true;
-		console.log('done')
-
-
-		/*
-		const pollMoveState = async () => {
-			if (!this.decrypt) {
-				this.decrypt = await getDecryptor(this.deviceDescriptor);
-			}
-			const encryptedMoves = await read(this.moves);
-			const decryptedMoves = await this.decrypt(new Uint8Array(encryptedMoves.buffer));
-			this.handleMoves(decryptedMoves, callback, ori);
-		};
-		window.setTimeout(pollMoveState, 10);
-		*/
+		console.log('done');
 	}
 
 	public extractBits(buffer: Uint8Array, startBit: number, numBits: number) {
-		let byteNum = Math.floor(startBit/8);
-		let start = startBit % 8;
+		let byteNum = Math.floor(startBit / 8);
+		const start = startBit % 8;
 		let byte = buffer[byteNum++] & 0x00ff;
 		byte = (byte << start) & 0x00ff;
 		byte = byte >> start;
@@ -201,7 +197,7 @@ export class GANCubeV2 {
 
 	public handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback, ori: OrientationCallback) {
 		const arr = new Uint8Array(decryptedMoves.buffer);
-		const curMoveCount = this.extractBits(decryptedMoves, 4,8);
+		const curMoveCount = this.extractBits(decryptedMoves, 4, 8);
 		const facingQuat = this.updateOrientation(decryptedMoves);
 		ori(facingQuat);
 		if (this.lastMoveCount !== curMoveCount) {
@@ -221,9 +217,8 @@ export class GANCubeV2 {
 			}
 			for (let i = 0; i < numMoves; ++i) {
 				const offset = numMoves - 1 - i;
-				const moveCode = this.extractBits(decryptedMoves, 12 + offset*5, 5);
+				const moveCode = this.extractBits(decryptedMoves, 12 + offset * 5, 5);
 				const arr = Array.from(decryptedMoves);
-				console.log({moveCode, arr})
 				callback(moveCode);
 			}
 		}
@@ -248,7 +243,7 @@ export class GANCubeV2 {
 	}
 
 	public colorToFaceMove(originalMove: number, stateData: KStateData) {
-		const mapped = [ "U", "U'", "R", "R'", "F", "F'", "D", "D'", "L",  "L'", "B",  "B'" ];
+		const mapped = ['U', "U'", 'R', "R'", 'F', "F'", 'D', "D'", 'L', "L'", 'B', "B'"];
 		return mapped[originalMove];
 	}
 
@@ -264,7 +259,7 @@ export class GANCubeV2 {
 
 		if (!this.homeOrientationKnown) {
 			const orient = new Euler(0, Math.PI / 2, 0, 'XYZ');
-			let hQuat = quat;
+			const hQuat = quat;
 			const oQ = new Quaternion();
 			oQ.setFromEuler(orient);
 			// as close as I've come to getting the orientation to work.
