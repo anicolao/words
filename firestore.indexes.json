@@ -13,6 +13,20 @@
 					"order": "ASCENDING"
 				}
 			]
+		}, 
+		{
+			"collectionGroup": "requests",
+			"queryScope": "COLLECTION_GROUP",
+			"fields": [
+				{
+					"fieldPath": "target",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "timestamp",
+					"order": "ASCENDING"
+				}
+			]
 		}
 	]
 }

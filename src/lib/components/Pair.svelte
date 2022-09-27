@@ -8,6 +8,7 @@
 
 	import Button from '@smui/button';
 	import { identity } from 'svelte/internal';
+	import firebase from '$lib/firebase';
 
 async function scan() {
 	const scan = await navigator.bluetooth.requestLEScan({filters:[{ namePrefix: 'GAN'}, {namePrefix: 'MG'}], keepRepeatedDevices: true});
@@ -26,7 +27,7 @@ async function scan() {
 				return b.toString(16).padStart(2, '0');
 			  }).join(' ');
 			log('Manufacturer data: ', { hex: hexString, buffer: vdv.buffer })
-			store.dispatch(known_md({ id: event.device.id, data: hexString}))
+			firebase.dispatchDoc(event.device.id, known_md({ id: event.device.id, data: hexString}))
 		})
 	});
 }

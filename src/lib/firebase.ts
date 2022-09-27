@@ -6,7 +6,9 @@ import {
 	connectFirestoreEmulator,
 	addDoc,
 	collection,
-	serverTimestamp
+	serverTimestamp,
+	doc,
+	setDoc
 } from 'firebase/firestore';
 import { store } from './store';
 //import { getAnalytics } from 'firebase/analytics';
@@ -38,8 +40,22 @@ const firebase = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	dispatch: (action: any) => {
 		const user = store.getState().auth;
-		if (user.email) {
-			firebase.request(user.email, action);
+		if (user.uid) {
+			firebase.request(user.uid, action);
+		}
+	},
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	dispatchDoc: (id: string, action: any) => {
+		const user = store.getState().auth;
+		if (user.uid) {
+			setDoc(doc(firebase.firestore, 'from', user.uid, 'to', user.uid, 'requests', id.replaceAll("/", "_")), {
+				...action,
+				creator: user.uid,
+				target: user.uid,
+				timestamp: serverTimestamp()
+			}).catch((message) => {
+				console.error(message);
+			});
 		}
 	},
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

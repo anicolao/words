@@ -30,6 +30,7 @@
 	} from 'firebase/firestore';
 	import firebase from '$lib/firebase';
 	import { add_scramble, add_solve } from '$lib/components/solves';
+	import type { AnyAction } from '@reduxjs/toolkit';
 
 	$: open = width > 720;
 	$: active = $store.nav.active.split('/')[0];
@@ -59,6 +60,7 @@
 
 	let unsubSolves: Unsubscribe | undefined;
 	let unsubScrambles: Unsubscribe | undefined;
+	let unsubActions: Unsubscribe | undefined;
 	$: if ($store.auth.signedIn && !unsubSolves) {
 		if (!unsubScrambles) {
 			const scrambles = collection(firebase.firestore, 'scrambles');
@@ -97,6 +99,26 @@
 					console.error(error);
 				}
 			);
+		}
+		if ($store.auth.uid && !unsubActions) {
+			const actions = collectionGroup(firebase.firestore, 'requests');
+			unsubSolves = onSnapshot(
+				query(actions, where('target', '==', $store.auth.uid), orderBy('timestamp')),
+				(querySnapshot) => {
+					querySnapshot.docChanges().forEach((change) => {
+						if (change.type === 'added') {
+							let doc = change.doc;
+							let action = doc.data() as AnyAction;
+							delete action.timestamp;
+							store.dispatch(action);
+						}
+					});
+				},
+				(error) => {
+					console.log('actions query failing: ');
+					console.error(error);
+				}
+			)
 		}
 	}
 
