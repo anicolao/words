@@ -17,7 +17,7 @@ const UUIDs = {
 	ganV2WriteCharacteristic: '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4'
 };
 
-async function getDeviceKeyInfo(f: GATTDeviceDescriptor) {
+export async function getDeviceKeyInfo(f: GATTDeviceDescriptor) {
 	// Ethan's i3 [0x9b, 0x71, 0x02, 0x34, 0x12, 0xab];
 	// iCarry [0x83, 0x36, 0x5D, 0x34, 0x12, 0xAB];
 	// Monster Go [ 0x32, 0x01, 0x5E, 0x34, 0x12, 0xAB ]
@@ -39,34 +39,33 @@ export async function getRawKey(f: GATTDeviceDescriptor): Promise<GANV2KeyInfo> 
 
 export async function makeKeyArray(
 	f: GATTDeviceDescriptor,
-	rawKey: Uint8Array
+	rawKey: Uint8Array,
+	keyXOR: number[]
 ): Promise<Uint8Array> {
-	const keyXOR = await getDeviceKeyInfo(f);
-
 	const key = new Uint8Array(rawKey);
 	for (let i = 0; i < keyXOR.length; i++) {
 		key[i] = (key[i] + keyXOR[i]) % 255;
 	}
 	return key;
 }
-export async function makeKey(f: GATTDeviceDescriptor, rawKey: Uint8Array): Promise<CryptoKey> {
-	return importKey(await makeKeyArray(f, rawKey));
+export async function makeKey(f: GATTDeviceDescriptor, rawKey: Uint8Array, keyXOR: number[]): Promise<CryptoKey> {
+	return importKey(await makeKeyArray(f, rawKey, keyXOR));
 }
 
 type Decryptor = (data: Uint8Array) => Promise<Uint8Array>;
 export async function getDecryptor(
 	f: GATTDeviceDescriptor,
-	keys: GANV2KeyInfo
+	keys: GANV2KeyInfo,
+	keyXOR: number[]
 ): Promise<Decryptor> {
 	const rawKey = Uint8Array.from(keys.key);
-	const aesKey = await makeKey(f, rawKey);
-	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv));
+	const aesKey = await makeKey(f, rawKey, keyXOR);
+	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv), keyXOR);
 	return async (data: Uint8Array) => {
 		const copy = new Uint8Array(data);
 		const offset = copy.length - 16;
 		copy.set(new Uint8Array(await unsafeDecryptBlock(aesKey, copy.slice(offset))), offset);
 		for (let i = offset; i < copy.length; ++i) {
-			const orig = copy[i];
 			copy[i] ^= iv[i - offset];
 		}
 		copy.set(new Uint8Array(await unsafeDecryptBlock(aesKey, copy.slice(0, 16))), 0);
@@ -80,11 +79,12 @@ export async function getDecryptor(
 
 export async function getEncryptor(
 	f: GATTDeviceDescriptor,
-	keys: GANV2KeyInfo
+	keys: GANV2KeyInfo,
+	keyXOR: number[]
 ): Promise<Decryptor> {
 	const rawKey = Uint8Array.from(keys.key);
-	const aesKey = await makeKey(f, rawKey);
-	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv));
+	const aesKey = await makeKey(f, rawKey, keyXOR);
+	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv), keyXOR);
 	return async (data: Uint8Array) => {
 		const copy = new Uint8Array(data);
 		for (let i = 0; i < keys.iv.length; ++i) {
