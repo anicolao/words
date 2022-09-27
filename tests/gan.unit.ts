@@ -2,9 +2,6 @@ import { expect } from 'chai';
 import { afterEach, describe, it, vi } from 'vitest';
 
 import {
-	getRawKey,
-	getDecryptor,
-	isProtocolEncrypted,
 	GANCube
 } from '$lib/bluetooth/gan/gan356i_v1';
 import { Alg } from 'cubing/alg';

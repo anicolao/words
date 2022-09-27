@@ -11,12 +11,14 @@ export interface CubesState {
 	knownCubes: CubeInfo[];
 	connectedDevice?: CubeInfo;
 	cubeIdToVersionMap: { [key: string]: string };
+	cubeIdToMDMap: { [key: string]: string };
 }
 
 export const bluetooth_supported = createAction<boolean>('bluetooth_supported');
 export const reconnect_supported = createAction<boolean>('reconnect_supported');
 export const known_cubes = createAction<[string, string, boolean][]>('known_cubes');
 export const known_version = createAction<{ id: string; version: string }>('known_version');
+export const known_md = createAction<{ id: string; data: string }>('known_md');
 export const connect = createAction<[string, boolean]>('connect');
 export const override = createAction<boolean>('override');
 
@@ -26,7 +28,8 @@ export const initialState = {
 	overrideUsingCubes: false,
 	knownCubes: [],
 	connectedDevice: undefined,
-	cubeIdToVersionMap: {}
+	cubeIdToVersionMap: {},
+	cubeIdToMDMap: {}
 } as CubesState;
 
 export const cubes = createReducer(initialState, (r) => {
@@ -36,6 +39,10 @@ export const cubes = createReducer(initialState, (r) => {
 	})
 		.addCase(known_version, (state, action) => {
 			state.cubeIdToVersionMap[action.payload.id] = action.payload.version;
+			return state;
+		})
+		.addCase(known_md, (state, action) => {
+			state.cubeIdToMDMap[action.payload.id] = action.payload.data;
 			return state;
 		})
 		.addCase(connect, (state, action) => {

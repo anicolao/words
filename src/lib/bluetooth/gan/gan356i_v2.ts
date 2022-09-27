@@ -17,11 +17,12 @@ const UUIDs = {
 	ganV2WriteCharacteristic: '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4'
 };
 
+const keyInfoMap: {[k: string]: number[]} = {};
 export async function getDeviceKeyInfo(f: GATTDeviceDescriptor) {
 	// Ethan's i3 [0x9b, 0x71, 0x02, 0x34, 0x12, 0xab];
 	// iCarry [0x83, 0x36, 0x5D, 0x34, 0x12, 0xAB];
 	// Monster Go [ 0x32, 0x01, 0x5E, 0x34, 0x12, 0xAB ]
-	return [0x9b, 0x71, 0x02, 0x34, 0x12, 0xab];
+	return keyInfoMap[f.id];
 }
 
 export type GANV2KeyInfo = { key: number[]; iv: number[] };
@@ -55,9 +56,9 @@ export async function makeKey(f: GATTDeviceDescriptor, rawKey: Uint8Array, keyXO
 type Decryptor = (data: Uint8Array) => Promise<Uint8Array>;
 export async function getDecryptor(
 	f: GATTDeviceDescriptor,
-	keys: GANV2KeyInfo,
-	keyXOR: number[]
 ): Promise<Decryptor> {
+	const keys = await getRawKey(f);
+	const keyXOR = await getDeviceKeyInfo(f);
 	const rawKey = Uint8Array.from(keys.key);
 	const aesKey = await makeKey(f, rawKey, keyXOR);
 	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv), keyXOR);
@@ -78,10 +79,10 @@ export async function getDecryptor(
 }
 
 export async function getEncryptor(
-	f: GATTDeviceDescriptor,
-	keys: GANV2KeyInfo,
-	keyXOR: number[]
+	f: GATTDeviceDescriptor
 ): Promise<Decryptor> {
+	const keys = await getRawKey(f);
+	const keyXOR = await getDeviceKeyInfo(f);
 	const rawKey = Uint8Array.from(keys.key);
 	const aesKey = await makeKey(f, rawKey, keyXOR);
 	const iv = await makeKeyArray(f, Uint8Array.from(keys.iv), keyXOR);
@@ -115,7 +116,9 @@ export class GANCubeV2 {
 	private homeOrientation = new Quaternion();
 	private orientation = new Quaternion();
 
-	public constructor(f: GATTDeviceDescriptor) {
+	public constructor(f: GATTDeviceDescriptor, manufacturerData: string) {
+		const md = manufacturerData.split(' ').map(x => parseInt(x,16));
+		keyInfoMap[f.id] = md.slice(-6);
 		this.deviceDescriptor = f;
 		this.lastMoveCount = -1;
 		this.notifications = {
@@ -148,35 +151,35 @@ export class GANCubeV2 {
 	public async watchMoves(callback: MoveCallback, ori: OrientationCallback) {
 		const n = await getCharacteristic(this.notifications);
 		await n.startNotifications();
-		const keys = await getRawKey(this.deviceDescriptor);
-		this.decrypt = await getDecryptor(this.deviceDescriptor, keys);
+		this.decrypt = await getDecryptor(this.deviceDescriptor);
 		const decrypt = this.decrypt;
-		this.encrypt = await getEncryptor(this.deviceDescriptor, keys);
+		this.encrypt = await getEncryptor(this.deviceDescriptor);
 		const requestState = await this.makeMessage(4);
 		write(this.request, requestState);
+		let count = 0;
 		n.addEventListener('characteristicvaluechanged', async (e) => {
 			const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
 			const decrypted = await decrypt(encrypted);
 
 			const message = this.extractBits(decrypted, 0, 4);
 			const curMoveCount = this.extractBits(decrypted, 4, 8);
+			if (count < 10 || (message !== 1 && count < 50)) {
+				console.log({ count, cvc: e, decrypted })
+				count++;
+			}
 			if (message === 1) {
 				return;
 			}
 			if (message === 4) {
 				if (this.lastMoveCount === -1) {
-					console.log('init move count to? ', curMoveCount);
 					this.lastMoveCount = curMoveCount;
 				}
 			}
-			console.log('Message #', this.extractBits(decrypted, 0, 4));
 			if (message === 2) {
-				console.log('#2 is MOVES, count=', this.extractBits(decrypted, 4, 8));
 				this.handleMoves(decrypted, callback, ori);
 			}
 		});
 		this.watchingMoves = true;
-		console.log('done');
 	}
 
 	public extractBits(buffer: Uint8Array, startBit: number, numBits: number) {
@@ -196,7 +199,6 @@ export class GANCubeV2 {
 	}
 
 	public handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback, ori: OrientationCallback) {
-		const arr = new Uint8Array(decryptedMoves.buffer);
 		const curMoveCount = this.extractBits(decryptedMoves, 4, 8);
 		const facingQuat = this.updateOrientation(decryptedMoves);
 		ori(facingQuat);
@@ -218,7 +220,6 @@ export class GANCubeV2 {
 			for (let i = 0; i < numMoves; ++i) {
 				const offset = numMoves - 1 - i;
 				const moveCode = this.extractBits(decryptedMoves, 12 + offset * 5, 5);
-				const arr = Array.from(decryptedMoves);
 				callback(moveCode);
 			}
 		}

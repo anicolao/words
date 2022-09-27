@@ -223,7 +223,7 @@ export class GANCube {
 
 		if (!this.homeOrientationKnown) {
 			const orient = new Euler(0, Math.PI/2, 0, "XYZ");
-			let hQuat = quat;
+			const hQuat = quat;
 			const oQ = new Quaternion();
 			oQ.setFromEuler(orient);
 			// as close as I've come to getting the orientation to work.

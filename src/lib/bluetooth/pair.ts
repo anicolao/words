@@ -1,24 +1,4 @@
 type CCType = (d: BluetoothDevice) => void;
-export async function scan(connectCallback: CCType): Promise<BluetoothRemoteGATTServer> {
-	const scan = await navigator.bluetooth.requestLEScan({filters:[{ namePrefix: 'GAN'}], keepRepeatedDevices: true});
-	const log = console.log;
-	console.log(scan);
-	navigator.bluetooth.addEventListener('advertisementreceived', event => {
-		log('Advertisement received.');
-		log('  Device Name: ' + event.device.name);
-		log('  Device ID: ' + event.device.id);
-		log('  RSSI: ' + event.rssi);
-		log('  TX Power: ' + event.txPower);
-		log('  UUIDs: ' + event.uuids);
-		log({md: event.manufacturerData});
-		event.manufacturerData.forEach((vdv, key) => {
-			const hexString = [...new Uint8Array(vdv.buffer)].map(b => {
-				return b.toString(16).padStart(2, '0');
-			  }).join(' ');
-			log('Manufacturer data: ', { hex: hexString, buffer: vdv.buffer })
-		})
-	});
-}
 
 export async function pair(connectCallback: CCType): Promise<BluetoothRemoteGATTServer> {
 	const device = await navigator.bluetooth.requestDevice({

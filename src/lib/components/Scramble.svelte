@@ -129,10 +129,8 @@
 			if (currentDevice && currentDevice[0].slice(0, 6) !== 'legacy') {
 				const server = await getServer({ id: currentDevice[0] });
 				const services: BluetoothRemoteGATTService[] = await server.getPrimaryServices();
-				console.log({services})
 				if (services[0].uuid === '6e400001-b5a3-f393-e0a9-e50e24dc4179') {
-					console.log('new cube will FAIL')
-					cube = new GANCubeV2({ id: currentDevice[0] });
+					cube = new GANCubeV2({ id: currentDevice[0] }, $store.cubes.cubeIdToMDMap[currentDevice[0]]);
 				} else {
 					cube = new GANCube({ id: currentDevice[0] });
 				}
