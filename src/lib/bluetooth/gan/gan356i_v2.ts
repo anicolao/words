@@ -8,7 +8,7 @@ import { importKey, unsafeDecryptBlock, unsafeEncryptBlock } from '$lib/third_pa
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { KStateData, KState } from 'cubing/kpuzzle';
 import { Euler, Quaternion, Vector3 } from 'three';
-import type { MoveCallback, OrientationCallback } from './gan356i_v1';
+import type { MoveCallback, OrientationCallback, RawCallback } from './gan356i_v1';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
 const UUIDs = {
@@ -17,7 +17,7 @@ const UUIDs = {
 	ganV2WriteCharacteristic: '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4'
 };
 
-const keyInfoMap: {[k: string]: number[]} = {};
+const keyInfoMap: { [k: string]: number[] } = {};
 export async function getDeviceKeyInfo(f: GATTDeviceDescriptor) {
 	// Ethan's i3 [0x9b, 0x71, 0x02, 0x34, 0x12, 0xab];
 	// iCarry [0x83, 0x36, 0x5D, 0x34, 0x12, 0xAB];
@@ -49,14 +49,16 @@ export async function makeKeyArray(
 	}
 	return key;
 }
-export async function makeKey(f: GATTDeviceDescriptor, rawKey: Uint8Array, keyXOR: number[]): Promise<CryptoKey> {
+export async function makeKey(
+	f: GATTDeviceDescriptor,
+	rawKey: Uint8Array,
+	keyXOR: number[]
+): Promise<CryptoKey> {
 	return importKey(await makeKeyArray(f, rawKey, keyXOR));
 }
 
 type Decryptor = (data: Uint8Array) => Promise<Uint8Array>;
-export async function getDecryptor(
-	f: GATTDeviceDescriptor,
-): Promise<Decryptor> {
+export async function getDecryptor(f: GATTDeviceDescriptor): Promise<Decryptor> {
 	const keys = await getRawKey(f);
 	const keyXOR = await getDeviceKeyInfo(f);
 	const rawKey = Uint8Array.from(keys.key);
@@ -78,9 +80,7 @@ export async function getDecryptor(
 	};
 }
 
-export async function getEncryptor(
-	f: GATTDeviceDescriptor
-): Promise<Decryptor> {
+export async function getEncryptor(f: GATTDeviceDescriptor): Promise<Decryptor> {
 	const keys = await getRawKey(f);
 	const keyXOR = await getDeviceKeyInfo(f);
 	const rawKey = Uint8Array.from(keys.key);
@@ -109,7 +109,7 @@ export class GANCubeV2 {
 	private request: GATTCharacteristicDescriptor;
 	private encrypt?: Decryptor;
 	private lastMoveCount;
-	private watchingMoves = false;
+	private watchingMoves: ((e: Event) => Promise<void>) | undefined = undefined;
 	private trackingRotation = false;
 
 	private homeOrientationKnown = false;
@@ -117,8 +117,12 @@ export class GANCubeV2 {
 	private orientation = new Quaternion();
 
 	public constructor(f: GATTDeviceDescriptor, manufacturerData: string) {
-		const md = manufacturerData.split(' ').map(x => parseInt(x,16));
-		keyInfoMap[f.id] = md.slice(-6);
+		if (manufacturerData) {
+			const md = manufacturerData.split(' ').map((x) => parseInt(x, 16));
+			keyInfoMap[f.id] = md.slice(-6);
+		} else {
+			keyInfoMap[f.id] = [ 0, 0, 0, 0, 0, 0 ];
+		}
 		this.deviceDescriptor = f;
 		this.lastMoveCount = -1;
 		this.notifications = {
@@ -145,43 +149,136 @@ export class GANCubeV2 {
 		const message = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 		message[0] = n;
 		const buffer = Uint8Array.from(message);
-		if (!this.encrypt) throw "No encryptor";
+		if (!this.encrypt) throw 'No encryptor';
 		return this.encrypt(buffer);
 	}
-	public async watchMoves(callback: MoveCallback, ori: OrientationCallback) {
+	public async watchMoves(callback: MoveCallback, ori: OrientationCallback, raw: RawCallback) {
 		const n = await getCharacteristic(this.notifications);
 		await n.startNotifications();
-		this.decrypt = await getDecryptor(this.deviceDescriptor);
-		const decrypt = this.decrypt;
-		this.encrypt = await getEncryptor(this.deviceDescriptor);
-		const requestState = await this.makeMessage(4);
-		write(this.request, requestState);
 		let count = 0;
-		n.addEventListener('characteristicvaluechanged', async (e) => {
-			const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
-			const decrypted = await decrypt(encrypted);
+		const setupEncryption = async () => {
+			if (count > 5) {
+				this.decrypt = await getDecryptor(this.deviceDescriptor);
+				this.encrypt = await getEncryptor(this.deviceDescriptor);
+				const requestState = await this.makeMessage(4);
+				write(this.request, requestState);
+			}
+		};
+		const encryptionSample: Uint8Array[] = [];
+		this.watchingMoves = async (e) => {
+			if (!this.decrypt) {
+				await setupEncryption();
+			}
+			if (this.decrypt) {
+				const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
+				const decrypted = await this.decrypt(encrypted);
+				raw(Array.from(decrypted));
 
-			const message = this.extractBits(decrypted, 0, 4);
-			const curMoveCount = this.extractBits(decrypted, 4, 8);
-			if (count < 10 || (message !== 1 && count < 50)) {
-				console.log({ count, cvc: e, decrypted })
+				const message = this.extractBits(decrypted, 0, 4);
+				const curMoveCount = this.extractBits(decrypted, 4, 8);
+				if (count < 10 || (message !== 1 && count < 50)) {
+					console.log({ count, cvc: e, decrypted });
+				}
+				if (message === 1) {
+					return;
+				}
+				if (message === 4) {
+					if (this.lastMoveCount === -1) {
+						this.lastMoveCount = curMoveCount;
+					}
+				}
+				if (message === 2) {
+					this.handleMoves(decrypted, callback, ori);
+				}
+			} else {
+				const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
+				encryptionSample.push(encrypted);
+				console.log({ count, encrypted: Array.from(encrypted) });
+				if (encryptionSample.length === 6) {
+					console.log(`Ready to brute force the encryption with ${encryptionSample.length} samples`);
+					let possiblyValidKeys = [ [0x83, 0x36, 0x5D, 0x34, 0x12, 0xAB] ];
+					let lastLogPercent = -1;
+					const digitSize = 256;
+					for (let d1 = 0; d1 < digitSize; d1++) {
+						for (let d2 = 0; d2 < digitSize; d2++) {
+							for (let d3 = 0; d3 < digitSize; d3++) {
+								let keySalt = d1*digitSize*digitSize + d2*digitSize + d3;
+								let percentDone = keySalt / ((14)*digitSize*digitSize);
+								if (Math.trunc(percentDone*10) !== lastLogPercent) {
+									console.log(`Progress ${Math.trunc(percentDone*100)}`)
+									lastLogPercent = Math.trunc(percentDone*10);
+								}
+								if (d1 > 4 && d1 < 90) continue;
+								if (d1 > 100) continue;
+								let kb0 = (keySalt & 0x00ff0000) >> 16;
+								let kb1 = (keySalt & 0x00ff00) >> 8;
+								let kb2 = keySalt & 0x00ff;
+								let key = [];
+								key.push(kb2);
+								key.push(kb1);
+								key.push(kb0);
+								key.push(0x34);
+								key.push(0x12);
+								key.push(0xAB);
+								const result = await this.filterKey(encryptionSample[2], key);
+								if (result) {
+									possiblyValidKeys.push(key);
+								}
+
+							}
+						}
+					}
+					console.log({possiblyValidKeys})
+					let stillValid = [];
+					for (let i = 0; i < possiblyValidKeys.length; ++i) {
+						let valid = true;
+						for (let j = 0; j < encryptionSample.length && valid; ++j) {
+							valid = valid && (await this.filterKey(encryptionSample[j], possiblyValidKeys[i]));
+						}
+						if (valid) {
+							stillValid.push(possiblyValidKeys[i]);
+						}
+					}
+					console.log({stillValid})
+					if (stillValid.length === 1) {
+						console.log('Success!')
+						keyInfoMap[this.deviceDescriptor.id] = stillValid[0];
+					}
+				}
 				count++;
 			}
-			if (message === 1) {
-				return;
-			}
-			if (message === 4) {
-				if (this.lastMoveCount === -1) {
-					this.lastMoveCount = curMoveCount;
-				}
-			}
-			if (message === 2) {
-				this.handleMoves(decrypted, callback, ori);
-			}
-		});
-		this.watchingMoves = true;
+
+		};
+		n.addEventListener('characteristicvaluechanged',  this.watchingMoves);
 	}
 
+			public async filterKey(sample: Uint8Array, key: number[]) {
+				keyInfoMap[this.deviceDescriptor.id] = key;
+				const decrypt = await getDecryptor(this.deviceDescriptor);
+				const sample1 = await decrypt(sample);
+				const message = this.extractBits(sample1, 0, 4);
+				if (message === 2) {
+					let possiblyValid = true;
+					for (let i = 0; i < 7 && possiblyValid; ++i) {
+						const offset = 7 - 1 - i;
+						const moveCode = this.extractBits(sample1, 12 + offset * 5, 5);
+						possiblyValid = possiblyValid && moveCode < 17;
+					}
+					/*
+					let previousTimestamp = this.extractBits(sample1, 12 + 7*5 + 0*16, 16);
+					for (let i = 1; i < 7 && possiblyValid; ++i) {
+						let timestamp = this.extractBits(sample1, 12 + 7 * 5 + i*16, 16);
+						if (timestamp < previousTimestamp) {
+							possiblyValid = false;
+						} else {
+							previousTimestamp = timestamp;
+						}
+					}
+					*/
+					return possiblyValid;
+				}
+				return false;
+			}
 	public extractBits(buffer: Uint8Array, startBit: number, numBits: number) {
 		let byteNum = Math.floor(startBit / 8);
 		const start = startBit % 8;
@@ -238,8 +335,13 @@ export class GANCubeV2 {
 		this.lastMoveCount = curMoveCount;
 	}
 
-	public unwatchMoves() {
-		this.watchingMoves = false;
+	public async unwatchMoves() {
+		if (this.watchingMoves) {
+			const n = await getCharacteristic(this.notifications);
+			await n.stopNotifications();
+			n.removeEventListener('characteristicvaluechanged',  this.watchingMoves);
+			this.watchingMoves = undefined;
+		}
 		console.log('no longer watching moves');
 	}
 

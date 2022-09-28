@@ -87,6 +87,7 @@ export async function getDecryptor(f: GATTDeviceDescriptor): Promise<Decryptor> 
 
 export type MoveCallback = (move: number) => void;
 export type OrientationCallback = (orientation: Quaternion) => void;
+export type RawCallback = (raw: number[]) => void;
 export class GANCube {
 	private deviceDescriptor;
 	private decrypt?: Decryptor;
@@ -115,13 +116,14 @@ export class GANCube {
 		return `${(version & 0xff0000) >> 16}.${(version & 0xff00) >> 8}.${version & 0xff}`;
 	}
 
-	public async watchMoves(callback: MoveCallback, ori: OrientationCallback) {
+	public async watchMoves(callback: MoveCallback, ori: OrientationCallback, raw: RawCallback) {
 		const pollMoveState = async () => {
 			if (!this.decrypt) {
 				this.decrypt = await getDecryptor(this.deviceDescriptor);
 			}
 			const encryptedMoves = await read(this.moves);
 			const decryptedMoves = await this.decrypt(new Uint8Array(encryptedMoves.buffer));
+			raw(Array.from(decryptedMoves));
 			this.handleMoves(decryptedMoves, callback, ori);
 		};
 		this.watchingMoves = true;

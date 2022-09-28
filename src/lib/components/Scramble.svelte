@@ -130,7 +130,10 @@
 				const server = await getServer({ id: currentDevice[0] });
 				const services: BluetoothRemoteGATTService[] = await server.getPrimaryServices();
 				if (services[0].uuid === '6e400001-b5a3-f393-e0a9-e50e24dc4179') {
-					cube = new GANCubeV2({ id: currentDevice[0] }, $store.cubes.cubeIdToMDMap[currentDevice[0]]);
+					cube = new GANCubeV2(
+						{ id: currentDevice[0] },
+						$store.cubes.cubeIdToMDMap[currentDevice[0]]
+					);
 				} else {
 					cube = new GANCube({ id: currentDevice[0] });
 				}
@@ -143,30 +146,39 @@
 				let spin = 0;
 				async function orientationCallback(q: Quaternion) {
 					//console.log({ q });
-					const orbit = await twistyPlayer.experimentalModel.twistySceneModel.orbitCoordinates.get();
-					const lat = Math.PI/8; //(90 - orbit.latitude) / 180 * Math.PI;
-					const lon = -Math.PI/4; //(orbit.longitude) / 180 * Math.PI;
-					const sphereCoords = new Spherical(orbit.distance, lat, lon)
+					const orbit =
+						await twistyPlayer.experimentalModel.twistySceneModel.orbitCoordinates.get();
+					const lat = Math.PI / 8; //(90 - orbit.latitude) / 180 * Math.PI;
+					const lon = -Math.PI / 4; //(orbit.longitude) / 180 * Math.PI;
+					const sphereCoords = new Spherical(orbit.distance, lat, lon);
 					sphereCoords.makeSafe();
 					const v3 = new Vector3(1, 1, 1);
 					//v3.setFromSpherical(sphereCoords);
 					v3.applyQuaternion(q.clone().invert());
 					sphereCoords.setFromVector3(v3);
-					const latitude = Math.PI/8; //sphereCoords.phi * 180 / Math.PI;
-					const longitude = spin/100; //sphereCoords.theta * 180 / Math.PI;
+					const latitude = Math.PI / 8; //sphereCoords.phi * 180 / Math.PI;
+					const longitude = spin / 100; //sphereCoords.theta * 180 / Math.PI;
 					spin += 1;
 					spin %= 3;
-					const ori = {...orbit, distance: 6 + spin/100 //orbit.distance 
+					const ori = {
+						...orbit,
+						distance: 6 + spin / 100 //orbit.distance
 					};
 					//console.log(ori)
 					twistyPlayer.experimentalModel.twistySceneModel.orbitCoordinatesRequest.set(ori);
 					const obj3d = await twistyPlayer.experimentalCurrentThreeJSPuzzleObject();
 					obj3d.setRotationFromQuaternion(q.clone());
 				}
-				cube.watchMoves((move: number) => {
-					const face = cube.colorToFaceMove(move, ksNew.applyAlg(alg).stateData);
-					addMove(model, face);
-				}, () => {});
+				cube.watchMoves(
+					(move: number) => {
+						if (cube) {
+							const face = cube.colorToFaceMove(move, ksNew.applyAlg(alg).stateData);
+							addMove(model, face);
+						}
+					},
+					() => {},
+					(data: number[]) => { rawData.push(data); rawData = rawData.slice(-30);}
+				);
 			} else if (currentDevice) {
 				console.log('Legacy bluetooth path enabled for ', currentDevice);
 				const cube = (globalThis as any).legacyCubes[currentDevice[0]] as BluetoothPuzzle;
@@ -245,6 +257,8 @@
 	$: timerInTenths = Math.round(rafTimer / 100);
 	$: timerSecs = Math.floor(timerInTenths / 10);
 	$: timerTenths = timerInTenths % 10;
+
+	let rawData: number[][] = [];
 </script>
 
 <div class="content-row">
@@ -278,6 +292,15 @@
 		</Content>
 	</div>
 </div>
+<table>
+	{#each rawData as row}
+	<tr>
+		{#each row as col}
+		<td>{col.toString(16).padStart(2, '0')}</td>
+		{/each}
+	</tr>
+	{/each}
+</table>
 
 <style>
 	.content-row {
