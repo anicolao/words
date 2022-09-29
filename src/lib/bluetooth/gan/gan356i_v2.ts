@@ -326,8 +326,10 @@ export class GANCubeV2 {
 
 	public handleMoves(decryptedMoves: Uint8Array, callback: MoveCallback, ori: OrientationCallback) {
 		const curMoveCount = this.extractBits(decryptedMoves, 4, 8);
+		/*
 		const facingQuat = this.updateOrientation(decryptedMoves);
 		ori(facingQuat);
+		*/
 		if (this.lastMoveCount !== curMoveCount) {
 			let mc = curMoveCount;
 			if (mc < this.lastMoveCount) mc += 256;
@@ -346,7 +348,13 @@ export class GANCubeV2 {
 			for (let i = 0; i < numMoves; ++i) {
 				const offset = numMoves - 1 - i;
 				const moveCode = this.extractBits(decryptedMoves, 12 + offset * 5, 5);
+				const timing = this.extractBits(decryptedMoves, 12 + 7*5 + 16*offset, 16);
+				console.log({moveCode, timestamp: timing});
 				callback(moveCode);
+				if (timing < 30) {
+					// hack in a rotation move so that we get a slice.
+					callback(moveCode+12);
+				}
 			}
 		}
 
@@ -373,10 +381,22 @@ export class GANCubeV2 {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	public colorToFaceMove(originalMove: number, stateData: KStateData) {
-		const mapped = ['U', "U'", 'R', "R'", 'F', "F'", 'D', "D'", 'L', "L'", 'B', "B'"];
-		return mapped[originalMove];
+		const colors = 'WOGRBY';
+		const mapped = ['W', "W'", 'R', "R'", 'G', "G'", 'Y', "Y'", 'O', "O'", 'B', "B'",
+		                "w'", "w", "r'", "r", "g'", "g", 'y', "y'", 'o', "o'", 'b', "b'"];
+		const move = mapped[originalMove];
+		const faceIndex = colors.indexOf(move[0].toUpperCase());
+		const faces = 'ULFRBD';
+		const rotations = 'yxzxzy';
+		let family = faces[stateData['CENTERS'].pieces.indexOf(faceIndex)];
+		if (move[0].toUpperCase() !== move[0]) {
+			family = rotations[stateData['CENTERS'].pieces.indexOf(faceIndex)];
+		}
+		if (move.length === 1) {
+			return family;
+		}
+		return family + "'";
 	}
 
 	public updateOrientation(decryptedMoves: Uint8Array): Quaternion {
