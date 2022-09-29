@@ -7,7 +7,7 @@ export async function pair(connectCallback: CCType): Promise<BluetoothRemoteGATT
 			'0000fff0-0000-1000-8000-00805f9b34fb',
 			'6e400001-b5a3-f393-e0a9-e50e24dc4179'
 		],
-		filters: [{ namePrefix: 'GAN' }, {namePrefix: 'MG'}]
+		filters: [{ namePrefix: 'GAN' }, { namePrefix: 'MG' }]
 	});
 	console.log('Device:', device);
 

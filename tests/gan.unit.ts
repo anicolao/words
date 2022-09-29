@@ -1,9 +1,7 @@
 import { expect } from 'chai';
 import { afterEach, describe, it, vi } from 'vitest';
 
-import {
-	GANCube
-} from '$lib/bluetooth/gan/gan356i_v1';
+import { GANCube } from '$lib/bluetooth/gan/gan356i_v1';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 

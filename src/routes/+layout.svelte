@@ -118,7 +118,7 @@
 					console.log('actions query failing: ');
 					console.error(error);
 				}
-			)
+			);
 		}
 	}
 

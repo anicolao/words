@@ -203,7 +203,9 @@ describe('optimizer can find helpful shorter solutions', () => {
 		const optimized = makeOptimizedData(scramble, solutionArray);
 		const computedSolution =
 			userFB.solution + optimized[1][0].premove + ' ' + movesToString(optimized[1][0].solution);
-		expect(computedSolution).to.equal("B' x2 y U' L2 D' L y' u2 f' F U S U2 R y'  R U' R' U R U' R2");
+		expect(computedSolution).to.equal(
+			"B' x2 y U' L2 D' L y' u2 f' F U S U2 R y'  R U' R' U R U' R2"
+		);
 		const spin = new MoveSeq(orientation);
 		const cube = new CubieCube()
 			.apply(scramble)

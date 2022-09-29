@@ -11,7 +11,7 @@
 	export let stickering = '';
 
 	$: if (stickering) {
-		console.log("RESET STICKERING to: ", stickering);
+		console.log('RESET STICKERING to: ', stickering);
 		/* this doesn't draw well at all.
 		if (stickering === 'cmll') {
 			twistyPlayer.experimentalStickering = 'CMLL';
@@ -22,7 +22,7 @@
 		}
 		*/
 	} else {
-		console.log("CLEAR STICKERS");
+		console.log('CLEAR STICKERS');
 		twistyPlayer.experimentalStickering = 'full';
 	}
 

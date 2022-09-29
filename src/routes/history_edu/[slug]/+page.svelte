@@ -124,7 +124,10 @@
 				const premoves = new MoveSeq(optimized[i][0].premove);
 				const moves = new MoveSeq(optimized[i][0].solution.moves);
 				quicker = spin + ' ' + premoves + ' ' + moves;
-				algStr += `(${s.solution.length()}) vs (${spin.moves.length+premoves.moves.length+moves.moves.length}) ` + quicker;
+				algStr +=
+					`(${s.solution.length()}) vs (${
+						spin.moves.length + premoves.moves.length + moves.moves.length
+					}) ` + quicker;
 			}
 			algStr += '\n';
 		});
@@ -169,7 +172,7 @@
 		const spin = new MoveSeq(alternateSolution?.orientation || '');
 		cubeAlg = spin + ' ' + alternateSolution?.premove + ' ' + alternateSolution?.solution;
 		playHead = 0;
-		console.log({cubeSS, cubeAlg, playHead})
+		console.log({ cubeSS, cubeAlg, playHead });
 	}
 	let playHead = 0;
 	let stickering = '';
@@ -204,10 +207,17 @@
 					<td>{timings[stage.stage]}</td><td align="left">{stage.solution}</td>
 				</tr>
 				{#if alternateSolution && alternateSolution.stage === stage.stage && alternateSolution.solution.length() > 0}
-				<tr class={'alternate'} on:click={() => playAlternate()}>
-					<td align="left"><em>vs: </em>{translation[stage.stage]}</td><td>{alternateSolution.solution.length()}</td>
-					<td>{Math.round(timings[stage.stage]*(alternateSolution.solution.length()/stage.solution.length()))}</td><td align="left">{alternateSolution.solution}</td>
-				</tr>
+					<tr class={'alternate'} on:click={() => playAlternate()}>
+						<td align="left"><em>vs: </em>{translation[stage.stage]}</td><td
+							>{alternateSolution.solution.length()}</td
+						>
+						<td
+							>{Math.round(
+								timings[stage.stage] *
+									(alternateSolution.solution.length() / stage.solution.length())
+							)}</td
+						><td align="left">{alternateSolution.solution}</td>
+					</tr>
 				{/if}
 			{/each}
 		</table>

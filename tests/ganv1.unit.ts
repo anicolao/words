@@ -1,11 +1,7 @@
 import { expect } from 'chai';
 import { describe, it, vi } from 'vitest';
 
-import {
-	getRawKey,
-	getDecryptor,
-	isProtocolEncrypted,
-} from '$lib/bluetooth/gan/gan356i_v1';
+import { getRawKey, getDecryptor, isProtocolEncrypted } from '$lib/bluetooth/gan/gan356i_v1';
 
 describe('GAN 356i encryption/decryption', async () => {
 	vi.mock('$lib/bluetooth/bluetooth', () => {

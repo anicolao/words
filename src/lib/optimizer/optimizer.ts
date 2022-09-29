@@ -61,12 +61,14 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 	}
 	for (let i = 1; rstages && i < rstages.length; ++i) {
 		if (i == 3) {
-			optimized.push([{
-				stage: 'cmll',
-				premove: '',
-				solution: new MoveSeq([]),
-				score: 0
-			}]);
+			optimized.push([
+				{
+					stage: 'cmll',
+					premove: '',
+					solution: new MoveSeq([]),
+					score: 0
+				}
+			]);
 			continue; // CMLL
 		}
 		let ori = rstages[0].orientation || '';
@@ -100,15 +102,19 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 			num_solution: 2,
 			upper_limit: 15
 		};
-		const stageNames = i == 1 ? [ 'ss-front', 'ss-back' ] : i == 2 ? [ 'sb' ] : [ 'lse' ];
+		const stageNames = i == 1 ? ['ss-front', 'ss-back'] : i == 2 ? ['sb'] : ['lse'];
 		optimized.push(
-			stageNames.map(n => solve(n, cube, config)
-				.map((sol) => ({
-					...sol,
-					stage: n
-				}))).flat().sort((x, y) => x.score - y.score)
+			stageNames
+				.map((n) =>
+					solve(n, cube, config).map((sol) => ({
+						...sol,
+						stage: n
+					}))
+				)
+				.flat()
+				.sort((x, y) => x.score - y.score)
 		);
 	}
-	console.log(optimized[optimized.length-1].map(x => [x.stage, x.solution.length(), x.score]))
+	console.log(optimized[optimized.length - 1].map((x) => [x.stage, x.solution.length(), x.score]));
 	return optimized;
 }

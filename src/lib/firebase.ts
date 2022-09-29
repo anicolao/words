@@ -48,12 +48,23 @@ const firebase = {
 	dispatchDoc: (id: string, action: any) => {
 		const user = store.getState().auth;
 		if (user.uid) {
-			setDoc(doc(firebase.firestore, 'from', user.uid, 'to', user.uid, 'requests', id.replaceAll("/", "_")), {
-				...action,
-				creator: user.uid,
-				target: user.uid,
-				timestamp: serverTimestamp()
-			}).catch((message) => {
+			setDoc(
+				doc(
+					firebase.firestore,
+					'from',
+					user.uid,
+					'to',
+					user.uid,
+					'requests',
+					id.replaceAll('/', '_')
+				),
+				{
+					...action,
+					creator: user.uid,
+					target: user.uid,
+					timestamp: serverTimestamp()
+				}
+			).catch((message) => {
 				console.error(message);
 			});
 		}

@@ -97,7 +97,7 @@
 	$: flags = {};
 
 	function modifyMD(e) {
-		console.log("Event: ", { e, id: e.target.id, value: e.target.value })
+		console.log('Event: ', { e, id: e.target.id, value: e.target.value });
 		firebase.dispatchDoc(e.target.id, known_md({ id: e.target.id, data: e.target.value }));
 	}
 </script>
@@ -128,8 +128,11 @@
 		<div class="scarydebug">
 			Scary Debug UI:
 			{#each disconnectedCubes as cube}
-				<li><pre>{cube}</pre><br>
-				<input id="{cube[0]}" type="text" value={mdKnown[cube[0]]} on:change={modifyMD}/></li>
+				<li>
+					<pre>{cube}</pre>
+					<br />
+					<input id={cube[0]} type="text" value={mdKnown[cube[0]]} on:change={modifyMD} />
+				</li>
 			{/each}
 		</div>
 	</ul>

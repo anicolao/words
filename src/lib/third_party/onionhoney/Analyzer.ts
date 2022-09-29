@@ -209,7 +209,7 @@ export const get_oris = (ori: string, preori?: string) => {
 			"z'y2"
 		];
 	} else {
-		oris = [ ori ];
+		oris = [ori];
 	}
 	return oris;
 };

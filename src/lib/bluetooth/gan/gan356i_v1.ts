@@ -232,9 +232,8 @@ export class GANCube {
 		const w = wSquared > 0 ? Math.sqrt(wSquared) : 0;
 		const quat = new Quaternion(x, y, z, w).normalize();
 
-
 		if (!this.homeOrientationKnown) {
-			const orient = new Euler(0, Math.PI/2, 0, "XYZ");
+			const orient = new Euler(0, Math.PI / 2, 0, 'XYZ');
 			const hQuat = quat;
 			const oQ = new Quaternion();
 			oQ.setFromEuler(orient);
