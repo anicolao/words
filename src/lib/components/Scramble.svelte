@@ -5,7 +5,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { TwistyPlayer } from 'cubing/twisty';
 	import { store } from '$lib/store';
-	import { known_version, type CubeInfo } from '$lib/components/cubes';
+	import { known_md, known_version, type CubeInfo } from '$lib/components/cubes';
 	import { GANCube } from '$lib/bluetooth/gan/gan356i_v1';
 	import { Alg, Move } from 'cubing/alg';
 	import { experimentalAppendMove } from '$lib/cubing/alg/operation';
@@ -17,7 +17,7 @@
 	import type { BluetoothPuzzle, MoveEvent } from 'cubing/dist/types/bluetooth';
 	import { Spherical, Vector3, type Quaternion } from 'three';
 	import { getServer } from '$lib/bluetooth/bluetooth';
-	import { GANCubeV2 } from '$lib/bluetooth/gan/gan356i_v2';
+	import { GANCubeV2, getDeviceKeyInfo } from '$lib/bluetooth/gan/gan356i_v2';
 
 	export let origin = 'timer';
 	let scramble = new Alg();
@@ -42,7 +42,7 @@
 	newScramble();
 
 	const twistyPlayer: TwistyPlayer = new TwistyPlayer();
-	onMount(async () => {
+	async function insertTwisty(): Promise<void> {
 		let contentElem = document.querySelector('#twisty-content');
 		if (contentElem) {
 			twistyPlayer.background = 'none';
@@ -53,7 +53,8 @@
 			twistyPlayer.cameraLatitudeLimit = 400;
 			contentElem.appendChild(twistyPlayer);
 		}
-	});
+	}
+	onMount(insertTwisty);
 	onDestroy(() => {
 		if (cube) {
 			cube.unwatchMoves();
@@ -177,7 +178,10 @@
 						}
 					},
 					() => {},
-					(data: number[]) => { rawData.push(data); rawData = rawData.slice(-30);}
+					(data: number[]) => {
+						rawData.push(data);
+						rawData = rawData.slice(-30);
+					}
 				);
 			} else if (currentDevice) {
 				console.log('Legacy bluetooth path enabled for ', currentDevice);
@@ -258,7 +262,44 @@
 	$: timerSecs = Math.floor(timerInTenths / 10);
 	$: timerTenths = timerInTenths % 10;
 
+	let movesRequired = cube?.numEncryptionMovesRequired() || 0;
 	let rawData: number[][] = [];
+	$: if (rawData || casesDone >= 0) {
+		movesRequired = cube?.numEncryptionMovesRequired() || 0;
+	}
+
+	let lastUpdate = new Date();
+	let casesDone = 0;
+	let totalCases = 0;
+	function progress(cases: number, total: number) {
+		const now = new Date();
+		const delta = now.getTime() - lastUpdate.getTime();
+		if (delta > 500 || cases === total) {
+			lastUpdate = now;
+			casesDone = cases;
+			totalCases = total;
+		}
+	}
+	let ready = cube?.isReady(progress);
+	$: if (casesDone === totalCases) {
+		ready = cube?.isReady(progress);
+		if (casesDone > 0) {
+			async function recordDeviceKey() {
+				if (currentDevice) {
+					const hexString = [...new Uint8Array(await getDeviceKeyInfo({ id: currentDevice[0] }))]
+						.map((b) => {
+							return b.toString(16).padStart(2, '0');
+						})
+						.join(' ');
+					firebase.dispatchDoc(
+						currentDevice[0],
+						known_md({ id: currentDevice[0], data: hexString })
+					);
+				}
+			}
+			recordDeviceKey();
+		}
+	}
 </script>
 
 <div class="content-row">
@@ -267,40 +308,49 @@
 			<div class="center-content">
 				{#if !currentDevice}
 					<Pair />
-				{/if}
-				{#if startWhenReady}
-					<p class="tenths">Start when ready!</p>
-				{:else if solving}
-					{#if origin === 'trending_down'}
-						<p>
-							<span class="seconds">{moveCount}</span>
-						</p>
+				{:else if ready}
+					{#if startWhenReady}
+						<p class="tenths">Start when ready!</p>
+					{:else if solving}
+						{#if origin === 'trending_down'}
+							<p>
+								<span class="seconds">{moveCount}</span>
+							</p>
+						{:else}
+							<p>
+								<span class="seconds">{timerSecs}.</span><span class="tenths">{timerTenths}</span>
+							</p>
+						{/if}
 					{:else}
-						<p>
-							<span class="seconds">{timerSecs}.</span><span class="tenths">{timerTenths}</span>
-						</p>
+						<ul>
+							{#each algView as { node, state }}
+								<li class={state}>{node}</li>
+							{/each}
+						</ul>
 					{/if}
 				{:else}
-					<ul>
-						{#each algView as { node, state }}
-							<li class={state}>{node}</li>
+					{#if movesRequired > 0}
+						<p>Please twist any face {movesRequired} more times.</p>
+					{:else}
+						<p>
+							Optimizing communications: {Math.round((casesDone / totalCases) * 100)}% done ({casesDone}/{totalCases})
+						</p>
+					{/if}
+					<table>
+						{#each rawData as row}
+							<tr>
+								{#each row as col}
+									<td>{col.toString(16).padStart(2, '0')}</td>
+								{/each}
+							</tr>
 						{/each}
-					</ul>
+					</table>
 				{/if}
 				<div class="center-content" id="twisty-content" />
 			</div>
 		</Content>
 	</div>
 </div>
-<table>
-	{#each rawData as row}
-	<tr>
-		{#each row as col}
-		<td>{col.toString(16).padStart(2, '0')}</td>
-		{/each}
-	</tr>
-	{/each}
-</table>
 
 <style>
 	.content-row {

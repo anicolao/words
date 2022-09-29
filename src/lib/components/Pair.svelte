@@ -118,20 +118,10 @@
 			{/each}
 		</ul>
 	{/if}
-
-	{#if disconnectedCubes.length}
-		<p>Wake up one of these cubes to automatically reconnect, or click if that doesn't work:</p>
-		<ul>
-			{#each disconnectedCubes as cube}
-				{#if mdKnown[cube[0]]}
-					<li><Button on:click={pairHandler} variant="raised">Pair {cube[1]}</Button></li>
-				{/if}
-			{/each}
-		</ul>
-	{/if}
 {/if}
-<Button on:click={scanHandler} variant="raised">Scan</Button>
-<Button on:click={legacyPairHandler} variant="raised">Pair Other Cubes</Button>
+<span><Button on:click={pairHandler} variant="raised">Pair</Button></span>
+<span><Button on:click={scanHandler} variant="raised">Scan</Button></span>
+<span><Button on:click={legacyPairHandler} variant="raised">Pair Unsupported Cube</Button></span>
 
 {#if flags.scarydebug}
 	<ul>
@@ -151,5 +141,9 @@
 		border: 2px dashed red;
 		margin: 3em;
 		padding: 1em;
+	}
+
+	span {
+		margin: 0.5em;
 	}
 </style>

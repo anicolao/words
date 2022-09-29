@@ -88,6 +88,7 @@ export async function getDecryptor(f: GATTDeviceDescriptor): Promise<Decryptor> 
 export type MoveCallback = (move: number) => void;
 export type OrientationCallback = (orientation: Quaternion) => void;
 export type RawCallback = (raw: number[]) => void;
+export type ProgressCallback = (casesDone: number, casesTotal: number) => void;
 export class GANCube {
 	private deviceDescriptor;
 	private decrypt?: Decryptor;
@@ -114,6 +115,15 @@ export class GANCube {
 	public async getVersionAsString() {
 		const version = await getVersionDecoded(this.deviceDescriptor);
 		return `${(version & 0xff0000) >> 16}.${(version & 0xff00) >> 8}.${version & 0xff}`;
+	}
+
+	public numEncryptionMovesRequired() {
+		return 0;
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	public isReady(p: ProgressCallback) {
+		return true;
 	}
 
 	public async watchMoves(callback: MoveCallback, ori: OrientationCallback, raw: RawCallback) {
