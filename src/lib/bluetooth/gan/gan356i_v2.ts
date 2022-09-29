@@ -32,6 +32,7 @@ export async function getDeviceKeyInfo(f: GATTDeviceDescriptor) {
 
 export type GANV2KeyInfo = { key: number[]; iv: number[] };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getRawKey(f: GATTDeviceDescriptor): Promise<GANV2KeyInfo> {
 	return {
 		key: [
@@ -193,8 +194,10 @@ export class GANCubeV2 {
 			if (!this.decrypt) {
 				await setupEncryption();
 			}
+			if (!e.currentTarget) return;
+			const target = e.currentTarget as unknown as { value: Uint8Array };
 			if (this.decrypt) {
-				const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
+				const encrypted = new Uint8Array(target.value.buffer);
 				const decrypted = await this.decrypt(encrypted);
 
 				const message = this.extractBits(decrypted, 0, 4);
@@ -211,7 +214,7 @@ export class GANCubeV2 {
 					this.handleMoves(decrypted, callback, ori);
 				}
 			} else {
-				const encrypted = new Uint8Array(e.currentTarget?.value.buffer);
+				const encrypted = new Uint8Array(target.value.buffer);
 				raw(Array.from(encrypted));
 				encryptionSample.push(encrypted);
 				if (encryptionSample.length === this.NUM_MOVES_TO_DECRYPT) {
@@ -370,6 +373,7 @@ export class GANCubeV2 {
 		}
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	public colorToFaceMove(originalMove: number, stateData: KStateData) {
 		const mapped = ['U', "U'", 'R', "R'", 'F', "F'", 'D', "D'", 'L', "L'", 'B', "B'"];
 		return mapped[originalMove];

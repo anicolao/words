@@ -71,7 +71,7 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 			]);
 			continue; // CMLL
 		}
-		let ori = rstages[0].orientation || '';
+		const ori = rstages[0].orientation || '';
 		const spin = new MoveSeq(ori);
 		let cube = new CubieCube().apply(scrambleString);
 		console.log(scrambleString);

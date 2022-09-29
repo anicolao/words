@@ -10,7 +10,6 @@
 	import {
 		get_roux_stages,
 		type SolutionDesc,
-		type SolverConfig
 	} from '$lib/third_party/onionhoney/Analyzer';
 	import { MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
 	import { makeOptimizedData } from '$lib/optimizer/optimizer';

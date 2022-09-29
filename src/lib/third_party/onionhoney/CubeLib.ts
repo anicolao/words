@@ -1018,16 +1018,14 @@ const CubeUtil = (() => {
 		const edge_stickers = stickers.filter((s) => s[2] === Typ.E);
 		const corner_stickers = stickers.filter((s) => s[2] === Typ.C);
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const ep_stickers: StickerExtT[][] = Array(12)
 			.fill(0)
-			.map((_) => Array(0));
+			.map(() => Array(0));
 		edge_stickers.map((s) => ep_stickers[s[0]].push(s));
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const cp_stickers: StickerExtT[][] = Array(8)
 			.fill(0)
-			.map((_) => Array(0));
+			.map(() => Array(0));
 		corner_stickers.map((s) => cp_stickers[s[0]].push(s));
 
 		const epcp_pairs: [number, number][] = [];

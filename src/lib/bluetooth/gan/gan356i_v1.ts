@@ -173,7 +173,8 @@ export class GANCube {
 		}
 		this.lastMoveCount = arr[12];
 		if (this.watchingMoves) {
-			this.watchMoves(callback, ori);
+			// eslint-disable-next-line @typescript-eslint/no-empty-function
+			this.watchMoves(callback, ori, () => {});
 		}
 	}
 

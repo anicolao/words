@@ -94,9 +94,9 @@
 	$: connectedCubes = cubes.filter((x) => x[2]);
 	$: disconnectedCubes = cubes.filter((x) => !x[2]);
 	$: mdKnown = $store.cubes.cubeIdToMDMap;
-	$: flags = {};
+	let flags: {scarydebug: boolean} = { scarydebug: false };
 
-	function modifyMD(e) {
+	function modifyMD(e: any) {
 		console.log('Event: ', { e, id: e.target.id, value: e.target.value });
 		firebase.dispatchDoc(e.target.id, known_md({ id: e.target.id, data: e.target.value }));
 	}

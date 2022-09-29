@@ -192,6 +192,7 @@ describe('GAN 356i', async () => {
 			const fail = () => {
 				expect(true).to.be.false;
 			};
+			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			const nullcallback = () => {};
 			ganCube.handleMoves(homeState, fail, nullcallback);
 			expect(ganCube.getFacing()).to.equal('WG');
@@ -217,6 +218,7 @@ describe('GAN 356i', async () => {
 				const countcallback = () => {
 					count++;
 				};
+				// eslint-disable-next-line @typescript-eslint/no-empty-function
 				const nullcallback = () => {};
 				ganCube.handleMoves(homeState, countcallback, nullcallback);
 				expect(count).to.equal(0);

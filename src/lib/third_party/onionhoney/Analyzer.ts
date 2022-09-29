@@ -1,7 +1,6 @@
 import { CubeUtil, CubieCube, FaceletCube, Mask, Move, MoveSeq } from './CubeLib';
 import { CachedSolver } from './CachedSolver';
 import { getEvaluator } from './Evaluator';
-import { visualize } from '$lib/optimizer/optimizer';
 
 export type AnalyzerState = {
 	scramble: string;
@@ -155,7 +154,6 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 }
 
 export function solve(solver_str: string, cube: CubieCube, config: SolverConfig) {
-	const v = visualize(cube);
 	const solver = CachedSolver.get(solver_str);
 	const { premoves, num_solution, upper_limit } = config;
 	const ev = getEvaluator(config.evaluator || 'sequential');
