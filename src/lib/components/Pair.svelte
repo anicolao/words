@@ -94,7 +94,7 @@
 	$: connectedCubes = cubes.filter((x) => x[2]);
 	$: disconnectedCubes = cubes.filter((x) => !x[2]);
 	$: mdKnown = $store.cubes.cubeIdToMDMap;
-	let flags: {scarydebug: boolean} = { scarydebug: false };
+	let flags: { scarydebug: boolean } = { scarydebug: false };
 
 	function modifyMD(e: any) {
 		console.log('Event: ', { e, id: e.target.id, value: e.target.value });

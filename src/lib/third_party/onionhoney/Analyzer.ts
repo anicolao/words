@@ -33,6 +33,7 @@ export type SolverConfig = {
 
 export type SolutionDesc = {
 	solution: MoveSeq;
+	rotatedSolution: MoveSeq;
 	premove: string;
 	score: number;
 	orientation?: string;
@@ -123,6 +124,9 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 				solution.push({
 					...defaultSolution,
 					solution: new MoveSeq(current_moves),
+					rotatedSolution: new MoveSeq(current_moves)
+						.pushBackAll(orientation)
+						.tail(orientation.length()),
 					orientation: orientation.inv().moves.join(''),
 					stage: 'fb'
 				});
@@ -134,13 +138,25 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 			const stage = stages[stage_idx];
 			const masks = getMasksForStage(stage);
 			if (masks.some((mask) => is_solved(cube, mask, oris))) {
-				solution.push({ ...defaultSolution, solution: new MoveSeq(current_moves), stage });
+				const sol = new MoveSeq(current_moves);
+				let rot = new MoveSeq([]);
+				if (solution[0].orientation) {
+					rot = new MoveSeq(solution[0].orientation);
+				}
+				const rotatedSolution = sol.pushBackAll(rot).tail(rot.length());
+				solution.push({ ...defaultSolution, solution: sol, rotatedSolution, stage });
 				stage_idx++;
 				current_moves = [];
 			}
 		} else {
 			if (is_cmll_solved(cube, oris)) {
-				solution.push({ ...defaultSolution, solution: new MoveSeq(current_moves), stage: 'cmll' });
+				const sol = new MoveSeq(current_moves);
+				let rot = new MoveSeq([]);
+				if (solution[0].orientation) {
+					rot = new MoveSeq(solution[0].orientation);
+				}
+				const rotatedSolution = sol.pushBackAll(rot).tail(rot.length());
+				solution.push({ ...defaultSolution, solution: sol, rotatedSolution, stage: 'cmll' });
 				stage_idx++;
 				current_moves = [];
 			}
@@ -148,7 +164,13 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 		if (stage_idx >= stages.length) break;
 	}
 	if (current_moves.length > 0) {
-		solution.push({ ...defaultSolution, solution: new MoveSeq(current_moves), stage: 'unknown' });
+		const sol = new MoveSeq(current_moves);
+		let rot = new MoveSeq([]);
+		if (solution[0].orientation) {
+			rot = new MoveSeq(solution[0].orientation);
+		}
+		const rotatedSolution = sol.pushBackAll(rot).tail(rot.length());
+		solution.push({ ...defaultSolution, solution: sol, rotatedSolution, stage: 'unknown' });
 	}
 	return solution;
 }
@@ -224,6 +246,9 @@ function analyze_fb(state: AnalyzerState, cube: CubieCube): SolutionDesc[] {
 			solve('fb', cube.changeBasis(new MoveSeq(ori)), config)
 				.map((sol) => ({
 					...sol,
+					rotatedSolution: sol.solution
+						.pushBackAll(new MoveSeq(ori))
+						.tail(new MoveSeq(ori).length()),
 					orientation: ori,
 					stage: 'fb'
 				}))
@@ -239,11 +264,16 @@ function analyze_ss(state: AnalyzerState, cube: CubieCube): SolutionDesc[] {
 		num_solution: state.num_solution,
 		upper_limit: 15
 	};
+	let ori = new MoveSeq([]);
+	if (state.full_solution[0].orientation) {
+		ori = new MoveSeq(state.full_solution[0].orientation).inv();
+	}
 	const solutions = ['ss-front', 'ss-back']
 		.map((name) =>
 			solve(name, cube, config)
 				.map((sol) => ({
 					...sol,
+					rotatedSolution: sol.solution.pushBackAll(ori).tail(ori.length()),
 					stage: name
 				}))
 				.sort((x, y) => x.score - y.score)
@@ -257,9 +287,11 @@ function analyze_sp(state: AnalyzerState, cube: CubieCube): SolutionDesc[] {
 		num_solution: state.num_solution,
 		upper_limit: 10
 	};
+	const ori = new MoveSeq(state.full_solution[0]?.orientation || '').inv();
 	const solutions = solve('sb', cube, config)
 		.map((sol) => ({
 			...sol,
+			rotatedSolution: sol.solution.pushBackAll(ori).tail(ori.length()),
 			stage: 'sp'
 		}))
 		.sort((x, y) => x.score - y.score);
@@ -272,9 +304,11 @@ function analyze_lse(state: AnalyzerState, cube: CubieCube): SolutionDesc[] {
 		num_solution: state.num_solution,
 		upper_limit: 20
 	};
+	const ori = new MoveSeq(state.full_solution[0]?.orientation || '').inv();
 	const solutions = solve('lse', cube, config)
 		.map((sol) => ({
 			...sol,
+			rotatedSolution: sol.solution.pushBackAll(ori).tail(ori.length()),
 			stage: 'lse'
 		}))
 		.sort((x, y) => x.score - y.score);

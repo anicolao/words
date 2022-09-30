@@ -37,7 +37,7 @@ export async function setupDevices(devices: BluetoothDevice[], connectCallback: 
 					log('ad: ', device);
 					abortController.abort();
 					connect(device, connectCallback);
-					log({md: event.manufacturerData});
+					log({ md: event.manufacturerData });
 				},
 				true
 			);

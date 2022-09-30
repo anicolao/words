@@ -395,6 +395,10 @@ export class Move {
 	eoc: Array<OriChg> = [];
 	tpc: Array<PermChg> = [];
 	name = '';
+	serialize() {
+		const { cpc, coc, epc, eoc, tpc } = this;
+		return JSON.stringify({ cpc, coc, epc, eoc, tpc });
+	}
 	constructor(arg?: Array<Move> | CubieCube | Move | MoveT, name?: string) {
 		if (Array.isArray(arg)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -520,6 +524,26 @@ export class Move {
 		return moves_dict;
 	};
 	static all: { [key: string]: Move } = Move.generate_base_moves();
+	// The rotations cache contains a rotation move coalesced with a
+	// regular move; e.g. it might contain y L. Later on, if you're
+	// trying to push y before F, you'll discover that F y == y L,
+	// and so you can rewrite F -> L and push y back. So the rotMove
+	// string is the serialization of y L and the Move[] = [y, L].
+	static rotationsCache: { [rotMove: string]: Move[] } = {};
+	static cachePopulatedFor: { [key: string]: boolean } = {};
+
+	static populateRotationCacheFor(m: Move) {
+		if (!Move.cachePopulatedFor[m.name]) {
+			Object.keys(Move.all).forEach((a) => {
+				if (a.slice(-1) !== '3') {
+					const moves = [m, Move.all[a]];
+					const appended = new Move().from_moves(moves, 'append');
+					this.rotationsCache[appended.serialize()] = moves;
+				}
+			});
+			Move.cachePopulatedFor[m.name] = true;
+		}
+	}
 
 	inv(): Move {
 		let name: string;
@@ -677,6 +701,42 @@ export class MoveSeq {
 		return new MoveSeq(newMoves);
 	}
 
+	pushBackAll(s: MoveSeq): MoveSeq {
+		let ret = new MoveSeq(this.moves);
+		for (let i = 0; i < s.moves.length; ++i) {
+			ret = ret.pushBack(s.moves[i]);
+		}
+		return ret;
+	}
+	pushBack(m: Move): MoveSeq {
+		const reversedMoves = this.moves.slice(0).reverse();
+		const processedMoves = [];
+		const newMoves: Move[][] = [];
+		for (let i = 0; i < reversedMoves.length; ++i) {
+			const origMove = reversedMoves[i];
+			const appended = new Move().from_moves([origMove, m], 'append');
+			const flipped = new Move().from_moves([m, origMove], 'flipped');
+			Move.populateRotationCacheFor(m);
+			if (appended.serialize() !== flipped.serialize()) {
+				const swapped = Move.rotationsCache[appended.serialize()];
+				if (swapped && swapped.length === 2) {
+					processedMoves.push(swapped[1]);
+					m = swapped[0];
+					continue;
+				}
+				newMoves.push(this.moves.slice(0, this.moves.length - i));
+				newMoves.push([m]);
+				newMoves.push(this.moves.slice(this.moves.length - i));
+				return new MoveSeq(newMoves.flat());
+			} else {
+				processedMoves.push(origMove);
+			}
+		}
+		newMoves.push([m]);
+		newMoves.push(processedMoves.reverse());
+		return new MoveSeq(newMoves.flat());
+	}
+
 	inv() {
 		const moves: Move[] = this.moves
 			.slice(0)
@@ -688,6 +748,11 @@ export class MoveSeq {
 
 	slice(n: number) {
 		const moves: Move[] = this.moves.slice(0, n);
+		return new MoveSeq(moves);
+	}
+
+	tail(n: number) {
+		const moves: Move[] = this.moves.slice(n);
 		return new MoveSeq(moves);
 	}
 

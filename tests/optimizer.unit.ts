@@ -20,7 +20,16 @@ describe('optimizer can find helpful shorter solutions', () => {
 		const stage = userSolution.stage;
 		const orientation = userSolution.orientation;
 		const moves = new MoveSeq(userSolution.solution);
-		const ret: SolutionDesc = { stage, orientation, solution: moves, premove: '', score: 0 };
+		const ori = new MoveSeq(orientation).inv();
+		const rotatedSolution = moves.pushBackAll(ori).tail(ori.length());
+		const ret: SolutionDesc = {
+			stage,
+			orientation,
+			solution: moves,
+			rotatedSolution,
+			premove: '',
+			score: 0
+		};
 		return ret;
 	}
 	it('can find shorter first block', () => {

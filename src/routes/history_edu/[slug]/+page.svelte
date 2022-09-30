@@ -7,11 +7,8 @@
 	import BarChart from '$lib/components/BarChart.svelte';
 	import IconButton from '@smui/icon-button';
 	import { Item, Text } from '@smui/list';
-	import {
-		get_roux_stages,
-		type SolutionDesc,
-	} from '$lib/third_party/onionhoney/Analyzer';
-	import { MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
+	import { get_roux_stages, type SolutionDesc } from '$lib/third_party/onionhoney/Analyzer';
+	import { Move, MoveSeq } from '$lib/third_party/onionhoney/CubeLib';
 	import { makeOptimizedData } from '$lib/optimizer/optimizer';
 
 	function toArray(any: ArrayLike<unknown> | Iterable<unknown>) {
@@ -35,10 +32,18 @@
 		.join(' ');
 
 	$: cubeSS = scrambleString;
-	$: cubeAlg = solutionString;
 	let alternateScramble = scrambleString;
 
 	$: stages = get_roux_stages(scrambleString, solutionString);
+	function rSolution(stages: SolutionDesc[]) {
+		let orientation = new MoveSeq([]);
+		if (stages && stages[0].orientation) {
+			orientation = new MoveSeq(stages[0].orientation).inv();
+		}
+		const orig = new MoveSeq(solutionString);
+		return orig.pushBackAll(orientation).toString();
+	}
+	$: cubeAlg = rSolution(stages);
 	$: optimized = [] /* makeOptimizedData(scrambleString, stages) */ as {
 		orientation?: string;
 		stage: string;
@@ -115,9 +120,17 @@
 	}
 	function copyText() {
 		let algStr = scrambleString + ' // Scramble\n';
+		let orientation = new MoveSeq([]);
+		if (stages[0].orientation) {
+			orientation = new MoveSeq(stages[0].orientation).inv();
+		}
+		algStr += orientation + ' ';
 		stages.forEach((s, i) => {
 			let quicker = '?';
-			algStr += s.solution + ' // ' + translation[s.stage];
+			const rotatedSoln = new MoveSeq(
+				s.solution.pushBackAll(orientation).moves.slice(orientation.length())
+			);
+			algStr += rotatedSoln + ' // ' + translation[s.stage];
 			if (optimized[i] && optimized[i].length) {
 				const spin = new MoveSeq(optimized[i][0]?.orientation || '');
 				const premoves = new MoveSeq(optimized[i][0].premove);
@@ -151,7 +164,7 @@
 				playHead = startOffset;
 				stickering = s.stage;
 				if (optimized[i] && optimized[i].length) {
-					alternateSolution = optimized[i][0];
+					alternateSolution = { ...optimized[i][0], rotatedSolution: new MoveSeq([]) };
 					alternateSolution.stage = s.stage;
 				} else {
 					alternateSolution = undefined;
@@ -203,7 +216,7 @@
 			{#each stages as stage, i}
 				<tr class={i % 2 ? 'odd' : 'even'} on:click={() => selectStage(translation[stage.stage])}>
 					<td align="left">{translation[stage.stage]}</td><td>{stage.solution.length()}</td>
-					<td>{timings[stage.stage]}</td><td align="left">{stage.solution}</td>
+					<td>{timings[stage.stage]}</td><td align="left">{stage.rotatedSolution}</td>
 				</tr>
 				{#if alternateSolution && alternateSolution.stage === stage.stage && alternateSolution.solution.length() > 0}
 					<tr class={'alternate'} on:click={() => playAlternate()}>

@@ -348,12 +348,12 @@ export class GANCubeV2 {
 			for (let i = 0; i < numMoves; ++i) {
 				const offset = numMoves - 1 - i;
 				const moveCode = this.extractBits(decryptedMoves, 12 + offset * 5, 5);
-				const timing = this.extractBits(decryptedMoves, 12 + 7*5 + 16*offset, 16);
-				console.log({moveCode, timestamp: timing});
+				const timing = this.extractBits(decryptedMoves, 12 + 7 * 5 + 16 * offset, 16);
+				console.log({ moveCode, timestamp: timing });
 				callback(moveCode);
 				if (timing < 30) {
 					// hack in a rotation move so that we get a slice.
-					callback(moveCode+12);
+					callback(moveCode + 12);
 				}
 			}
 		}
@@ -383,8 +383,32 @@ export class GANCubeV2 {
 
 	public colorToFaceMove(originalMove: number, stateData: KStateData) {
 		const colors = 'WOGRBY';
-		const mapped = ['W', "W'", 'R', "R'", 'G', "G'", 'Y', "Y'", 'O', "O'", 'B', "B'",
-		                "w'", "w", "r'", "r", "g'", "g", 'y', "y'", 'o', "o'", 'b', "b'"];
+		const mapped = [
+			'W',
+			"W'",
+			'R',
+			"R'",
+			'G',
+			"G'",
+			'Y',
+			"Y'",
+			'O',
+			"O'",
+			'B',
+			"B'",
+			"w'",
+			'w',
+			"r'",
+			'r',
+			"g'",
+			'g',
+			'y',
+			"y'",
+			'o',
+			"o'",
+			'b',
+			"b'"
+		];
 		const move = mapped[originalMove];
 		const faceIndex = colors.indexOf(move[0].toUpperCase());
 		const faces = 'ULFRBD';
