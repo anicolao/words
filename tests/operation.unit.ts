@@ -129,6 +129,6 @@ describe('operation', () => {
 	tests({
 		test: 'slice moves only',
 		options: { sliceMoves333: true },
-		tests: ['R + x = R x', "R x + L' = R x L'", "L2' R2 + x2' = M2"]
+		tests: ['R + x = R x', "R x + L' = R x L'", "L2' R2 + x2' = M2", "F B' + z' = S'"]
 	});
 });

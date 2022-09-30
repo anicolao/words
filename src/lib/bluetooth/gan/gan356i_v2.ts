@@ -115,6 +115,7 @@ export class GANCubeV2 {
 	private request: GATTCharacteristicDescriptor;
 	private encrypt?: Decryptor;
 	private lastMoveCount;
+	private lastMoveTime: number;
 	private watchingMoves: ((e: Event) => Promise<void>) | undefined = undefined;
 	private trackingRotation = false;
 
@@ -131,6 +132,7 @@ export class GANCubeV2 {
 		}
 		this.deviceDescriptor = f;
 		this.lastMoveCount = -1;
+		this.lastMoveTime = -1;
 		this.notifications = {
 			...this.deviceDescriptor,
 			service: UUIDs.ganCubeService,
@@ -208,6 +210,7 @@ export class GANCubeV2 {
 				if (message === 4) {
 					if (this.lastMoveCount === -1) {
 						this.lastMoveCount = curMoveCount;
+						this.lastMoveTime = new Date().getTime();
 					}
 				}
 				if (message === 2) {
@@ -336,6 +339,7 @@ export class GANCubeV2 {
 			if (this.lastMoveCount === -1) {
 				// assume 1 move ...
 				this.lastMoveCount = mc - 1;
+				this.lastMoveTime = new Date().getTime();
 			}
 			const numMoves = Math.min(mc - this.lastMoveCount, 6);
 			if (mc - this.lastMoveCount > 6) {
@@ -345,11 +349,12 @@ export class GANCubeV2 {
 					}!`
 				);
 			}
+			const clockTime = new Date().getTime();
 			for (let i = 0; i < numMoves; ++i) {
 				const offset = numMoves - 1 - i;
 				const moveCode = this.extractBits(decryptedMoves, 12 + offset * 5, 5);
 				const timing = this.extractBits(decryptedMoves, 12 + 7 * 5 + 16 * offset, 16);
-				console.log({ moveCode, timestamp: timing });
+				console.log({ moveCode, timestamp: timing, clock_timing: clockTime - this.lastMoveTime });
 				callback(moveCode);
 				if (timing < 30) {
 					// hack in a rotation move so that we get a slice.
@@ -370,6 +375,7 @@ export class GANCubeV2 {
 			}
 		}
 		this.lastMoveCount = curMoveCount;
+		this.lastMoveTime = new Date().getTime();
 	}
 
 	public async unwatchMoves() {
