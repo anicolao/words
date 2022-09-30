@@ -419,11 +419,17 @@ export class GANCubeV2 {
 		const faceIndex = colors.indexOf(move[0].toUpperCase());
 		const faces = 'ULFRBD';
 		const rotations = 'yxzxzy';
-		let family = faces[stateData['CENTERS'].pieces.indexOf(faceIndex)];
+		const inversion = '010011';
+		const index = stateData['CENTERS'].pieces.indexOf(faceIndex);
+		let family = faces[index];
+		let inverted = false;
 		if (move[0].toUpperCase() !== move[0]) {
-			family = rotations[stateData['CENTERS'].pieces.indexOf(faceIndex)];
+			family = rotations[index];
+			inverted = inversion[index] === '1';
 		}
-		if (move.length === 1) {
+		let forward = move.length === 1;
+		if (inverted) forward = !forward;
+		if (forward) {
 			return family;
 		}
 		return family + "'";

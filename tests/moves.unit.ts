@@ -47,6 +47,13 @@ describe('CubeLib.Move has useful functionality', () => {
 		expect(combined.toString()).to.equal("y' x x ");
 	});
 
+	it('pushes rotations through each other II', () => {
+		const alg = new MoveSeq("R L' x");
+		const R = Move.all["y'"];
+		const combined = alg.pushBack(R);
+		expect(combined.toString()).to.equal("y' B F' z' ");
+	});
+
 	it('can push back multiple moves', () => {
 		const alg = new MoveSeq('U L F R D B');
 		const I = new MoveSeq('y y y y');

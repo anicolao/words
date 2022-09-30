@@ -4,6 +4,7 @@ import { afterEach, describe, it, vi } from 'vitest';
 import { GANCube } from '$lib/bluetooth/gan/gan356i_v1';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
+import { GANCubeV2 } from '$lib/bluetooth/gan/gan356i_v2';
 
 describe('GAN 356i', async () => {
 	const kpuzzle = await cube3x3x3.kpuzzle();
@@ -33,36 +34,51 @@ describe('GAN 356i', async () => {
 	});
 
 	interface TestCase {
+		cube: GANCube | GANCubeV2;
 		from: number;
 		to: string;
 		afterRotations?: Alg;
 	}
 
-	function validateTransform({ from, to, afterRotations }: TestCase) {
+	function validateTransform({ cube, from, to, afterRotations }: TestCase) {
 		const startState = kpuzzle.startState();
 		const state = afterRotations ? startState.applyAlg(afterRotations) : startState;
-		const newMove = new GANCube(dummyDevice).colorToFaceMove(from, state.stateData);
+		const newMove = cube.colorToFaceMove(from, state.stateData);
 		expect(newMove).to.equal(to);
 	}
 
 	// after an X rotation , ULFRBD <- FLDRUB
+	const ganv1 = new GANCube(dummyDevice);
+	const ganv2 = new GANCubeV2(dummyDevice, '');
 	const faceCases = [
-		{ face: 0x06, originalFace: 'F', expectedFace: 'U' },
-		{ face: 0x0c, originalFace: 'L', expectedFace: 'L' },
-		{ face: 0x09, originalFace: 'D', expectedFace: 'F' },
-		{ face: 0x03, originalFace: 'R', expectedFace: 'R' },
-		{ face: 0x05, originalFace: "R'", expectedFace: "R'" },
-		{ face: 0x00, originalFace: 'U', expectedFace: 'B' },
-		{ face: 0x0f, originalFace: 'B', expectedFace: 'D' },
-		{ face: 0x26, originalFace: 'z', expectedFace: 'z' }
+		{ cube: ganv1, face: 0x06, originalFace: 'F', expectedFace: 'U' },
+		{ cube: ganv1, face: 0x0c, originalFace: 'L', expectedFace: 'L' },
+		{ cube: ganv1, face: 0x09, originalFace: 'D', expectedFace: 'F' },
+		{ cube: ganv1, face: 0x03, originalFace: 'R', expectedFace: 'R' },
+		{ cube: ganv1, face: 0x05, originalFace: "R'", expectedFace: "R'" },
+		{ cube: ganv1, face: 0x00, originalFace: 'U', expectedFace: 'B' },
+		{ cube: ganv1, face: 0x0f, originalFace: 'B', expectedFace: 'D' },
+		{ cube: ganv2, face: 4, originalFace: 'F', expectedFace: 'U' },
+		{ cube: ganv2, face: 8, originalFace: 'L', expectedFace: 'L' },
+		{ cube: ganv2, face: 6, originalFace: 'D', expectedFace: 'F' },
+		{ cube: ganv2, face: 2, originalFace: 'R', expectedFace: 'R' },
+		{ cube: ganv2, face: 3, originalFace: "R'", expectedFace: "R'" },
+		{ cube: ganv2, face: 0, originalFace: 'U', expectedFace: 'B' },
+		{ cube: ganv2, face: 10, originalFace: 'B', expectedFace: 'D' }
 	];
-	for (const { face, originalFace, expectedFace } of faceCases) {
+	const rotationCases = [
+		{ cube: ganv1, face: 0x26, originalFace: 'z', expectedFace: 'z' },
+		{ cube: ganv1, face: 0x23, originalFace: 'y', expectedFace: 'y' },
+		{ cube: ganv2, face: 13, originalFace: 'y', expectedFace: "z'" }
+	];
+	for (const { cube, face, originalFace, expectedFace } of [faceCases, rotationCases].flat()) {
 		it(`should not touch '${face}' moves`, () => {
-			validateTransform({ from: face, to: originalFace });
+			validateTransform({ cube, from: face, to: originalFace });
 		});
 
 		it(`should modify '${face}' to '${expectedFace}' moves with x rotation`, () => {
 			validateTransform({
+				cube,
 				from: face,
 				to: expectedFace,
 				afterRotations: new Alg('x')
