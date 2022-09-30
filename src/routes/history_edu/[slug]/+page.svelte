@@ -127,10 +127,7 @@
 		algStr += orientation + ' ';
 		stages.forEach((s, i) => {
 			let quicker = '?';
-			const rotatedSoln = new MoveSeq(
-				s.solution.pushBackAll(orientation).moves.slice(orientation.length())
-			);
-			algStr += rotatedSoln + ' // ' + translation[s.stage];
+			algStr += s.rotatedSolution + ' // ' + translation[s.stage];
 			if (optimized[i] && optimized[i].length) {
 				const spin = new MoveSeq(optimized[i][0]?.orientation || '');
 				const premoves = new MoveSeq(optimized[i][0].premove);
