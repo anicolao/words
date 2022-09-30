@@ -113,6 +113,7 @@ describe('operation', () => {
 			"L' R + x' = M",
 			"L R' + x = M'",
 			"L' R + x = L' R x",
+			"R L' + x' = M",
 			"U' D + y = E'",
 			"U D' + y' = E",
 			"F B' + z' = S'",

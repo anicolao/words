@@ -408,12 +408,12 @@ export class GANCubeV2 {
 			'r',
 			"g'",
 			'g',
-			'y',
 			"y'",
-			'o',
+			'y',
 			"o'",
-			'b',
-			"b'"
+			'o',
+			"b'",
+			'b'
 		];
 		const move = mapped[originalMove];
 		const faceIndex = colors.indexOf(move[0].toUpperCase());
@@ -431,6 +431,9 @@ export class GANCubeV2 {
 		if (inverted) forward = !forward;
 		if (forward) {
 			return family;
+		}
+		if (family.slice(-1) === "'") {
+			return family.slice(0, -1);
 		}
 		return family + "'";
 	}
