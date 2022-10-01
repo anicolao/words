@@ -1,4 +1,4 @@
-import { CubeUtil, CubieCube, FaceletCube, Mask, Move, MoveSeq } from './CubeLib';
+import { CubeUtil, CubieCube, Mask, Move, MoveSeq } from './CubeLib';
 import { CachedSolver } from './CachedSolver';
 import { getEvaluator } from './Evaluator';
 
@@ -95,6 +95,7 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 	const stages = ['fb', 'ss', 'sp', 'cmll', 'lse'];
 	const solution: SolutionDesc[] = [];
 	let current_moves: Move[] = [];
+	const accumulated_rots: MoveSeq[] = [];
 	let stage_idx = 0;
 	const getMasksForStage = (s: string) => {
 		switch (s) {
@@ -115,24 +116,13 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 	for (const move of moves) {
 		cube = cube.apply(move);
 		if (move.name !== 'id') current_moves.push(move);
-		if (current_moves.length === 16) {
-			console.log(current_moves.toString());
-			const faceletCube = FaceletCube.from_cubie(cube);
-			const visual = FaceletCube.to_unfolded_cube_str(faceletCube);
-			console.log(visual);
-		}
 
 		if (stage_idx === 0) {
 			const res = is_fb_solved(cube, oris);
 			if (res !== null) {
 				const orientation = res;
-				const xRotations = [];
-				xRotations.push(new MoveSeq(''));
-				xRotations.push(new MoveSeq('x'));
-				xRotations.push(new MoveSeq('x2'));
-				xRotations.push(new MoveSeq("x'"));
 				const cube1 = cube.changeBasis(orientation);
-				const prerotate = prerotate_solves(cube1, Mask.fb_mask, xRotations);
+				const prerotate = prerotate_solves(cube1, Mask.fb_mask, oris);
 				let prerotate_orientation = new MoveSeq('');
 				if (prerotate !== undefined) {
 					prerotate_orientation = prerotate.inv();
@@ -156,26 +146,14 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 			const stage = stages[stage_idx];
 			const masks = getMasksForStage(stage);
 			if (masks.some((mask) => is_solved(cube, mask, oris))) {
-				const sol = new MoveSeq(current_moves);
-				let rot = new MoveSeq([]);
-				if (solution[0].orientation && solution[0].view) {
-					rot = new MoveSeq(solution[0].orientation);
-					rot = new MoveSeq([rot.moves, solution[0].view.inv().moves].flat());
-				}
-				const rotatedSolution = sol.pushBackAll(rot).tail(rot.length());
+				const { sol, rotatedSolution } = rotateSolution();
 				solution.push({ ...defaultSolution, solution: sol, rotatedSolution, stage });
 				stage_idx++;
 				current_moves = [];
 			}
 		} else {
 			if (is_cmll_solved(cube, oris)) {
-				const sol = new MoveSeq(current_moves);
-				let rot = new MoveSeq([]);
-				if (solution[0].orientation && solution[0].view) {
-					rot = new MoveSeq(solution[0].orientation);
-					rot = new MoveSeq([rot.moves, solution[0].view.inv().moves].flat());
-				}
-				const rotatedSolution = sol.pushBackAll(rot).tail(rot.length());
+				const { sol, rotatedSolution } = rotateSolution();
 				solution.push({ ...defaultSolution, solution: sol, rotatedSolution, stage: 'cmll' });
 				stage_idx++;
 				current_moves = [];
@@ -193,6 +171,55 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 		solution.push({ ...defaultSolution, solution: sol, rotatedSolution, stage: 'unknown' });
 	}
 	return solution;
+
+	function rotateMoves(seq: Move[]) {
+		let rotated = new MoveSeq(seq);
+		for (let i = 0; i < accumulated_rots.length; ++i) {
+			rotated = rotated.pushBackAll(accumulated_rots[i]).tail(accumulated_rots[i].length());
+		}
+		return rotated;
+	}
+
+	function preferRwide(moves: MoveSeq): MoveSeq {
+		for (let i = 0; i < moves.length(); ++i) {
+			if (moves.moves[i].name.slice(0, 1) === 'L') {
+				const rotation = 'x' + moves.moves[i].name.slice(1);
+				const rSeq = new MoveSeq(rotation);
+				const wide = 'r' + moves.moves[i].name.slice(1);
+				const wSeq = new MoveSeq(wide);
+				const prefix = moves.moves.slice(0, i);
+				const suffix = preferRwide(
+					new MoveSeq(moves.moves.slice(i + 1)).pushBackAll(rSeq).tail(rSeq.length())
+				);
+				accumulated_rots.push(rSeq);
+				return new MoveSeq([prefix, wSeq.moves, suffix.moves].flat());
+			}
+			if (moves.moves[i].name.slice(0, 1) === 'l') {
+				const rotation = 'x' + moves.moves[i].name.slice(1);
+				const rSeq = new MoveSeq(rotation);
+				const unWide = 'R' + moves.moves[i].name.slice(1);
+				const wSeq = new MoveSeq(unWide);
+				const prefix = moves.moves.slice(0, i);
+				const suffix = preferRwide(
+					new MoveSeq(moves.moves.slice(i + 1)).pushBackAll(rSeq).tail(rSeq.length())
+				);
+				accumulated_rots.push(rSeq);
+				return new MoveSeq([prefix, wSeq.moves, suffix.moves].flat());
+			}
+		}
+		return moves;
+	}
+	function rotateSolution() {
+		const sol = new MoveSeq(current_moves);
+		let rot = new MoveSeq([]);
+		if (solution[0].orientation && solution[0].view) {
+			rot = new MoveSeq(solution[0].orientation);
+			rot = new MoveSeq([rot.moves, solution[0].view.inv().moves].flat());
+		}
+		const rotOnly = sol.pushBackAll(rot).tail(rot.length());
+		const rotatedSolution = preferRwide(rotateMoves(rotOnly.moves));
+		return { sol, rotatedSolution };
+	}
 }
 
 export function solve(solver_str: string, cube: CubieCube, config: SolverConfig) {

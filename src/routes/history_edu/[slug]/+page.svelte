@@ -35,15 +35,7 @@
 	let alternateScramble = scrambleString;
 
 	$: stages = get_roux_stages(scrambleString, solutionString);
-	function rSolution(stages: SolutionDesc[]) {
-		let orientation = new MoveSeq([]);
-		if (stages && stages[0].orientation) {
-			orientation = new MoveSeq(stages[0].orientation).inv();
-		}
-		const orig = new MoveSeq(solutionString);
-		return orig.pushBackAll(orientation).toString();
-	}
-	$: cubeAlg = rSolution(stages);
+	$: cubeAlg = makeText(stages);
 	$: optimized = [] /* makeOptimizedData(scrambleString, stages) */ as {
 		orientation?: string;
 		stage: string;
@@ -118,8 +110,8 @@
 	function toggleDisplayMode() {
 		displayMode = displayMode === 'times' ? 'moves' : 'times';
 	}
-	function copyText() {
-		let algStr = scrambleString + ' // Scramble\n';
+	function makeText(stages: SolutionDesc[]) {
+		let algStr = `// Scramble: ${scrambleString}\n`;
 		let orientation = new MoveSeq([]);
 		let prerotate = new MoveSeq([]);
 		if (stages[0].view) {
@@ -144,6 +136,11 @@
 			}
 			algStr += '\n';
 		});
+		return algStr;
+	}
+
+	function copyText() {
+		const algStr = makeText(stages);
 		navigator.clipboard.writeText(algStr);
 		selectStage('solved');
 	}
@@ -153,11 +150,17 @@
 	}
 	function selectStage(stageSelected: string) {
 		let startOffset = 0;
+		if (stages[0].view) {
+			startOffset += stages[0].view.length();
+		}
+		if (stages[0].orientation) {
+			startOffset += new MoveSeq(stages[0].orientation).length();
+		}
 		playHead = -1;
 		alternateSolution = undefined;
 		alternateScramble = scrambleString;
 		cubeSS = scrambleString;
-		cubeAlg = solutionString;
+		cubeAlg = makeText(stages);
 		console.log('SHOW: ', stageSelected, ' scramble offset ', startOffset);
 		stages.forEach((s, i) => {
 			if (translation[s.stage] === stageSelected || s.stage === stageSelected) {
@@ -173,7 +176,7 @@
 			} else if (alternateSolution === undefined) {
 				alternateScramble += s.premove + ' ' + s.solution;
 			}
-			startOffset += s.solution.length();
+			startOffset += s.rotatedSolution.length();
 		});
 		if (playHead === -1) {
 			playHead = startOffset;
