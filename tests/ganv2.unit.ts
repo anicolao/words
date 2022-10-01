@@ -168,7 +168,7 @@ describe('GAN v2 encryption/decryption', () => {
 		60 * 1000 * 4
 	);
 
-	it(
+	it.skip(
 		'can brute force keys given 6 gyro messages at startup',
 		async () => {
 			// prettier-ignore
