@@ -221,67 +221,74 @@ export class GANCubeV2 {
 				raw(Array.from(encrypted));
 				encryptionSample.push(encrypted);
 				if (encryptionSample.length === this.NUM_MOVES_TO_DECRYPT) {
-					const possiblyValidKeys = [];
-					const digitSize = 62;
-					for (let d1 = 0; d1 < digitSize; d1++) {
-						for (let d2 = 0; d2 < digitSize; d2++) {
-							for (let d3 = 0; d3 < digitSize; d3++) {
-								let keySalt = d1 * digitSize * digitSize + d2 * digitSize + d3;
-								this.progress(keySalt, digitSize * digitSize * digitSize);
-								let kb0 = (keySalt & 0x00ff0000) >> 16;
-								let kb1 = (keySalt & 0x00ff00) >> 8;
-								let kb2 = keySalt & 0x00ff;
-								let key = [];
-								key.push(kb2);
-								key.push(kb1);
-								key.push(kb0);
-								key.push(0x34);
-								key.push(0x12);
-								key.push(0xab);
-								let result = await this.filterKey(encryptionSample[2], key);
-								if (result) {
-									possiblyValidKeys.push(key);
-								}
-								keySalt += 25 * 62 * 62 * 62;
-								kb0 = (keySalt & 0x00ff0000) >> 16;
-								kb1 = (keySalt & 0x00ff00) >> 8;
-								kb2 = keySalt & 0x00ff;
-								key = [];
-								key.push(kb2);
-								key.push(kb1);
-								key.push(kb0);
-								key.push(0x34);
-								key.push(0x12);
-								key.push(0xab);
-								result = await this.filterKey(encryptionSample[2], key);
-								if (result) {
-									possiblyValidKeys.push(key);
-								}
-							}
-						}
-					}
-					console.log({ possiblyValidKeys });
-					const stillValid = [];
-					for (let i = 0; i < possiblyValidKeys.length; ++i) {
-						let valid = true;
-						for (let j = 0; j < encryptionSample.length && valid; ++j) {
-							valid = valid && (await this.filterKey(encryptionSample[j], possiblyValidKeys[i]));
-						}
-						if (valid) {
-							stillValid.push(possiblyValidKeys[i]);
-						}
-					}
-					console.log({ stillValid });
+					const stillValid = await this.bruteForceKeys(encryptionSample, this.progress);
 					if (stillValid.length === 1) {
 						console.log('Success!');
 						keyInfoMap[this.deviceDescriptor.id] = stillValid[0];
-						this.progress(digitSize * digitSize * digitSize, digitSize * digitSize * digitSize);
 					}
 				}
 				this.encryptionMoveCount++;
 			}
 		};
 		n.addEventListener('characteristicvaluechanged', this.watchingMoves);
+	}
+
+	public async bruteForceKeys(encryptionSample: Uint8Array[], progress: ProgressCallback) {
+		const possiblyValidKeys = [];
+		const digitSize = 62;
+		for (let d1 = 0; d1 < digitSize; d1++) {
+			for (let d2 = 0; d2 < digitSize; d2++) {
+				for (let d3 = 0; d3 < digitSize; d3++) {
+					let keySalt = d1 * digitSize * digitSize + d2 * digitSize + d3;
+					progress(keySalt, digitSize * digitSize * digitSize);
+					let kb0 = (keySalt & 0x00ff0000) >> 16;
+					let kb1 = (keySalt & 0x00ff00) >> 8;
+					let kb2 = keySalt & 0x00ff;
+					let key = [];
+					key.push(kb2);
+					key.push(kb1);
+					key.push(kb0);
+					key.push(0x34);
+					key.push(0x12);
+					key.push(0xab);
+					let result = await this.filterKey(encryptionSample[2], key);
+					if (result) {
+						possiblyValidKeys.push(key);
+					}
+					keySalt += 25 * 62 * 62 * 62;
+					kb0 = (keySalt & 0x00ff0000) >> 16;
+					kb1 = (keySalt & 0x00ff00) >> 8;
+					kb2 = keySalt & 0x00ff;
+					key = [];
+					key.push(kb2);
+					key.push(kb1);
+					key.push(kb0);
+					key.push(0x34);
+					key.push(0x12);
+					key.push(0xab);
+					result = await this.filterKey(encryptionSample[2], key);
+					if (result) {
+						possiblyValidKeys.push(key);
+					}
+				}
+			}
+		}
+		console.log({ possiblyValidKeys });
+		const stillValid = [];
+		for (let i = 0; i < possiblyValidKeys.length; ++i) {
+			let valid = true;
+			for (let j = 0; j < encryptionSample.length && valid; ++j) {
+				valid = valid && (await this.filterKey(encryptionSample[j], possiblyValidKeys[i]));
+			}
+			if (valid) {
+				stillValid.push(possiblyValidKeys[i]);
+			}
+		}
+		console.log({ stillValid });
+		if (stillValid.length === 1) {
+			progress(digitSize * digitSize * digitSize, digitSize * digitSize * digitSize);
+		}
+		return stillValid;
 	}
 
 	public async filterKey(sample: Uint8Array, key: number[]) {
@@ -308,6 +315,9 @@ export class GANCubeV2 {
 					}
 					*/
 			return possiblyValid;
+		}
+		if (message === 1) {
+			return true;
 		}
 		return false;
 	}
