@@ -122,6 +122,7 @@ export class GANCubeV2 {
 	private homeOrientationKnown = false;
 	private homeOrientation = new Quaternion();
 	private orientation = new Quaternion();
+	private stillValid: number[][] | undefined = undefined;
 
 	public constructor(f: GATTDeviceDescriptor, manufacturerData: string) {
 		if (manufacturerData) {
@@ -161,8 +162,8 @@ export class GANCubeV2 {
 		return this.encrypt(buffer);
 	}
 
+	encryptionSample: Uint8Array[] = [];
 	NUM_MOVES_TO_DECRYPT = 6;
-	encryptionMoveCount = 0;
 	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	progress: ProgressCallback = () => {};
 	public isReady(p: ProgressCallback) {
@@ -170,6 +171,9 @@ export class GANCubeV2 {
 		return this.keyIsGood();
 	}
 	public keyIsGood() {
+		if (this.stillValid) {
+			return this.stillValid.length === 1;
+		}
 		const nonZeroEntryCount = keyInfoMap[this.deviceDescriptor.id].filter((x) => x > 0).length;
 		return nonZeroEntryCount > 4;
 	}
@@ -177,21 +181,19 @@ export class GANCubeV2 {
 		if (this.keyIsGood()) {
 			return 0;
 		}
-		return this.NUM_MOVES_TO_DECRYPT - this.encryptionMoveCount;
+		return this.NUM_MOVES_TO_DECRYPT - this.encryptionSample.length;
 	}
 	public async watchMoves(callback: MoveCallback, ori: OrientationCallback, raw: RawCallback) {
 		const n = await getCharacteristic(this.notifications);
 		await n.startNotifications();
 		const setupEncryption = async () => {
-			const nonZeroEntryCount = keyInfoMap[this.deviceDescriptor.id].filter((x) => x > 0).length;
-			if (nonZeroEntryCount > 4) {
+			if (this.keyIsGood()) {
 				this.decrypt = await getDecryptor(this.deviceDescriptor);
 				this.encrypt = await getEncryptor(this.deviceDescriptor);
 				const requestState = await this.makeMessage(4);
 				write(this.request, requestState);
 			}
 		};
-		const encryptionSample: Uint8Array[] = [];
 		this.watchingMoves = async (e) => {
 			if (!this.decrypt) {
 				await setupEncryption();
@@ -218,16 +220,36 @@ export class GANCubeV2 {
 				}
 			} else {
 				const encrypted = new Uint8Array(target.value.buffer);
-				raw(Array.from(encrypted));
+				const encryptionSample = this.encryptionSample;
 				encryptionSample.push(encrypted);
+				if (!this.stillValid) this.stillValid = [];
+				if (encryptionSample.length <= this.NUM_MOVES_TO_DECRYPT) {
+					raw(Array.from(encrypted));
+				}
 				if (encryptionSample.length === this.NUM_MOVES_TO_DECRYPT) {
-					const stillValid = await this.bruteForceKeys(encryptionSample, this.progress);
-					if (stillValid.length === 1) {
+					if (this.stillValid && this.stillValid.length > 1) {
+						console.log({ candidateKeyCount: this.stillValid.length });
+					}
+					this.stillValid = await this.bruteForceKeys(
+						encryptionSample.slice(0, this.NUM_MOVES_TO_DECRYPT),
+						this.progress
+					);
+					while (this.stillValid.length > 1) {
+						if (this.NUM_MOVES_TO_DECRYPT < encryptionSample.length) {
+							const i = this.NUM_MOVES_TO_DECRYPT;
+							console.log({ extraSample: Array.from(encryptionSample[i]) });
+							raw(Array.from(encryptionSample[i]));
+							this.stillValid = await this.bruteForceKeys([encryptionSample[i]], this.progress);
+							console.log(`Request an extra move for a total of ${this.NUM_MOVES_TO_DECRYPT}`);
+							this.NUM_MOVES_TO_DECRYPT++;
+						}
+					}
+					if (this.stillValid.length === 1) {
 						console.log('Success!');
-						keyInfoMap[this.deviceDescriptor.id] = stillValid[0];
+						keyInfoMap[this.deviceDescriptor.id] = this.stillValid[0];
+						this.progress(100, 100);
 					}
 				}
-				this.encryptionMoveCount++;
 			}
 		};
 		n.addEventListener('characteristicvaluechanged', this.watchingMoves);
@@ -236,43 +258,46 @@ export class GANCubeV2 {
 	public async bruteForceKeys(encryptionSample: Uint8Array[], progress: ProgressCallback) {
 		const possiblyValidKeys = [];
 		const digitSize = 62;
-		for (let d1 = 0; d1 < digitSize; d1++) {
-			for (let d2 = 0; d2 < digitSize; d2++) {
-				for (let d3 = 0; d3 < digitSize; d3++) {
-					let keySalt = d1 * digitSize * digitSize + d2 * digitSize + d3;
-					progress(keySalt, digitSize * digitSize * digitSize);
-					let kb0 = (keySalt & 0x00ff0000) >> 16;
-					let kb1 = (keySalt & 0x00ff00) >> 8;
-					let kb2 = keySalt & 0x00ff;
-					let key = [];
-					key.push(kb2);
-					key.push(kb1);
-					key.push(kb0);
-					key.push(0x34);
-					key.push(0x12);
-					key.push(0xab);
-					let result = await this.filterKey(encryptionSample[2], key);
-					if (result) {
-						possiblyValidKeys.push(key);
-					}
-					keySalt += 25 * 62 * 62 * 62;
-					kb0 = (keySalt & 0x00ff0000) >> 16;
-					kb1 = (keySalt & 0x00ff00) >> 8;
-					kb2 = keySalt & 0x00ff;
-					key = [];
-					key.push(kb2);
-					key.push(kb1);
-					key.push(kb0);
-					key.push(0x34);
-					key.push(0x12);
-					key.push(0xab);
-					result = await this.filterKey(encryptionSample[2], key);
-					if (result) {
-						possiblyValidKeys.push(key);
+		if (this.stillValid && this.stillValid.length) {
+			this.stillValid.forEach((x) => possiblyValidKeys.push(x));
+		} else
+			for (let d1 = 0; d1 < digitSize; d1++) {
+				for (let d2 = 0; d2 < digitSize; d2++) {
+					for (let d3 = 0; d3 < digitSize; d3++) {
+						let keySalt = d1 * digitSize * digitSize + d2 * digitSize + d3;
+						progress(keySalt, digitSize * digitSize * digitSize);
+						let kb0 = (keySalt & 0x00ff0000) >> 16;
+						let kb1 = (keySalt & 0x00ff00) >> 8;
+						let kb2 = keySalt & 0x00ff;
+						let key = [];
+						key.push(kb2);
+						key.push(kb1);
+						key.push(kb0);
+						key.push(0x34);
+						key.push(0x12);
+						key.push(0xab);
+						let result = await this.filterKey(encryptionSample[0], key);
+						if (result) {
+							possiblyValidKeys.push(key);
+						}
+						keySalt += 25 * 62 * 62 * 62;
+						kb0 = (keySalt & 0x00ff0000) >> 16;
+						kb1 = (keySalt & 0x00ff00) >> 8;
+						kb2 = keySalt & 0x00ff;
+						key = [];
+						key.push(kb2);
+						key.push(kb1);
+						key.push(kb0);
+						key.push(0x34);
+						key.push(0x12);
+						key.push(0xab);
+						result = await this.filterKey(encryptionSample[0], key);
+						if (result) {
+							possiblyValidKeys.push(key);
+						}
 					}
 				}
 			}
-		}
 		console.log({ possiblyValidKeys });
 		const stillValid = [];
 		for (let i = 0; i < possiblyValidKeys.length; ++i) {
@@ -285,9 +310,6 @@ export class GANCubeV2 {
 			}
 		}
 		console.log({ stillValid });
-		if (stillValid.length === 1) {
-			progress(digitSize * digitSize * digitSize, digitSize * digitSize * digitSize);
-		}
 		return stillValid;
 	}
 

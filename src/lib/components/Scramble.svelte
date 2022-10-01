@@ -35,13 +35,18 @@
 	$: if ($store.auth.uid && $store.solves.unattempted.length === 0) {
 		saveNewScramble();
 	}
+	const twistyPlayer: TwistyPlayer = new TwistyPlayer();
+	let alg = new Alg();
 	async function newScramble() {
 		scramble = new Alg($store.solves.unattempted[0]);
 		remaining = scramble;
+		if (twistyPlayer) {
+			alg = new Alg();
+			twistyPlayer.experimentalModel.alg.set(alg);
+		}
 	}
 	newScramble();
 
-	const twistyPlayer: TwistyPlayer = new TwistyPlayer();
 	async function insertTwisty(): Promise<void> {
 		let contentElem = document.querySelector('#twisty-content');
 		if (contentElem) {
@@ -63,7 +68,6 @@
 
 	let currentDevice: CubeInfo | undefined;
 	let cube: GANCube | GANCubeV2 | undefined;
-	let alg = new Alg();
 	let startWhenReady = false;
 	let solving = false;
 	let solution: { move: string; timestamp: number }[] = [];
@@ -284,6 +288,7 @@
 	$: if (casesDone === totalCases) {
 		ready = cube?.isReady(progress);
 		if (casesDone > 0) {
+			newScramble();
 			async function recordDeviceKey() {
 				if (currentDevice) {
 					const hexString = [...new Uint8Array(await getDeviceKeyInfo({ id: currentDevice[0] }))]
