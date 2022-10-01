@@ -121,10 +121,14 @@
 	function copyText() {
 		let algStr = scrambleString + ' // Scramble\n';
 		let orientation = new MoveSeq([]);
+		let prerotate = new MoveSeq([]);
+		if (stages[0].view) {
+			prerotate = stages[0].view;
+		}
 		if (stages[0].orientation) {
 			orientation = new MoveSeq(stages[0].orientation).inv();
 		}
-		algStr += orientation + ' ';
+		algStr += orientation + ' ' + prerotate.inv() + ' ';
 		stages.forEach((s, i) => {
 			let quicker = '?';
 			algStr += s.rotatedSolution + ' // ' + translation[s.stage];
