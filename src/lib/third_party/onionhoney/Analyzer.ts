@@ -76,7 +76,7 @@ export function is_fb_solved(cube: CubieCube, oris: MoveSeq[]) {
 	return null;
 }
 
-export function get_roux_stages(scramble: string, solution: string) {
+export function get_roux_stages(scramble: string, solution: string): SolutionDesc[] {
 	const scrambledCube = new CubieCube().apply(scramble);
 	return analyze_roux_solve(scrambledCube, new MoveSeq(solution));
 }
