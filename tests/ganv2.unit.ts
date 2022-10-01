@@ -60,6 +60,26 @@ describe('GAN v2 encryption/decryption', () => {
 		expect(message.toString()).to.equal(decryptedBlock.toString());
 	});
 
+	it('can decrypt a gyro message', async () => {
+		new GANCubeV2(dummyV2, '00 00 00 9b 71 02 34 12 ab');
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		vi.stubGlobal('crypto', require('node:crypto').webcrypto);
+		const m = [
+			0x6d, 0xd4, 0x63, 0x99, 0xb1, 0xcc, 0x77, 0xb6, 0x21, 0xe8, 0xb8, 0xc5, 0xaa, 0x1c, 0x35,
+			0x03, 0x67, 0x66, 0x0d, 0xab
+		];
+
+		const data = Uint8Array.from(m);
+		const decrypt = await getDecryptor(dummyV2);
+		const message = await decrypt(data);
+		const decryptedBlock = [
+			0x14, 0x5c, 0xdb, 0xe8, 0x1c, 0x43, 0x9b, 0x64, 0xe8, 0x80, 0x45, 0xcd, 0xbe, 0x81, 0xc4,
+			0x3a, 0xb6, 0x4d, 0x88, 0x0a
+		];
+
+		expect(message.toString()).to.equal(decryptedBlock.toString());
+	});
+
 	it('can encrypt a message', async () => {
 		new GANCubeV2(dummyV2, '00 00 00 9b 71 02 34 12 ab');
 		const reference = {
@@ -114,8 +134,10 @@ describe('GAN v2 encryption/decryption', () => {
 			const cube = new GANCubeV2(dummyV2, '00 00 00 00 00 00');
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			const nullProgress = () => {};
+			vi.stubGlobal('crypto', require('node:crypto').webcrypto);
 			const key = await cube.bruteForceKeys(uSamples, nullProgress);
 			expect(key.length).to.equal(1);
+			expect(key.toString()).to.equal('50,1,94,52,18,171');
 		},
 		60 * 1000 * 4
 	);
@@ -136,8 +158,10 @@ describe('GAN v2 encryption/decryption', () => {
 			const cube = new GANCubeV2(dummyV2, '00 00 00 00 00 00');
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			const nullProgress = () => {};
+			vi.stubGlobal('crypto', require('node:crypto').webcrypto);
 			const key = await cube.bruteForceKeys(uSamples, nullProgress);
 			expect(key.length).to.equal(1);
+			expect(key.toString()).to.equal([0x9b, 0x71, 0x02, 0x34, 0x12, 0xAB].toString());
 		},
 		60 * 1000 * 4
 	);
