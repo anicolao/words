@@ -171,7 +171,7 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 			if (is_cmll_solved(cube, oris)) {
 				const sol = new MoveSeq(current_moves);
 				let rot = new MoveSeq([]);
-				if (solution[0].orientation) {
+				if (solution[0].orientation && solution[0].view) {
 					rot = new MoveSeq(solution[0].orientation);
 					rot = new MoveSeq([rot.moves, solution[0].view.inv().moves].flat());
 				}

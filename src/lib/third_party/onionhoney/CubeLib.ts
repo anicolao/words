@@ -712,6 +712,7 @@ export class MoveSeq {
 		const reversedMoves = this.moves.slice(0).reverse();
 		const processedMoves = [];
 		const newMoves: Move[][] = [];
+		Move.cachePopulatedFor = {};
 		for (let i = 0; i < reversedMoves.length; ++i) {
 			const origMove = reversedMoves[i];
 			const appended = new Move().from_moves([origMove, m], 'append');
