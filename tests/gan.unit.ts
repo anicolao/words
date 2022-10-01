@@ -87,7 +87,7 @@ describe('GAN 356i', async () => {
 	}
 
 	it('should throw an error on unexpected faces', () => {
-		expect(() => validateTransform({ from: 0x42, to: 'M' })).to.throw(
+		expect(() => validateTransform({ cube: ganv1, from: 0x42, to: 'M' })).to.throw(
 			'Cannot read properties of undefined'
 		);
 	});
