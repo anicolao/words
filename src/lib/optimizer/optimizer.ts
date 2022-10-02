@@ -74,10 +74,25 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 		const ori = rstages[0].orientation || '';
 		const spin = new MoveSeq(ori);
 		let cube = new CubieCube().apply(scrambleString);
+		let setup = scrambleString;
 		console.log(scrambleString);
 		for (let pre = 0; pre < i; ++pre) {
 			console.log({ pre, s: rstages[pre].solution.toString(), p: rstages[pre].premove });
-			cube = cube.apply(rstages[pre].solution);
+			if (pre === 0 && rstages[pre].orientation) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const spin = new MoveSeq(rstages[pre].orientation!);
+				cube = cube.apply(spin);
+				cube = cube.changeBasis(spin);
+				cube = cube.apply(spin.inv());
+				console.log(visualize(cube));
+			}
+			if (rstages[pre].view) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				cube = cube.apply(rstages[pre].view!.inv());
+				setup += '/' + rstages[pre].view?.inv();
+			}
+			cube = cube.apply(rstages[pre].rotatedSolution);
+			setup += '-/-' + rstages[pre].rotatedSolution;
 			if (pre === 0) {
 				const v = visualize(cube);
 				console.log(v);
@@ -91,7 +106,8 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 				}
 			}
 		}
-		cube = cube.changeBasis(spin).apply(spin.inv());
+		setup += ' [spin: ' + spin + '] ';
+		//cube = cube.changeBasis(spin).apply(spin.inv());
 		if (i === 1) {
 			const v = visualize(cube);
 			console.log(scrambleString);
@@ -108,6 +124,7 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 				.map((n) =>
 					solve(n, cube, config).map((sol) => ({
 						...sol,
+						setup,
 						stage: n
 					}))
 				)
@@ -115,6 +132,5 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 				.sort((x, y) => x.score - y.score)
 		);
 	}
-	console.log(optimized[optimized.length - 1].map((x) => [x.stage, x.solution.length(), x.score]));
 	return optimized;
 }

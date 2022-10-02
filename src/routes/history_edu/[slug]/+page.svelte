@@ -36,11 +36,12 @@
 
 	$: stages = get_roux_stages(scrambleString, solutionString);
 	$: cubeAlg = makeText(stages);
-	$: optimized = [] /* makeOptimizedData(scrambleString, stages) */ as {
+	$: optimized = makeOptimizedData(scrambleString, stages) as {
 		orientation?: string;
 		stage: string;
 		premove: string;
 		solution: MoveSeq;
+		setup: string;
 		score: number;
 	}[][];
 	let alternateSolution: SolutionDesc | undefined = undefined;
@@ -124,7 +125,7 @@
 		stages.forEach((s, i) => {
 			let quicker = '?';
 			algStr += s.rotatedSolution + ' // ' + translation[s.stage];
-			if (optimized[i] && optimized[i].length) {
+			if (optimized && optimized[i] && optimized[i].length) {
 				const spin = new MoveSeq(optimized[i][0]?.orientation || '');
 				const premoves = new MoveSeq(optimized[i][0].premove);
 				const moves = new MoveSeq(optimized[i][0].solution.moves);
@@ -132,7 +133,7 @@
 				algStr +=
 					`(${s.solution.length()}) vs (${
 						spin.moves.length + premoves.moves.length + moves.moves.length
-					}) ` + quicker;
+					}) ` + quicker; // + ` //setup[${optimized[i][0].setup}]`;
 			}
 			algStr += '\n';
 		});
@@ -143,6 +144,22 @@
 		const algStr = makeText(stages);
 		navigator.clipboard.writeText(algStr);
 		selectStage('solved');
+	}
+
+	function bugText() {
+		let text = `// Bug Report: incorrect solve reconstruction.
+validateUserSolution({
+	scramble: "${scrambleString}",
+	orientation: "${new MoveSeq(stages[0].orientation || []).inv()}",
+	fb: "${stages[0]?.view?.inv() || ''} ${stages[0].rotatedSolution}", 
+	ss: "${stages[1].rotatedSolution}",
+	lp: "${stages[2].rotatedSolution}",
+	cmll: "${stages[3].rotatedSolution}",
+	lse: "${stages[4].rotatedSolution}"
+});
+`;
+		navigator.clipboard.writeText(text);
+		// Bug Report: incorrect solve reconstruction.
 	}
 
 	function handleStage(stageSelected: any) {
@@ -174,7 +191,12 @@
 					alternateSolution = undefined;
 				}
 			} else if (alternateSolution === undefined) {
-				alternateScramble += s.premove + ' ' + s.solution;
+				if (i === 0 && s.orientation)
+					alternateScramble += ' ' + new MoveSeq(s.orientation).inv() + ' ';
+				if (s.view) {
+					alternateScramble += s.view.inv() + ' ';
+				}
+				alternateScramble += s.premove + ' ' + s.rotatedSolution + ' ';
 			}
 			startOffset += s.rotatedSolution.length();
 		});
@@ -209,10 +231,11 @@
 			{heading}
 			{axisLabel}
 		/>
-		<p style="display:inline-block" on:click={copyText}>
+		<p style="display:inline-block">
 			<Item>
-				<IconButton class="material-icons">content_copy</IconButton>
-				<Text>Scramble: {scrambleString}</Text>
+				<IconButton class="material-icons" on:click={copyText}>content_copy</IconButton>
+				<Text on:click={copyText}>Scramble: {scrambleString}</Text>
+				<IconButton class="material-icons" on:click={bugText}>bug_report</IconButton>
 			</Item>
 		</p>
 		<table cellspacing="0" align="center">

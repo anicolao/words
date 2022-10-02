@@ -1,3 +1,5 @@
+/* ignore file coverage */
+
 /* eslint-disable @typescript-eslint/ban-types */
 import { CubieCube, Move, MoveSeq } from './CubeLib';
 import { arrayEqual } from './Math';
@@ -44,6 +46,11 @@ export type SolverT = {
 	getPruners: () => PrunerT[];
 };
 
+enum SState {
+	CONTINUE,
+	STOP
+}
+
 function Solver(config: SolverConfig): SolverT {
 	const MAX_STATE_COUNT = 3000000;
 	const { moveset, is_solved, pruners } = config;
@@ -52,11 +59,6 @@ function Solver(config: SolverConfig): SolverT {
 	let accum: Accumulator;
 	let max_depth: number;
 	let min_depth: number;
-
-	enum SState {
-		CONTINUE,
-		STOP
-	}
 
 	function solve_depth(
 		cube: CubieCube,

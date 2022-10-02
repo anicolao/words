@@ -41,7 +41,7 @@ export type SolutionDesc = {
 	stage: string;
 };
 
-function is_cmll_solved(cube: CubieCube, oris: MoveSeq[]) {
+export function is_cmll_solved(cube: CubieCube, oris: MoveSeq[]) {
 	for (const prerotate of oris) {
 		const cpre = cube.apply(prerotate);
 		if (CubeUtil.is_cmll_solved(cpre)) return true;

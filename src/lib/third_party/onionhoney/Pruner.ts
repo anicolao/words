@@ -1,3 +1,4 @@
+/* ignore file coverage */
 import { CubieCube, Move } from './CubeLib';
 import { cartesianProduct } from './Math';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

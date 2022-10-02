@@ -1,3 +1,4 @@
+/* ignore file coverage */
 import type {
 	MoveT,
 	OriChg,
