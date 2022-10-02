@@ -39,7 +39,6 @@
 	$: optimized = makeOptimizedData(scrambleString, stages) as {
 		orientation?: string;
 		stage: string;
-		premove: string;
 		solution: MoveSeq;
 		setup: string;
 		score: number;
@@ -127,13 +126,10 @@
 			algStr += s.rotatedSolution + ' // ' + translation[s.stage];
 			if (optimized && optimized[i] && optimized[i].length) {
 				const spin = new MoveSeq(optimized[i][0]?.orientation || '');
-				const premoves = new MoveSeq(optimized[i][0].premove);
 				const moves = new MoveSeq(optimized[i][0].solution.moves);
-				quicker = spin + ' ' + premoves + ' ' + moves;
+				quicker = spin + ' ' + moves;
 				algStr +=
-					`(${s.solution.length()}) vs (${
-						spin.moves.length + premoves.moves.length + moves.moves.length
-					}) ` + quicker; // + ` //setup[${optimized[i][0].setup}]`;
+					`(${s.solution.length()}) vs (${spin.moves.length + moves.moves.length}) ` + quicker; // + ` //setup[${optimized[i][0].setup}]`;
 			}
 			algStr += '\n';
 		});

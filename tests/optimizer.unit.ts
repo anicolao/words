@@ -353,15 +353,13 @@ describe('optimizer can find helpful shorter solutions', () => {
 		lse: "U M2 U M U2 M U M2 U2 M' U M2 U2 "
 	});
 
-	/*
 	validateUserSolution({
 		scramble: "F' D2' B2' U F R D F R' F2 U2 F2 R F2 B2' R F2 R2 F2 L L2' D",
 		orientation: "y' ",
 		fb: "  D' U' F' U R B R' D2 ",
-		ss: "R R2 F R U R B r2 R' D2 M2 D' R M' F2 R' D' r F r R' F' M M' F2 M2 F2 r' D2 R' B' R2 r' ",
-		lp: "r F' R' ",
-		cmll: "D' F r F r' D' F' F r F r' D' F' D r F r' F' r F r' D' r' D r2 F' r' ",
-		lse: "r R' D' R r' D2 M D M D M2 D M2 D' "
+		ss: "r r2 U r U r U R2 r' U2 M2 U' r M U2 r' U' R U R r' U' M' M U2 M2 U2 R' U2 r' U' r2 R' ",
+		lp: "R U' r' ",
+		cmll: "U' F R U R' U' F' F R U R' U' F' U R U R' F' R U R' U' R' F R2 U' R' ",
+		lse: "R r' U' r R' U2 M' U M' U M2 U M2 U' "
 	});
-	*/
 });

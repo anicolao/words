@@ -228,12 +228,10 @@ export function solve(solver_str: string, cube: CubieCube, config: SolverConfig)
 	const solutions = (premoves || [''])
 		.map((x) => new MoveSeq(x))
 		.map((pm) =>
-			solver
-				.solve(cube.apply(pm), 0, upper_limit, solver_num_solution)
-				.map((x: MoveSeq) => ({
-					solution: new MoveSeq([pm.moves, x.moves].flat()),
-					score: ev.evaluate(x)
-				}))
+			solver.solve(cube.apply(pm), 0, upper_limit, solver_num_solution).map((x: MoveSeq) => ({
+				solution: new MoveSeq([pm.moves, x.moves].flat()),
+				score: ev.evaluate(x)
+			}))
 		)
 		.flat();
 	const ret = solutions.sort((x, y) => x.score - y.score).slice(0, num_solution);
