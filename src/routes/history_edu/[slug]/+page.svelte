@@ -196,7 +196,7 @@ validateUserSolution({
 				if (s.view) {
 					alternateScramble += s.view.inv() + ' ';
 				}
-				alternateScramble += s.premove + ' ' + s.rotatedSolution + ' ';
+				alternateScramble += s.rotatedSolution + ' ';
 			}
 			startOffset += s.rotatedSolution.length();
 		});
@@ -208,7 +208,7 @@ validateUserSolution({
 	function playAlternate() {
 		cubeSS = alternateScramble;
 		const spin = new MoveSeq(alternateSolution?.orientation || '');
-		cubeAlg = spin + ' ' + alternateSolution?.premove + ' ' + alternateSolution?.solution;
+		cubeAlg = spin + ' ' + alternateSolution?.solution;
 		playHead = 0;
 		console.log({ cubeSS, cubeAlg, playHead });
 	}

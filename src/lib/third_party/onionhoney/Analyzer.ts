@@ -34,7 +34,6 @@ export type SolverConfig = {
 export type SolutionDesc = {
 	solution: MoveSeq;
 	rotatedSolution: MoveSeq;
-	premove: string;
 	score: number;
 	orientation?: string;
 	view?: MoveSeq;
@@ -86,7 +85,6 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 	const oris = get_oris('cn').map((m) => new MoveSeq(m));
 	const defaultSolution = {
 		solution: [],
-		premove: '',
 		orientation: '',
 		stage: '',
 		score: 0
@@ -213,7 +211,7 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 		const sol = new MoveSeq(current_moves);
 		let rot = new MoveSeq([]);
 		if (solution[0].orientation && solution[0].view) {
-			rot = new MoveSeq(solution[0].orientation);
+			rot = new MoveSeq(solution[0].orientation).inv();
 			rot = new MoveSeq([rot.moves, solution[0].view.inv().moves].flat());
 		}
 		const rotOnly = sol.pushBackAll(rot).tail(rot.length());
@@ -228,10 +226,14 @@ export function solve(solver_str: string, cube: CubieCube, config: SolverConfig)
 	const ev = getEvaluator(config.evaluator || 'sequential');
 	const solver_num_solution = num_solution < 10 ? 10 : num_solution;
 	const solutions = (premoves || [''])
+		.map((x) => new MoveSeq(x))
 		.map((pm) =>
 			solver
 				.solve(cube.apply(pm), 0, upper_limit, solver_num_solution)
-				.map((x: MoveSeq) => ({ premove: pm, solution: x, score: ev.evaluate(x) }))
+				.map((x: MoveSeq) => ({
+					solution: new MoveSeq([pm.moves, x.moves].flat()),
+					score: ev.evaluate(x)
+				}))
 		)
 		.flat();
 	const ret = solutions.sort((x, y) => x.score - y.score).slice(0, num_solution);

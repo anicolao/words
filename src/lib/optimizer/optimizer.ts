@@ -53,7 +53,6 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 		const quicker = optimized[0][0].solution.moves.map((x) => x.name).join(' ');
 		console.log({ optimized, quicker });
 		//cube = cube.apply(new MoveSeq(ori));
-		cube = cube.apply(optimized[0][0].premove);
 		cube = cube.apply(optimized[0][0].solution.moves);
 		faceletCube = FaceletCube.from_cubie(cube);
 		visual = FaceletCube.to_unfolded_cube_str(faceletCube);
@@ -77,7 +76,7 @@ export function makeOptimizedData(scrambleString: string, rstages: SolutionDesc[
 		let setup = scrambleString;
 		console.log(scrambleString);
 		for (let pre = 0; pre < i; ++pre) {
-			console.log({ pre, s: rstages[pre].solution.toString(), p: rstages[pre].premove });
+			console.log({ pre, s: rstages[pre].solution.toString() });
 			if (pre === 0 && rstages[pre].orientation) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const spin = new MoveSeq(rstages[pre].orientation!);
