@@ -125,11 +125,12 @@
 	$: if (stickering) {
 		console.log('RESET STICKERING to: ', stickering);
 		const stageToMask: { [key: string]: MaskT } = {};
-		stageToMask['fb'] = Mask.fb_mask;
-		stageToMask['ss'] = Mask.sb_mask;
-		stageToMask['sp'] = Mask.sb_mask;
-		stageToMask['cmll'] = Mask.lse_mask;
-		stageToMask['lse'] = Mask.solved_mask;
+		// disable for now; rotations don't work.
+		//stageToMask['fb'] = Mask.fb_mask;
+		//stageToMask['ss'] = Mask.sb_mask;
+		//stageToMask['sp'] = Mask.sb_mask;
+		//stageToMask['cmll'] = Mask.lse_mask;
+		//stageToMask['lse'] = Mask.solved_mask;
 		if (stageToMask[stickering]) {
 			setStickers(stageToMask[stickering]);
 		} else {
