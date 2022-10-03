@@ -190,9 +190,9 @@ validateUserSolution({
 			} else if (alternateSolution === undefined) {
 				if (i === 0 && s.orientation) alternateScramble += ' ' + new MoveSeq(s.orientation) + ' ';
 				if (s.view) {
-					alternateScramble += s.view.inv() + ' ';
+					alternateScramble += ' ' + s.view.inv() + ' ';
 				}
-				alternateScramble += s.rotatedSolution + ' ';
+				alternateScramble += ' ' + s.rotatedSolution + ' ';
 			}
 			startOffset += s.rotatedSolution.length();
 		});
