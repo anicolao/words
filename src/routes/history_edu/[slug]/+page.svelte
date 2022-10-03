@@ -118,7 +118,7 @@
 			prerotate = stages[0].view;
 		}
 		if (stages[0].orientation) {
-			orientation = new MoveSeq(stages[0].orientation).inv();
+			orientation = new MoveSeq(stages[0].orientation);
 		}
 		algStr += orientation + ' ' + prerotate.inv() + ' ';
 		stages.forEach((s, i) => {
@@ -146,7 +146,8 @@
 		let text = `// Bug Report: incorrect solve reconstruction.
 validateUserSolution({
 	scramble: "${scrambleString}",
-	orientation: "${new MoveSeq(stages[0].orientation || []).inv()}",
+  original_solution: "${solutionString}",
+	orientation: "${new MoveSeq(stages[0].orientation || [])}",
 	fb: "${stages[0]?.view?.inv() || ''} ${stages[0].rotatedSolution}", 
 	ss: "${stages[1].rotatedSolution}",
 	lp: "${stages[2].rotatedSolution}",
@@ -187,8 +188,7 @@ validateUserSolution({
 					alternateSolution = undefined;
 				}
 			} else if (alternateSolution === undefined) {
-				if (i === 0 && s.orientation)
-					alternateScramble += ' ' + new MoveSeq(s.orientation).inv() + ' ';
+				if (i === 0 && s.orientation) alternateScramble += ' ' + new MoveSeq(s.orientation) + ' ';
 				if (s.view) {
 					alternateScramble += s.view.inv() + ' ';
 				}

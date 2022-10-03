@@ -132,7 +132,7 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 						.pushBackAll(orientation)
 						.pushBackAll(prerotate_orientation.inv())
 						.tail(prerotate_orientation.length() + orientation.length()),
-					orientation: orientation.inv().moves.join(''),
+					orientation: orientation.moves.join(''),
 					view: prerotate_orientation,
 					stage: 'fb'
 				});
@@ -210,8 +210,10 @@ export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
 	function rotateSolution() {
 		const sol = new MoveSeq(current_moves);
 		let rot = new MoveSeq([]);
-		if (solution[0].orientation && solution[0].view) {
-			rot = new MoveSeq(solution[0].orientation).inv();
+		if (solution[0].orientation) {
+			rot = new MoveSeq(solution[0].orientation);
+		}
+		if (solution[0].view) {
 			rot = new MoveSeq([rot.moves, solution[0].view.inv().moves].flat());
 		}
 		const rotOnly = sol.pushBackAll(rot).tail(rot.length());
