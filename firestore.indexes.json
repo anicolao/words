@@ -1,0 +1,32 @@
+{
+	"indexes": [
+		{
+			"collectionGroup": "solves",
+			"queryScope": "COLLECTION_GROUP",
+			"fields": [
+				{
+					"fieldPath": "creator",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "timestamp",
+					"order": "ASCENDING"
+				}
+			]
+		},
+		{
+			"collectionGroup": "requests",
+			"queryScope": "COLLECTION_GROUP",
+			"fields": [
+				{
+					"fieldPath": "target",
+					"order": "ASCENDING"
+				},
+				{
+					"fieldPath": "timestamp",
+					"order": "ASCENDING"
+				}
+			]
+		}
+	]
+}
