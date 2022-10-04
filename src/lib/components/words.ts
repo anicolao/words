@@ -33,7 +33,7 @@ export const initialWordsState = {
 	height: 15,
 	drawPile: '',
 	emailToRack: {},
-	players: [],
+	players: []
 } as WordsState;
 
 export const words = createReducer(initialWordsState, (r) => {
@@ -55,11 +55,11 @@ export const words = createReducer(initialWordsState, (r) => {
 	}
 
 	function extractLettersFromRack(letters: string, rack: string): string | undefined {
-		 for (const l of letters) {
+		for (const l of letters) {
 			const newRack = rack.replace(l, '');
 			if (newRack.length === rack.length) return undefined;
 			rack = newRack;
-		};
+		}
 		return rack;
 	}
 
@@ -91,7 +91,7 @@ export const words = createReducer(initialWordsState, (r) => {
 
 	r.addCase(join_game, (state, { payload }) => {
 		state.players.push(payload);
-		state.emailToRack[payload] = "";
+		state.emailToRack[payload] = '';
 		return state;
 	});
 	r.addCase(draw_tiles, (state, { payload }) => {
@@ -103,6 +103,6 @@ export const words = createReducer(initialWordsState, (r) => {
 		return state;
 	});
 	r.addCase(initial_tiles, (state, { payload }) => {
-		return {...state, drawPile: payload};
+		return { ...state, drawPile: payload };
 	});
 });
