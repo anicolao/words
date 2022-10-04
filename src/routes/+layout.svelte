@@ -6,11 +6,8 @@
 	import IconButton from '@smui/icon-button';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Login from '$lib/components/Login.svelte';
-	import Pair from '$lib/components/Pair.svelte';
 	import Card, { Content as CardContent, Actions } from '@smui/card';
-	import Button, { Label } from '@smui/button';
 	import { store } from '$lib/store';
-	import { override } from '$lib/components/cubes';
 
 	let topAppBar: TopAppBarComponentDev;
 
@@ -29,7 +26,6 @@
 		type Unsubscribe
 	} from 'firebase/firestore';
 	import firebase from '$lib/firebase';
-	import { add_scramble, add_solve } from '$lib/components/solves';
 	import type { AnyAction } from '@reduxjs/toolkit';
 
 	$: open = width > 720;
@@ -45,12 +41,7 @@
 
 	const i18n: { [key: string]: string } = {
 		unknown: 'Unknown',
-		timer: 'Speed Solving',
-		trending_down: 'Efficient Solving',
-		history_edu: 'Solve Analysis',
-		school: 'Roux Academy',
-		account_circle: 'Profile',
-		bluetooth: 'Cubes'
+		account_circle: 'Profile'
 	};
 	function textLookup(key: string) {
 		return i18n[key];
@@ -58,51 +49,11 @@
 
 	let loading = true;
 
-	let unsubSolves: Unsubscribe | undefined;
-	let unsubScrambles: Unsubscribe | undefined;
 	let unsubActions: Unsubscribe | undefined;
-	$: if ($store.auth.signedIn && !unsubSolves) {
-		if (!unsubScrambles) {
-			const scrambles = collection(firebase.firestore, 'scrambles');
-			unsubScrambles = onSnapshot(query(scrambles, orderBy('timestamp')), (querySnapshot) => {
-				querySnapshot.docChanges().forEach((change) => {
-					if (change.type === 'added') {
-						let doc = change.doc;
-						store.dispatch(add_scramble({ scramble: doc.data().setup, id: doc.id }));
-					}
-				});
-			});
-		}
-
-		if ($store.auth.uid && !unsubSolves) {
-			// always true
-			const solves = collectionGroup(firebase.firestore, 'solves');
-			unsubSolves = onSnapshot(
-				query(solves, where('creator', '==', $store.auth.uid), orderBy('timestamp')),
-				(querySnapshot) => {
-					querySnapshot.docChanges().forEach((change) => {
-						if (change.type === 'added') {
-							let doc = change.doc;
-							store.dispatch(
-								add_solve({
-									solveId: doc.id,
-									scramble: doc.data().scramble,
-									moves: doc.data().moves,
-									time: doc.data().time
-								})
-							);
-						}
-					});
-				},
-				(error) => {
-					console.log('solves query failing: ');
-					console.error(error);
-				}
-			);
-		}
+	$: if ($store.auth.signedIn) {
 		if ($store.auth.uid && !unsubActions) {
 			const actions = collectionGroup(firebase.firestore, 'requests');
-			unsubSolves = onSnapshot(
+			unsubActions = onSnapshot(
 				query(actions, where('target', '==', $store.auth.uid), orderBy('timestamp')),
 				(querySnapshot) => {
 					querySnapshot.docChanges().forEach((change) => {
@@ -121,50 +72,23 @@
 			);
 		}
 	}
-
-	$: if (unsubSolves && !$store.auth.signedIn) {
-		unsubSolves();
-		unsubSolves = undefined;
-	}
-
-	$: if (unsubScrambles && !$store.auth.signedIn) {
-		unsubScrambles();
-		unsubScrambles = undefined;
-	}
 </script>
 
 <svelte:window bind:innerWidth={width} />
 
 {#if loading || $store.auth.signedIn === undefined}
 	<h2>Loading ...</h2>
-	<div style="display: none"><Pair /><Login />{(loading = false)}</div>
+	<div style="display: none"><Login />{(loading = false)}</div>
 {:else if !$store.auth.signedIn}
 	<div class="card-display">
 		<div class="card-container">
 			<Card>
-				{#if !$store.cubes.bluetoothSupported && !$store.cubes.overrideUsingCubes}
-					<CardContent>
-						<h2>Blue Roux</h2>
-						<p>Make the most of your bluetooth cube as you master the Roux speedsolving method.</p>
-						<p>
-							Your web browser doesn't support bluetooth. Try using Google Chrome or installing the
-							app version of blueroux.
-						</p>
-					</CardContent>
-					<Actions fullBleed>
-						<Button on:click={() => store.dispatch(override(true))}>
-							<Label>Ignore and continue</Label>
-							<i class="material-icons" aria-hidden="true">arrow_forward</i>
-						</Button>
-					</Actions>
-				{:else}
-					<CardContent>
-						<h2>Blue Roux</h2>
-						<p>Make the most of your bluetooth cube as you master the Roux speedsolving method.</p>
-						<p>Sign in with Google to proceed.</p>
-					</CardContent>
-					<Login />
-				{/if}
+				<CardContent>
+					<h2>Words</h2>
+					<p>Have fun playing a word game!</p>
+					<p>Sign in with Google to proceed.</p>
+				</CardContent>
+				<Login />
 			</Card>
 		</div>
 	</div>
@@ -187,11 +111,6 @@
 					</Section>
 				</div>
 				<Section align="end" toolbar>
-					<IconButton
-						class="material-icons"
-						aria-label="Connect Cube"
-						on:click={() => setActive('bluetooth')}>settings_bluetooth</IconButton
-					>
 					<span on:click={() => setActive('account_circle')}><Avatar /></span>
 				</Section>
 			</Row>
@@ -205,44 +124,11 @@
 			bind:open
 		>
 			<Header>
-				<Title>Blue Roux</Title>
-				<Subtitle>Bluetooth training FTW</Subtitle>
+				<Title>Words</Title>
+				<Subtitle>Word Game</Subtitle>
 			</Header>
 			<Content>
 				<List>
-					<Item
-						href="javascript:void(0)"
-						on:click={() => setActive('timer')}
-						activated={active === 'timer'}
-					>
-						<Graphic class="material-icons" aria-hidden="true">timer</Graphic>
-						<Text>{textLookup('timer')}</Text>
-					</Item>
-					<Item
-						href="javascript:void(0)"
-						on:click={() => setActive('trending_down')}
-						activated={active === 'trending_down'}
-					>
-						<Graphic class="material-icons" aria-hidden="true">trending_down</Graphic>
-						<Text>{textLookup('trending_down')}</Text>
-					</Item>
-					<Item
-						href="javascript:void(0)"
-						on:click={() => setActive('history_edu')}
-						activated={active === 'history_edu'}
-					>
-						<Graphic class="material-icons" aria-hidden="true">history_edu</Graphic>
-						<Text>{textLookup('history_edu')}</Text>
-					</Item>
-					<Item
-						href="javascript:void(0)"
-						on:click={() => setActive('school')}
-						activated={active === 'school'}
-					>
-						<Graphic class="material-icons" aria-hidden="true">school</Graphic>
-						<Text>{textLookup('school')}</Text>
-					</Item>
-
 					<Separator />
 					<Subheader component={H6}>Settings</Subheader>
 					<Item
@@ -252,14 +138,6 @@
 					>
 						<Graphic class="material-icons" aria-hidden="true">account_circle</Graphic>
 						<Text>{textLookup('account_circle')}</Text>
-					</Item>
-					<Item
-						href="javascript:void(0)"
-						on:click={() => setActive('bluetooth')}
-						activated={active === 'bluetooth'}
-					>
-						<Graphic class="material-icons" aria-hidden="true">bluetooth</Graphic>
-						<Text>{textLookup('bluetooth')}</Text>
 					</Item>
 				</List>
 			</Content>

@@ -9,12 +9,12 @@ export interface NavState {
 export const navigate_to = createAction<string>('navigate_to');
 
 export const initialState = {
-	active: 'unknown'
+	active: 'account_circle'
 } as NavState;
 
 export const nav = createReducer(initialState, (r) => {
 	r.addCase(navigate_to, (state, action) => {
-		state.active = action.payload || 'bluetooth';
+		state.active = action.payload || 'account_circle';
 		return state;
 	});
 });
