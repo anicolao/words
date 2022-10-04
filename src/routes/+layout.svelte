@@ -27,6 +27,7 @@
 	} from 'firebase/firestore';
 	import firebase from '$lib/firebase';
 	import type { AnyAction } from '@reduxjs/toolkit';
+	import { create_user, type User } from '$lib/components/users';
 
 	$: open = width > 720;
 	$: active = $store.nav.active.split('/')[0];
@@ -39,9 +40,11 @@
 
 	let width = 0;
 
+	// Icon reference: https://fonts.google.com/icons?icon.query=table_bar&icon.set=Material+Icons
 	const i18n: { [key: string]: string } = {
 		unknown: 'Unknown',
-		account_circle: 'Profile'
+		account_circle: 'Profile',
+		table_bar: 'Tables'
 	};
 	function textLookup(key: string) {
 		return i18n[key];
@@ -49,11 +52,11 @@
 
 	let loading = true;
 
-	let unsubActions: Unsubscribe | undefined;
+	let unsubRequests: Unsubscribe | undefined;
 	$: if ($store.auth.signedIn) {
-		if ($store.auth.uid && !unsubActions) {
+		if ($store.auth.uid && !unsubRequests) {
 			const actions = collectionGroup(firebase.firestore, 'requests');
-			unsubActions = onSnapshot(
+			unsubRequests = onSnapshot(
 				query(actions, where('target', '==', $store.auth.uid), orderBy('timestamp')),
 				(querySnapshot) => {
 					querySnapshot.docChanges().forEach((change) => {
@@ -62,6 +65,57 @@
 							let action = doc.data() as AnyAction;
 							delete action.timestamp;
 							store.dispatch(action);
+						}
+					});
+				},
+				(error) => {
+					console.log('requests query failing: ');
+					console.error(error);
+				}
+			);
+		}
+	}
+
+	let unsubActions: Unsubscribe | undefined;
+	$: if ($store.auth.signedIn) {
+		if ($store.auth.uid && !unsubActions) {
+			const actions = collection(firebase.firestore, 'actions');
+			unsubActions = onSnapshot(
+				query(actions, orderBy('timestamp')),
+				(querySnapshot) => {
+					querySnapshot.docChanges().forEach((change) => {
+						if (change.type === 'added') {
+							let doc = change.doc;
+							let action = doc.data() as AnyAction;
+							console.log('Incoming action ', action);
+							delete action.timestamp;
+							store.dispatch(action);
+						}
+					});
+				},
+				(error) => {
+					console.log('actions query failing: ');
+					console.error(error);
+				}
+			);
+		}
+	}
+
+	let unsubUsers: Unsubscribe | undefined;
+	$: if ($store.auth.signedIn) {
+		if ($store.auth.uid && !unsubUsers) {
+			const users = collection(firebase.firestore, 'users');
+			unsubUsers = onSnapshot(
+				query(users),
+				(querySnapshot) => {
+					querySnapshot.docChanges().forEach((change) => {
+						if (change.type === 'added') {
+							let doc = change.doc;
+							let user = doc.data() as User;
+							console.log('Incoming user ', user);
+							store.dispatch(create_user(user));
+							//delete action.timestamp;
+							//store.dispatch(action);
 						}
 					});
 				},
@@ -129,6 +183,14 @@
 			</Header>
 			<Content>
 				<List>
+					<Item
+						href="javascript:void(0)"
+						on:click={() => setActive('table_bar')}
+						activated={active === 'table_bar'}
+					>
+						<Graphic class="material-icons" aria-hidden="true">table_bar</Graphic>
+						<Text>{textLookup('table_bar')}</Text>
+					</Item>
 					<Separator />
 					<Subheader component={H6}>Settings</Subheader>
 					<Item

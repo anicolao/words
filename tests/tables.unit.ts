@@ -6,7 +6,9 @@ import {
 	initialTablesState,
 	create_table,
 	join_table,
-	start_table
+	start_table,
+	destroy_table,
+	leave_table
 } from '$lib/components/tables';
 
 describe('table creation and joining', () => {
@@ -43,5 +45,12 @@ describe('table creation and joining', () => {
 		table = started.tableIdToTable[started.tableIds[0]];
 		expect(table.players.length).to.equal(2);
 		expect(table.started).to.be.true;
+
+		const left = tables(secondPlayer, leave_table(joinTable));
+		table = left.tableIdToTable[started.tableIds[0]];
+		expect(table.players.length).to.equal(1);
+
+		const destroyed = tables(started, destroy_table(joinTable));
+		expect(destroyed.tableIds.length).to.be.equal(0);
 	});
 });

@@ -41,7 +41,13 @@ const firebase = {
 	dispatch: (action: any) => {
 		const user = store.getState().auth;
 		if (user.uid) {
-			firebase.request(user.uid, action);
+			addDoc(collection(firebase.firestore, 'actions'), {
+				...action,
+				creator: user.uid,
+				timestamp: serverTimestamp()
+			}).catch((message) => {
+				console.error(message);
+			});
 		}
 	},
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -4,6 +4,9 @@ const { configureStore } = ((toolkitRaw as any).default ?? toolkitRaw) as typeof
 import { auth } from './components/auth';
 import { nav } from '$lib/components/nav';
 import type { Writable } from 'svelte/store';
+import { tables } from './components/tables';
+import { words } from './components/words';
+import { users } from './components/users';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
@@ -26,7 +29,10 @@ function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
 
 const reducer = {
 	auth,
-	nav
+	nav,
+	tables,
+	users,
+	words
 };
 const rawStore = configureStore({ reducer, enhancers: [svelteStoreEnhancer] });
 export type ReduxStore = typeof rawStore;
