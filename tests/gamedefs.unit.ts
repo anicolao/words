@@ -12,7 +12,7 @@ import {
 
 describe('gamedefs', () => {
 	it('initial state', () => {
-		expect(initialGameDefsState.games.length).to.equals(0);
+		expect(initialGameDefsState.gameΙds.length).to.equals(0);
 	});
 
 	it('define a word game', () => {
@@ -21,6 +21,6 @@ describe('gamedefs', () => {
 			properties: { tiles: 'abcdefghijklmnopqrstuvwxyz', name: 'Crossword Game' }
 		};
 		const nextState = gamedefs(initialGameDefsState, define_game(crossword));
-		expect(nextState.games.length).to.be.equal(1);
+		expect(nextState.gameΙds.length).to.be.equal(1);
 	});
 });

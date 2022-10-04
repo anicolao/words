@@ -4,7 +4,8 @@ const { createAction, createReducer } = ((toolkitRaw as any).default ??
 	toolkitRaw) as typeof toolkitRaw;
 // Upper case letter is blank.
 export interface GameDefsState {
-	games: GameDefinition[];
+	gameΙds: string[];
+	gameIdToGame: { [id: string]: GameDefinition };
 }
 
 export interface GameDefinition {
@@ -15,11 +16,13 @@ export interface GameDefinition {
 export const define_game = createAction<GameDefinition>('define_game');
 
 export const initialGameDefsState = {
-	games: []
+	gameΙds: [],
+	gameIdToGame: {}
 } as GameDefsState;
 
 export const gamedefs = createReducer(initialGameDefsState, (r) => {
 	r.addCase(define_game, (state, { payload }) => {
-		state.games.push(payload);
+		state.gameΙds.push(payload.id);
+		state.gameIdToGame[payload.id] = payload;
 	});
 });

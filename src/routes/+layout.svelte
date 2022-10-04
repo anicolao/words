@@ -28,6 +28,7 @@
 	import firebase from '$lib/firebase';
 	import type { AnyAction } from '@reduxjs/toolkit';
 	import { create_user, type User } from '$lib/components/users';
+	import { define_game } from '$lib/components/gamedefs';
 
 	$: open = width > 720;
 	$: active = $store.nav.active.split('/')[0];
@@ -114,6 +115,32 @@
 							let user = doc.data() as User;
 							console.log('Incoming user ', user);
 							store.dispatch(create_user(user));
+							//delete action.timestamp;
+							//store.dispatch(action);
+						}
+					});
+				},
+				(error) => {
+					console.log('actions query failing: ');
+					console.error(error);
+				}
+			);
+		}
+	}
+
+	let unsubGamedefs: Unsubscribe | undefined;
+	$: if ($store.auth.signedIn) {
+		if ($store.auth.uid && !unsubGamedefs) {
+			const gamedefs = collection(firebase.firestore, 'gamedef');
+			unsubGamedefs = onSnapshot(
+				query(gamedefs),
+				(querySnapshot) => {
+					querySnapshot.docChanges().forEach((change) => {
+						if (change.type === 'added') {
+							let doc = change.doc;
+							let game = doc.data() as any;
+							console.log('Incoming game ', game);
+							store.dispatch(define_game({ id: change.doc.id, properties: game }));
 							//delete action.timestamp;
 							//store.dispatch(action);
 						}

@@ -60,6 +60,7 @@
 	<ul>
 		{#each tableIds as table}
 			<li>
+				{$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[table].gameid].properties.name}:
 				{#each $store.tables.tableIdToTable[table].players as player}
 					<Avatar {player} />
 				{/each}

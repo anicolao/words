@@ -7,6 +7,7 @@ import type { Writable } from 'svelte/store';
 import { tables } from './components/tables';
 import { words } from './components/words';
 import { users } from './components/users';
+import { gamedefs } from './components/gamedefs';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
@@ -29,6 +30,7 @@ function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
 
 const reducer = {
 	auth,
+	gamedefs,
 	nav,
 	tables,
 	users,
