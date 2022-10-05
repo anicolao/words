@@ -152,7 +152,7 @@
 							style="--wd:{tileWidth};--ht:{tileHeight}"
 							class="tile boardCell"
 						>
-							{state.board[r][c]}<sub>{tileToValue[state.board[r][c]]}</sub>
+							{state.board[r][c]}<span>{tileToValue[state.board[r][c]]}</span>
 						</div>{:else}<div
 							on:click={cell(r, c)}
 							class="{c === selectedCol && r === selectedRow
@@ -172,7 +172,7 @@
 					style="--wd:{tileWidth};--ht:{tileHeight}"
 					class="tile boardCell"
 				>
-					{letter}<sub>{tileToValue[letter]}</sub>
+					{letter}<span>{tileToValue[letter]}</span>
 				</div>
 			{/each}
 		</div>
@@ -264,9 +264,11 @@
 
 		border-top: calc(var(--ht) * 1px) solid green;
 	}
-	sub {
-		font-size: xx-small;
-		font-size: 8px;
-		margin-bottom: -1.2em;
+	.boardCell span {
+		font-size: small;
+		font-size: calc(var(--wd) * 0.25px) !important;
+		position: relative;
+		top: 1em;
+		left: 0.2em;
 	}
 </style>
