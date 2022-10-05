@@ -60,7 +60,10 @@ export const words = createReducer(initialWordsState, (r) => {
 
 	function extractLettersFromRack(letters: string, rack: string): string | undefined {
 		for (const l of letters) {
-			const newRack = rack.replace(l, '');
+			let newRack = rack.replace(l, '');
+			if (l.toUpperCase() === l) {
+				newRack = rack.replace('_', '');
+			}
 			if (newRack.length === rack.length) return undefined;
 			rack = newRack;
 		}
