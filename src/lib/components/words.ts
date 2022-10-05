@@ -20,6 +20,7 @@ export interface WordsMove {
 	isVertical: boolean;
 	letters: string;
 	player: string;
+	allowIllegalMoves?: boolean;
 }
 
 export const play = createAction<WordsMove>('play');
@@ -64,13 +65,13 @@ export const words = createReducer(initialWordsState, (r) => {
 	}
 
 	r.addCase(play, (state, { payload }) => {
-		// If horizontal play
-		let { x, y, letters, isVertical } = payload;
-		let newBoard = state.board.map((x) => [...x]);
-		let legalPlay = false;
+		let { x, y } = payload;
+		const { letters, isVertical } = payload;
+		const newBoard = state.board.map((x) => [...x]);
+		let legalPlay = payload?.allowIllegalMoves || false;
 		const rack: string = state.emailToRack[payload.player] || '';
-		let remainingRack = extractLettersFromRack(letters, rack);
-		if (!remainingRack) return state;
+		const remainingRack = extractLettersFromRack(letters, rack);
+		if (remainingRack === undefined) return state;
 		for (const l of letters) {
 			while (newBoard[y][x]) {
 				isVertical ? y++ : x++;
@@ -103,6 +104,6 @@ export const words = createReducer(initialWordsState, (r) => {
 		return state;
 	});
 	r.addCase(initial_tiles, (state, { payload }) => {
-		return { ...state, drawPile: payload };
+		return { ...initialWordsState, drawPile: payload };
 	});
 });

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import {
 		create_table,
@@ -8,12 +9,13 @@
 		start_table,
 		tables
 	} from '$lib/components/tables';
+	import { draw_tiles, initial_tiles, join_game } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import Button from '@smui/button';
 	import { Content } from '@smui/card';
 	import IconButton from '@smui/icon-button';
-	import { addDoc, collection, setIndexConfiguration } from 'firebase/firestore';
+	import { addDoc, collection, serverTimestamp, setIndexConfiguration } from 'firebase/firestore';
 
 	$: tableIds = $store.tables.tableIds;
 
@@ -43,14 +45,43 @@
 			firebase.dispatch(leave_table({ tableid, player: me }));
 		};
 	}
+	function shuffle(elements: string[]) {
+		const ret = elements.slice(0);
+		for (let i = ret.length - 1; i > 0; --i) {
+			const item = Math.round(Math.random() * i);
+			[ret[i], ret[item]] = [ret[item], ret[i]];
+		}
+		return ret;
+	}
 	function start(tableid: string) {
 		return async () => {
+			const players = shuffle($store.tables.tableIdToTable[tableid].players);
+			const tiles = shuffle(
+				$store.gamedefs.gameIdToGame[
+					$store.tables.tableIdToTable[tableid].gameid
+				].properties.tiles.split('')
+			);
+			const setupActions = [];
+			setupActions.push(initial_tiles(tiles.join('')));
+			players.forEach((player) => setupActions.push(join_game(player)));
+			players.forEach((player) => setupActions.push(draw_tiles(player)));
+
+			const gameActions = collection(firebase.firestore, 'tables', tableid, 'actions');
+			setupActions.forEach((action) => {
+				console.log(action);
+				addDoc(gameActions, { ...action, timestamp: serverTimestamp() }).catch((message) => {
+					console.error(message);
+				});
+			});
+
 			firebase.dispatch(start_table({ tableid }));
+			goto('table_bar/' + tableid);
 		};
 	}
 	function navigateTo(tableid: string) {
 		return async () => {
 			console.log('go to ', tableid);
+			goto('table_bar/' + tableid);
 		};
 	}
 </script>
