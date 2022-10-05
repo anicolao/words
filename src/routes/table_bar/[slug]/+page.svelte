@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import Board from '$lib/components/Board.svelte';
+	import { custom_title } from '$lib/components/nav';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import Button, { Label } from '@smui/button';
@@ -69,6 +70,12 @@
 	}
 	$: console.log({ gamedef });
 	$: boardState = $store.words;
+
+	$: currentPlayer = $store.words.players[$store.words.currentPlayerIndex];
+	$: if (currentPlayer) {
+		const name = $store.users.emailToUser[currentPlayer].name.split(' ');
+		store.dispatch(custom_title(`${name[0]}'s turn`));
+	}
 </script>
 
 <div class="container">

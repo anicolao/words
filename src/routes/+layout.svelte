@@ -149,6 +149,8 @@
 			);
 		}
 	}
+
+	$: customTitle = $store.nav.customTitle;
 </script>
 
 <svelte:window bind:innerWidth={width} />
@@ -179,12 +181,16 @@
 							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
 								>menu</IconButton
 							>
-						{:else}
+						{:else if !customTitle}
 							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
 								>{active}</IconButton
 							>
 						{/if}
-						<Title>{textLookup(active)}</Title>
+						{#if !customTitle}
+							<Title>{textLookup(active)}</Title>
+						{:else}
+							<Title>{customTitle}</Title>
+						{/if}
 					</Section>
 				</div>
 				<Section align="end" toolbar>
