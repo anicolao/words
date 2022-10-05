@@ -53,14 +53,16 @@
 </script>
 
 <div class="container">
-	Welcome to the game at table {tableId}.
+	<p class="titlepadding" />
 	<Board bind:rack {tableId} {tiles} {values} {letterm} {wordm} {boardState} />
-	<p>Rack: {rack}</p>
 </div>
 
 <style>
 	.container {
 		width: 100%;
 		height: 80%;
+	}
+	.titlepadding {
+		height: 1px;
 	}
 </style>

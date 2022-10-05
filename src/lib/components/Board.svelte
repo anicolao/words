@@ -90,7 +90,7 @@
 		}
 		if (e.key) {
 			const letter = e.key.toLowerCase();
-			async function previewMove() {
+			async function previewMove(expectedChange: number) {
 				const move = play({
 					x: selectedCol,
 					y: selectedRow,
@@ -100,13 +100,14 @@
 					allowIllegalMoves: true
 				});
 				state = words(boardState, move);
-				if (rack.length <= state.emailToRack[me].length) {
-					wordSoFar = '';
+				if (rack.length !== state.emailToRack[me].length + expectedChange) {
+					wordSoFar = wordSoFar.slice(0, -1);
+					previewMove(0);
 				}
 			}
 			if (letter.length === 1 && letter >= 'a' && letter <= 'z') {
 				wordSoFar += letter;
-				previewMove();
+				previewMove(1);
 			} else if (letter === 'enter') {
 				console.log('submit move');
 				const move = play({
@@ -124,7 +125,7 @@
 				state = boardState;
 			} else if (letter === 'backspace') {
 				wordSoFar = wordSoFar.slice(0, -1);
-				previewMove();
+				previewMove(-1);
 			} else {
 				console.log({ letter });
 			}
@@ -157,6 +158,17 @@
 						</div>{/if}{/each}
 			</div>{/each}
 	</div>
+	{#if rack}
+		<div class="rack">
+			{#each rack.split('') as letter}<div
+					style="--wd:{tileWidth};--ht:{tileHeight}"
+					class="tile boardCell"
+				>
+					{letter}<sub>{tileToValue[letter]}</sub>
+				</div>
+			{/each}
+		</div>
+	{/if}
 </div>
 
 <svelte:window on:keydown|preventDefault={onKeyDown} />
@@ -168,6 +180,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.rack {
+		display: flex;
 	}
 
 	.tile {
