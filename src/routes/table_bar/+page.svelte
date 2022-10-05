@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import { dispatchToTable } from '$lib/components/gameutil';
 	import {
 		create_table,
 		destroy_table,
@@ -66,12 +67,8 @@
 			players.forEach((player) => setupActions.push(join_game(player)));
 			players.forEach((player) => setupActions.push(draw_tiles(player)));
 
-			const gameActions = collection(firebase.firestore, 'tables', tableid, 'actions');
 			setupActions.forEach((action) => {
-				console.log(action);
-				addDoc(gameActions, { ...action, timestamp: serverTimestamp() }).catch((message) => {
-					console.error(message);
-				});
+				dispatchToTable(tableid, action);
 			});
 
 			firebase.dispatch(start_table({ tableid }));

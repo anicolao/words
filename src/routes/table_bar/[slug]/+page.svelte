@@ -16,18 +16,18 @@
 			const gameActions = collection(firebase.firestore, 'tables', tableId, 'actions');
 			unsub = onSnapshot(
 				query(gameActions, orderBy('timestamp')),
+				{ includeMetadataChanges: true },
 				(querySnapshot) => {
 					querySnapshot.docChanges().forEach((change) => {
-						if (change.type === 'added') {
+						if (change.type === 'added' || (change.type === 'modified' && change.doc)) {
 							let doc = change.doc;
 							let action = doc.data() as any;
-							console.log('Incoming game action ', action);
 							if (action.timestamp) {
-								console.log('Dispatched!');
+								console.log('server side action: ', action);
 								delete action.timestamp;
 								store.dispatch(action);
 							} else {
-								console.log('Ignore local echo for consistency');
+								console.log('Ignore local echo for consistency', action);
 							}
 						}
 					});
@@ -54,7 +54,7 @@
 
 <div class="container">
 	Welcome to the game at table {tableId}.
-	<Board bind:rack {tiles} {values} {letterm} {wordm} {boardState} />
+	<Board bind:rack {tableId} {tiles} {values} {letterm} {wordm} {boardState} />
 	<p>Rack: {rack}</p>
 </div>
 

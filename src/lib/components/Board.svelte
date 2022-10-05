@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { store } from '$lib/store';
-	import { initialWordsState, play, words, type WordsState } from './words';
+	import { dispatchToTable } from './gameutil';
+	import { draw_tiles, initialWordsState, play, words, type WordsState } from './words';
 
+	export let tableId = '';
 	export let numRows = 15;
 	export let numCols = 15;
 	export let letterm = '';
@@ -64,7 +66,6 @@
 			selectedCol = c;
 		};
 	}
-	$: console.log({ selectedRow, selectedCol, goVertical });
 
 	const me = $store.auth.email || '';
 	$: rack = state.emailToRack[me];
@@ -89,9 +90,7 @@
 		}
 		if (e.key) {
 			const letter = e.key.toLowerCase();
-			if (letter.length === 1 && letter >= 'a' && letter <= 'z') {
-				console.log({ letter });
-				wordSoFar += letter;
+			async function previewMove() {
 				const move = play({
 					x: selectedCol,
 					y: selectedRow,
@@ -101,16 +100,31 @@
 					allowIllegalMoves: true
 				});
 				state = words(boardState, move);
-				console.log({ originalRack: rack, newRack: state.emailToRack[me] });
 				if (rack.length <= state.emailToRack[me].length) {
 					wordSoFar = '';
 				}
+			}
+			if (letter.length === 1 && letter >= 'a' && letter <= 'z') {
+				wordSoFar += letter;
+				previewMove();
 			} else if (letter === 'enter') {
 				console.log('submit move');
+				const move = play({
+					x: selectedCol,
+					y: selectedRow,
+					isVertical: goVertical,
+					letters: wordSoFar,
+					player: me
+				});
+				dispatchToTable(tableId, move);
+				const draw = draw_tiles(me);
+				dispatchToTable(tableId, draw);
 			} else if (letter === 'escape') {
-				console.log('undo move');
 				wordSoFar = '';
 				state = boardState;
+			} else if (letter === 'backspace') {
+				wordSoFar = wordSoFar.slice(0, -1);
+				previewMove();
 			} else {
 				console.log({ letter });
 			}
