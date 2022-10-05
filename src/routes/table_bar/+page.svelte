@@ -103,6 +103,9 @@
 					{/if}
 				{:else}
 					<IconButton class="material-icons" on:click={navigateTo(table)}>arrow_forward</IconButton>
+					{#if $store.tables.tableIdToTable[table].owner === me}
+						<IconButton class="material-icons" on:click={destroy(table)}>delete</IconButton>
+					{/if}
 				{/if}
 			</li>
 		{/each}

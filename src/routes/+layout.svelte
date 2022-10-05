@@ -88,7 +88,6 @@
 						if (change.type === 'added') {
 							let doc = change.doc;
 							let action = doc.data() as AnyAction;
-							console.log('Incoming action ', action);
 							delete action.timestamp;
 							store.dispatch(action);
 						}
@@ -139,10 +138,7 @@
 						if (change.type === 'added') {
 							let doc = change.doc;
 							let game = doc.data() as any;
-							console.log('Incoming game ', game);
 							store.dispatch(define_game({ id: change.doc.id, properties: game }));
-							//delete action.timestamp;
-							//store.dispatch(action);
 						}
 					});
 				},

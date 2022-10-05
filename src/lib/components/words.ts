@@ -12,6 +12,7 @@ export interface WordsState {
 	emailToRack: { [k: string]: string };
 	// List of players for order.
 	players: string[];
+	currentPlayerIndex: number;
 }
 
 export interface WordsMove {
@@ -27,6 +28,7 @@ export const play = createAction<WordsMove>('play');
 export const initial_tiles = createAction<string>('initial_tiles');
 export const draw_tiles = createAction<string>('draw_tiles');
 export const join_game = createAction<string>('join_game');
+export const set_current_player = createAction<number>('set_current_player');
 
 export const initialWordsState = {
 	board: new Array(15).fill('').map((x) => new Array(15)),
@@ -34,7 +36,8 @@ export const initialWordsState = {
 	height: 15,
 	drawPile: '',
 	emailToRack: {},
-	players: []
+	players: [],
+	currentPlayerIndex: 0
 } as WordsState;
 
 export const words = createReducer(initialWordsState, (r) => {
@@ -84,7 +87,12 @@ export const words = createReducer(initialWordsState, (r) => {
 			newBoard[y][x] = l;
 			legalPlay = legalPlay || hasAdjacentTile(state.board, x, y);
 		}
+		if (legalPlay) {
+			legalPlay = payload.player === state.players[state.currentPlayerIndex];
+			legalPlay = legalPlay || payload?.allowIllegalMoves || false;
+		}
 		if (!legalPlay) return state;
+		state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
 		state.emailToRack[payload.player] = remainingRack;
 		state.board = newBoard;
 		return state;
@@ -105,5 +113,9 @@ export const words = createReducer(initialWordsState, (r) => {
 	});
 	r.addCase(initial_tiles, (state, { payload }) => {
 		return { ...initialWordsState, drawPile: payload };
+	});
+
+	r.addCase(set_current_player, (state, { payload }) => {
+		state.currentPlayerIndex = payload % state.players.length;
 	});
 });

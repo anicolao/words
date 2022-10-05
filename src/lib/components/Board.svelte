@@ -117,9 +117,17 @@
 					letters: wordSoFar,
 					player: me
 				});
-				dispatchToTable(tableId, move);
-				const draw = draw_tiles(me);
-				dispatchToTable(tableId, draw);
+				state = words(boardState, move);
+				if (rack !== state.emailToRack[me]) {
+					console.log('Not your turn?', { rack, srack: state.emailToRack[me] });
+					state = boardState;
+				} else {
+					state = boardState;
+					dispatchToTable(tableId, move);
+					const draw = draw_tiles(me);
+					dispatchToTable(tableId, draw);
+				}
+				wordSoFar = '';
 			} else if (letter === 'escape') {
 				wordSoFar = '';
 				state = boardState;

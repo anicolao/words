@@ -11,8 +11,15 @@
 	const tableId = $page.params.slug;
 
 	let unsub: Unsubscribe | undefined;
+	let subbedTableId = '';
 	$: if ($store.auth.signedIn) {
-		if ($store.auth.uid && !unsub) {
+		if ($store.auth.uid && (!unsub || subbedTableId !== tableId)) {
+			if (unsub) {
+				console.log('unsubscribe from old table: ', { subbedTableId });
+				unsub();
+			}
+			subbedTableId = tableId;
+			console.log('subscribe to new table: ', { subbedTableId });
 			const gameActions = collection(firebase.firestore, 'tables', tableId, 'actions');
 			unsub = onSnapshot(
 				query(gameActions, orderBy('timestamp')),
