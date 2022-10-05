@@ -52,6 +52,7 @@
 		const tArray = tiles.split('');
 		const vArray = values.split('').map((x) => parseInt(x, 16));
 		tArray.forEach((letter, i) => (tileToValue[letter] = vArray[i]));
+		tArray.forEach((letter, i) => (tileToValue[letter.toUpperCase()] = tileToValue['_']));
 	}
 
 	let goVertical = false;
@@ -89,7 +90,7 @@
 				break;
 		}
 		if (e.key) {
-			const letter = e.key.toLowerCase();
+			let letter = e.key.toLowerCase();
 			async function previewMove(expectedChange: number) {
 				const move = play({
 					x: selectedCol,
@@ -101,8 +102,14 @@
 				});
 				state = words(boardState, move);
 				if (rack.length !== state.emailToRack[me].length + expectedChange) {
-					wordSoFar = wordSoFar.slice(0, -1);
-					previewMove(0);
+					if (expectedChange === 1 && letter.toUpperCase() !== letter) {
+						letter = letter.toUpperCase();
+						wordSoFar = wordSoFar.slice(0, -1) + letter.toUpperCase();
+						previewMove(1);
+					} else {
+						wordSoFar = wordSoFar.slice(0, -1);
+						previewMove(0);
+					}
 				}
 			}
 			if (letter.length === 1 && letter >= 'a' && letter <= 'z') {
@@ -150,7 +157,7 @@
 		{#each squareTypes as row, r}<div class="row">
 				{#each row as square, c}{#if state.board[r][c]}<div
 							style="--wd:{tileWidth};--ht:{tileHeight}"
-							class="tile boardCell"
+							class="tile boardCell {tileToValue[state.board[r][c]] === 0 ? 'blank' : ''}"
 						>
 							{state.board[r][c]}<span>{tileToValue[state.board[r][c]]}</span>
 						</div>{:else}<div
@@ -204,6 +211,9 @@
 		font-weight: 100 !important;
 		font-size: calc(var(--wd) * 0.7px) !important;
 		text-transform: uppercase;
+	}
+	.blank {
+		color: yellowgreen;
 	}
 	.boardCell {
 		width: calc(var(--wd) * 1px);
