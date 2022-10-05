@@ -42,12 +42,24 @@
 
 	const me = $store.auth.email || '';
 	let rack;
-	$: gameId = $store.tables.tableIdToTable[tableId].gameid;
-	$: gamedef = $store.gamedefs.gameIdToGame[gameId].properties;
-	$: letterm = gamedef.letterm;
-	$: wordm = gamedef.wordm;
-	$: tiles = gamedef.tiles;
-	$: values = gamedef.values;
+	let gameId: string = '';
+	let gamedef: any;
+	$: if ($store.tables.tableIdToTable[tableId]) {
+		gameId = $store.tables.tableIdToTable[tableId].gameid;
+	}
+	$: if (gameId && $store.gamedefs.gameIdToGame[gameId]) {
+		gamedef = $store.gamedefs.gameIdToGame[gameId].properties;
+	}
+	let letterm: string;
+	let wordm: string;
+	let tiles: string;
+	let values: string;
+	$: if (gamedef) {
+		letterm = gamedef.letterm;
+		wordm = gamedef.wordm;
+		tiles = gamedef.tiles;
+		values = gamedef.values;
+	}
 	$: console.log({ gamedef });
 	$: boardState = $store.words;
 </script>
