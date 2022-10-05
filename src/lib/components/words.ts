@@ -52,7 +52,7 @@ export const words = createReducer(initialWordsState, (r) => {
 
 	// Will return false if out of bound.
 	function isOccupied(board: string[][], x: number, y: number) {
-		if (x < 0 || x > board[0].length || y < 0 || y > board.length) {
+		if (x < 0 || x > board[0].length - 1 || y < 0 || y > board.length - 1) {
 			return false;
 		}
 		return board[y][x] != undefined;
