@@ -10,7 +10,7 @@
 	export let values = '';
 	export let rack = '';
 	export let boardState: WordsState = initialWordsState;
-	let state = boardState;
+	$: state = boardState;
 	let w: number;
 	let h: number;
 
