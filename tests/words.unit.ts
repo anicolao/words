@@ -29,7 +29,7 @@ describe('words', () => {
 				tiles: '_abddeeeeeeeeghhllllmoooorrrrssstty',
 				values: '01322111111112441111311111111000114',
 				letterm,
-				wordm: '31111111111111111121111111111111113',
+				wordm: '31111121111111111121111111111111113',
 				num_rows: 7,
 				num_cols: 5
 			})
@@ -229,7 +229,7 @@ describe('words', () => {
 		};
 		const nextState = words(firstState, play(vertical));
 		//'11111 31111 g
-		// 12121 11111 o
+		// 12121 12111 o
 		// 11111 11111 d
 		// 12121 11121 hell.
 
@@ -238,11 +238,39 @@ describe('words', () => {
 		expect(transposedBoard[0].join('')).to.be.equal('godh');
 		const firstTurn = nextState.plays[0];
 		expect(firstTurn.score).to.equal(18);
-		const lastTurn = nextState.plays[1];
+		let lastTurn = nextState.plays[1];
 		expect(lastTurn.playerIndex).to.equal(1);
 		expect(lastTurn.mainWord).to.equal('godh');
 		expect(lastTurn.sideWords.length).to.equal(0);
 		expect(lastTurn.score).to.equal(27);
+		console.log(nextState.emailToRack);
+
+		const twoWaySetup: WordsMove = {
+			x: 1,
+			y: 0,
+			isVertical: false,
+			letters: 'oo',
+			player: 'Alex@gmail.com'
+		};
+		const twoDW = words(nextState, play(twoWaySetup));
+		lastTurn = twoDW.plays.slice(-1)[0];
+		expect(lastTurn.playerIndex).to.equal(0);
+		expect(lastTurn.mainWord).to.equal('goo');
+
+		const twoWayDW: WordsMove = {
+			x: 1,
+			y: 1,
+			isVertical: true,
+			letters: 'y',
+			player: 'Bob@gmail.com'
+		};
+		const twenty = words(twoDW, play(twoWayDW));
+		lastTurn = twenty.plays.slice(-1)[0];
+		expect(lastTurn.playerIndex).to.equal(1);
+		expect(lastTurn.mainWord).to.equal('oy');
+		expect(lastTurn.sideWords.length).to.equal(1);
+		expect(lastTurn.sideWords[0]).to.equal('oy');
+		expect(lastTurn.score).to.equal(36);
 	});
 
 	it('initialize draw pile', () => {

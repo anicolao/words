@@ -83,17 +83,17 @@
 		for (let i = playerIndex + 1; i < $store.words.players.length; ++i) {
 			const email = $store.words.players[i];
 			const name = $store.users.emailToUser[email].name.split(' ')[0];
-			title += `vs ${name} (${$store.words.scores[i]})`
+			title += `vs ${name} (${$store.words.scores[i]})`;
 		}
 		for (let i = 0; i < playerIndex; ++i) {
 			const email = $store.words.players[i];
 			const name = $store.users.emailToUser[email].name.split(' ')[0];
-			title += `vs  ${name} (${$store.words.scores[i]})`
+			title += `vs  ${name} (${$store.words.scores[i]})`;
 		}
 		if ($store.words.plays.length) {
 			const lastPlay = $store.words.plays.slice(-1)[0];
-			const words = [lastPlay.mainWord, lastPlay.sideWords].flat().map(x => x.toUpperCase());
-			title += ` [Last play: ${words} for ${lastPlay.score}]`
+			const words = [lastPlay.mainWord, lastPlay.sideWords].flat().map((x) => x.toUpperCase());
+			title += ` [Last play: ${words} for ${lastPlay.score}]`;
 		}
 		store.dispatch(custom_title(title));
 	}

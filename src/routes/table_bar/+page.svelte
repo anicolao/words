@@ -68,7 +68,15 @@
 			const num_rows = parseInt(gameProps.numRows);
 			const setupActions = [];
 			setupActions.push(
-				initial_tiles({ draw_pile: shuffledTiles.join(''), tiles, values, letterm, wordm, num_cols, num_rows })
+				initial_tiles({
+					draw_pile: shuffledTiles.join(''),
+					tiles,
+					values,
+					letterm,
+					wordm,
+					num_cols,
+					num_rows
+				})
 			);
 			players.forEach((player) => setupActions.push(join_game(player)));
 			players.forEach((player) => setupActions.push(draw_tiles(player)));

@@ -81,7 +81,7 @@ export const initialWordsState = {
 	plays: [],
 	letterToValue: {},
 	lmTable: [],
-	wmTable: [],
+	wmTable: []
 } as WordsState;
 
 export const words = createReducer(initialWordsState, (r) => {
@@ -129,6 +129,30 @@ export const words = createReducer(initialWordsState, (r) => {
 		let sideWords: string[] = [];
 		if (remainingRack === undefined) return state;
 		let placedTile = false;
+		function findSideWord(x: number, y: number, xoff: number, yoff: number) {
+			const board = newBoard;
+			if (isOccupied(board, x + xoff, y + yoff) || isOccupied(board, x - xoff, y - yoff)) {
+				let sideWord = '';
+				while (isOccupied(board, x + xoff, y + yoff)) {
+					x += xoff;
+					y += yoff;
+				}
+				xoff *= -1;
+				yoff *= -1;
+				do {
+					sideWord += board[y][x];
+					x += xoff;
+					y += yoff;
+				} while (isOccupied(board, x, y));
+				return sideWord;
+			}
+			return undefined;
+		}
+		const prefix = findSideWord(x, y, isVertical ? 0 : -1, isVertical ? -1 : 0);
+		if (prefix) {
+			mainWord = prefix;
+			prefix.split('').forEach((x) => (mainWordScore += state.letterToValue[x]));
+		}
 		for (const l of letters) {
 			while (newBoard[y][x]) {
 				if (!placedTile) {
@@ -150,33 +174,13 @@ export const words = createReducer(initialWordsState, (r) => {
 			mainWordMultiplier *= state.wmTable[y * state.width + x];
 			mainWordScore += state.letterToValue[l] * letterMultiplier;
 			placedTile = true;
-			function findSideWord(x: number, y: number, xoff: number, yoff: number) {
-				const board = newBoard;
-				if (isOccupied(board, x + xoff, y + yoff) || isOccupied(board, x - xoff, y - yoff)) {
-					let sideWord = '';
-					while (isOccupied(board, x + xoff, y + yoff)) {
-						x += xoff;
-						y += yoff;
-						console.log({ letter: board[y][x], x, y, xoff, yoff });
-					}
-					xoff *= -1;
-					yoff *= -1;
-					do {
-						sideWord += board[y][x];
-						x += xoff;
-						y += yoff;
-					} while (isOccupied(board, x, y));
-					return sideWord;
-				}
-				return undefined;
-			}
 			const potentialSideWord = findSideWord(x, y, isVertical ? -1 : 0, isVertical ? 0 : -1);
 			if (potentialSideWord) {
 				let swScore = 0;
 				potentialSideWord.split('').forEach((x) => (swScore += state.letterToValue[x]));
 				swScore -= state.letterToValue[l];
 				const letterMultiplier = state.lmTable[y * state.width + x];
-				const wordMultiplier = 1;
+				const wordMultiplier = state.wmTable[y * state.width + x];
 				swScore += state.letterToValue[l] * letterMultiplier;
 				score += wordMultiplier * swScore;
 				sideWords.push(potentialSideWord);
