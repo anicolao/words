@@ -2,11 +2,9 @@
 	import { page } from '$app/stores';
 	import Board from '$lib/components/Board.svelte';
 	import { custom_title } from '$lib/components/nav';
+	import type { play, TurnRecord } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
-	import Button, { Label } from '@smui/button';
-	import IconButton from '@smui/icon-button';
-	import { Item, Text } from '@smui/list';
 	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
 
 	const tableId = $page.params.slug;
@@ -76,6 +74,8 @@
 	$: boardState = $store.words;
 
 	$: currentPlayer = $store.words.players[$store.words.currentPlayerIndex];
+	type TurnRecordSummarized = TurnRecord & { totalScore: number };
+	let turnRows: TurnRecordSummarized[][] = [];
 	$: if (currentPlayer) {
 		const playerIndex = $store.words.currentPlayerIndex;
 		const name = $store.users.emailToUser[currentPlayer].name.split(' ');
@@ -92,19 +92,65 @@
 		}
 		if ($store.words.plays.length) {
 			const lastPlay = $store.words.plays.slice(-1)[0];
-			const words = [lastPlay.mainWord, lastPlay.sideWords].flat().map((x) => x.toUpperCase());
+			const words = lastPlayWords(lastPlay);
 			title += ` [Last play: ${words} for ${lastPlay.score}]`;
 		}
 		store.dispatch(custom_title(title));
+	}
+	$: if ($store.words.plays.length) {
+		turnRows = [];
+		let totals: number[] = [];
+		for (let i = 0; i < $store.words.plays.length; ++i) {
+			const lastPlay = $store.words.plays[i];
+			while (totals.length < lastPlay.playerIndex + 1) totals.push(0);
+			console.log({ totals, pi: lastPlay.playerIndex, ti: totals[lastPlay.playerIndex] });
+			totals[lastPlay.playerIndex] += lastPlay.score;
+			const data = { ...lastPlay, totalScore: totals[lastPlay.playerIndex] };
+			if (lastPlay.playerIndex === 0 || turnRows.length === 0) {
+				turnRows.push([data]);
+			} else {
+				turnRows[turnRows.length - 1].push(data);
+			}
+			console.log('Turn Rows so far: ', turnRows);
+		}
+	}
+	function lastPlayWords(lastPlay: TurnRecord) {
+		return [lastPlay.mainWord, lastPlay.sideWords].flat().map((x) => x.toUpperCase());
+	}
+	function lastPlayName(lastPlay: TurnRecord) {
+		const email = $store.words.players[lastPlay.playerIndex];
+		return $store.users.emailToUser[email].name.split(' ')[0];
 	}
 </script>
 
 <div class="container">
 	<p class="titlepadding" />
 	<Board bind:rack {tableId} {numRows} {numCols} {tiles} {values} {letterm} {wordm} {boardState} />
+	<table border="1" cellspacing="0" style="margin-top: 50px">
+		{#each turnRows as turn, i}
+			{#if i === 0}
+				<tr
+					><td>Turn #</td>
+					{#each turn as play}
+						<td>{lastPlayName(play)}</td><td>Points</td><td>Total</td>
+					{/each}
+				</tr>
+			{/if}
+			<tr
+				><td>{i + 1}</td>
+				{#each turn as play}<td>{lastPlayWords(play)}</td><td>{play.score}</td><td
+						>{play.totalScore}</td
+					>{/each}
+			</tr>
+		{/each}
+	</table>
 </div>
 
 <style>
+	td {
+		padding: 0.3em;
+		text-align: center;
+	}
 	.container {
 		width: 100%;
 		height: 80%;
