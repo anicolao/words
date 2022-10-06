@@ -140,6 +140,7 @@ export const words = createReducer(initialWordsState, (r) => {
 				xoff *= -1;
 				yoff *= -1;
 				do {
+					if (!board[y][x]) return undefined;
 					sideWord += board[y][x];
 					x += xoff;
 					y += yoff;
