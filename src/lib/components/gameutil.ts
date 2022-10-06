@@ -8,3 +8,12 @@ export async function dispatchToTable(tableid: string, action: AnyAction) {
 		console.error(message);
 	});
 }
+
+export function shuffle(elements: string[]) {
+	const ret = elements.slice(0);
+	for (let i = ret.length - 1; i > 0; --i) {
+		const item = Math.round(Math.random() * i);
+		[ret[i], ret[item]] = [ret[item], ret[i]];
+	}
+	return ret;
+}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
-	import { dispatchToTable } from '$lib/components/gameutil';
+	import { dispatchToTable, shuffle } from '$lib/components/gameutil';
 	import {
 		create_table,
 		destroy_table,
@@ -45,14 +45,6 @@
 		return async () => {
 			firebase.dispatch(leave_table({ tableid, player: me }));
 		};
-	}
-	function shuffle(elements: string[]) {
-		const ret = elements.slice(0);
-		for (let i = ret.length - 1; i > 0; --i) {
-			const item = Math.round(Math.random() * i);
-			[ret[i], ret[item]] = [ret[item], ret[i]];
-		}
-		return ret;
 	}
 	function start(tableid: string) {
 		return async () => {

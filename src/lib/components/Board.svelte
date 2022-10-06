@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { store } from '$lib/store';
-	import { dispatchToTable } from './gameutil';
-	import { draw_tiles, initialWordsState, play, words, type WordsState } from './words';
+	import IconButton from '@smui/icon-button/src/IconButton.svelte';
+	import { dispatchToTable, shuffle } from './gameutil';
+	import { draw_tiles, dump, initialWordsState, play, words, type WordsState } from './words';
 
 	export let tableId = '';
 	export let numRows = 0;
@@ -71,6 +72,76 @@
 	const me = $store.auth.email || '';
 	$: rack = state.emailToRack[me];
 	let wordSoFar = '';
+	function handleLetter(letter: string) {
+		async function previewMove(expectedChange: number) {
+			const move = play({
+				x: selectedCol,
+				y: selectedRow,
+				isVertical: goVertical,
+				letters: wordSoFar,
+				player: me,
+				allowIllegalMoves: true
+			});
+			state = words(boardState, move);
+			if (rack.length !== state.emailToRack[me].length + expectedChange) {
+				if (expectedChange === 1 && letter.toUpperCase() !== letter) {
+					letter = letter.toUpperCase();
+					wordSoFar = wordSoFar.slice(0, -1) + letter.toUpperCase();
+					previewMove(1);
+				} else {
+					wordSoFar = wordSoFar.slice(0, -1);
+					previewMove(0);
+				}
+			}
+		}
+		if (letter.length === 1 && letter >= 'a' && letter <= 'z') {
+			wordSoFar += letter;
+			previewMove(1);
+		} else if (letter === 'enter') {
+			console.log('submit move');
+			const move = play({
+				x: selectedCol,
+				y: selectedRow,
+				isVertical: goVertical,
+				letters: wordSoFar,
+				player: me
+			});
+			state = words(boardState, move);
+			if (rack !== state.emailToRack[me]) {
+				console.log('Not your turn?', { rack, srack: state.emailToRack[me] });
+				state = boardState;
+			} else {
+				state = boardState;
+				dispatchToTable(tableId, move);
+				const draw = draw_tiles(me);
+				dispatchToTable(tableId, draw);
+			}
+			wordSoFar = '';
+		} else if (letter === 'escape') {
+			wordSoFar = '';
+			state = boardState;
+		} else if (letter === 'backspace') {
+			wordSoFar = wordSoFar.slice(0, -1);
+			previewMove(-1);
+		} else if (letter === 'dump') {
+			if (state.drawPile.length >= 7) {
+				previewMove(0);
+				const draw = draw_tiles(me);
+				state = words(state, draw);
+				const newDrawPile = state.drawPile + wordSoFar;
+				const shuffleArrray = shuffle(newDrawPile.split(''));
+				const reshuffledDrawPile = shuffleArrray.join('');
+				const dumpTiles = dump({ player: me, newRack: state.emailToRack[me], reshuffledDrawPile });
+				state = boardState;
+				wordSoFar = '';
+				dispatchToTable(tableId, dumpTiles);
+			} else {
+				console.log('NOT ENOUGH TILES TO DUMP', state.drawPile.length);
+			}
+		} else {
+			console.log({ letter });
+		}
+	}
 	function onKeyDown(e: { keyCode: any; key: string }) {
 		switch (e.keyCode) {
 			case 38:
@@ -91,59 +162,7 @@
 		}
 		if (e.key) {
 			let letter = e.key.toLowerCase();
-			async function previewMove(expectedChange: number) {
-				const move = play({
-					x: selectedCol,
-					y: selectedRow,
-					isVertical: goVertical,
-					letters: wordSoFar,
-					player: me,
-					allowIllegalMoves: true
-				});
-				state = words(boardState, move);
-				if (rack.length !== state.emailToRack[me].length + expectedChange) {
-					if (expectedChange === 1 && letter.toUpperCase() !== letter) {
-						letter = letter.toUpperCase();
-						wordSoFar = wordSoFar.slice(0, -1) + letter.toUpperCase();
-						previewMove(1);
-					} else {
-						wordSoFar = wordSoFar.slice(0, -1);
-						previewMove(0);
-					}
-				}
-			}
-			if (letter.length === 1 && letter >= 'a' && letter <= 'z') {
-				wordSoFar += letter;
-				previewMove(1);
-			} else if (letter === 'enter') {
-				console.log('submit move');
-				const move = play({
-					x: selectedCol,
-					y: selectedRow,
-					isVertical: goVertical,
-					letters: wordSoFar,
-					player: me
-				});
-				state = words(boardState, move);
-				if (rack !== state.emailToRack[me]) {
-					console.log('Not your turn?', { rack, srack: state.emailToRack[me] });
-					state = boardState;
-				} else {
-					state = boardState;
-					dispatchToTable(tableId, move);
-					const draw = draw_tiles(me);
-					dispatchToTable(tableId, draw);
-				}
-				wordSoFar = '';
-			} else if (letter === 'escape') {
-				wordSoFar = '';
-				state = boardState;
-			} else if (letter === 'backspace') {
-				wordSoFar = wordSoFar.slice(0, -1);
-				previewMove(-1);
-			} else {
-				console.log({ letter });
-			}
+			handleLetter(letter);
 		}
 		selectedRow = Math.max(0, selectedRow);
 		selectedCol = Math.max(0, selectedCol);
@@ -180,10 +199,22 @@
 			{#each rack.split('') as letter}<div
 					style="--wd:{tileWidth};--ht:{tileHeight}"
 					class="tile boardCell"
+					on:click={() => handleLetter(letter)}
 				>
 					{letter}<span>{tileToValue[letter]}</span>
 				</div>
 			{/each}
+			{#if wordSoFar}
+				<IconButton class="material-icons" on:click={() => handleLetter('enter')}
+					>arrow_forward</IconButton
+				>
+				<IconButton class="material-icons" on:click={() => handleLetter('escape')}>undo</IconButton>
+				{#if $store.words.drawPile.length >= 7}
+					<IconButton class="material-icons" on:click={() => handleLetter('dump')}
+						>recycling</IconButton
+					>
+				{/if}
+			{/if}
 		</div>
 	{/if}
 </div>
