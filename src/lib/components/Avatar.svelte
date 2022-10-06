@@ -10,8 +10,8 @@
 
 	$: if ($store.auth.signedIn) {
 		if (email == $store.auth.email) {
-			name = $store.auth.name;
-			photo = $store.auth.photo;
+			name = $store.auth.name || '';
+			photo = $store.auth.photo || '';
 		} else {
 			name = $store.users.emailToUser[email].name;
 			photo = $store.users.emailToUser[email].photo;

@@ -57,13 +57,17 @@
 	function start(tableid: string) {
 		return async () => {
 			const players = shuffle($store.tables.tableIdToTable[tableid].players);
-			const tiles = shuffle(
-				$store.gamedefs.gameIdToGame[
-					$store.tables.tableIdToTable[tableid].gameid
-				].properties.tiles.split('')
-			);
+			const gameProps =
+				$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[tableid].gameid].properties;
+			const shuffledTiles = shuffle(gameProps.tiles.split(''));
+			const tiles = gameProps.tiles;
+			const values = gameProps.values;
+			const letterm = gameProps.letterm;
+			const wordm = gameProps.wordm;
 			const setupActions = [];
-			setupActions.push(initial_tiles(tiles.join('')));
+			setupActions.push(
+				initial_tiles({ draw_pile: shuffledTiles.join(''), tiles, values, letterm, wordm })
+			);
 			players.forEach((player) => setupActions.push(join_game(player)));
 			players.forEach((player) => setupActions.push(draw_tiles(player)));
 
