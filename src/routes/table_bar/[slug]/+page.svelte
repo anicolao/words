@@ -77,25 +77,36 @@
 	type TurnRecordSummarized = TurnRecord & { totalScore: number };
 	let turnRows: TurnRecordSummarized[][] = [];
 	$: if (currentPlayer) {
-		const playerIndex = $store.words.currentPlayerIndex;
-		const name = $store.users.emailToUser[currentPlayer].name.split(' ');
-		let title = `${name[0]}'s turn (${$store.words.scores[playerIndex]})   `;
-		for (let i = playerIndex + 1; i < $store.words.players.length; ++i) {
-			const email = $store.words.players[i];
-			const name = $store.users.emailToUser[email].name.split(' ')[0];
-			title += `vs ${name} (${$store.words.scores[i]})`;
+		if (!$store.words.gameOver) {
+			const playerIndex = $store.words.currentPlayerIndex;
+			const name = $store.users.emailToUser[currentPlayer].name.split(' ');
+			let title = `${name[0]}'s turn (${$store.words.scores[playerIndex]})   `;
+			for (let i = playerIndex + 1; i < $store.words.players.length; ++i) {
+				const email = $store.words.players[i];
+				const name = $store.users.emailToUser[email].name.split(' ')[0];
+				title += `vs ${name} (${$store.words.scores[i]})`;
+			}
+			for (let i = 0; i < playerIndex; ++i) {
+				const email = $store.words.players[i];
+				const name = $store.users.emailToUser[email].name.split(' ')[0];
+				title += `vs  ${name} (${$store.words.scores[i]})`;
+			}
+			if ($store.words.plays.length) {
+				const lastPlay = $store.words.plays.slice(-1)[0];
+				const words = lastPlayWords(lastPlay);
+				title += ` [Last play: ${words} for ${lastPlay.score}]`;
+			}
+			store.dispatch(custom_title(title));
+		} else {
+			let winningScore = 0;
+			$store.words.scores.forEach((s) => (winningScore = Math.max(s, winningScore)));
+			let winner: string[] = [];
+			$store.words.scores.forEach((s, i) => {
+				if (s === winningScore) winner.push(playerName($store.words.players[i]));
+			});
+			let title = `Game Over! ${winner} wins with ${winningScore}!`;
+			store.dispatch(custom_title(title));
 		}
-		for (let i = 0; i < playerIndex; ++i) {
-			const email = $store.words.players[i];
-			const name = $store.users.emailToUser[email].name.split(' ')[0];
-			title += `vs  ${name} (${$store.words.scores[i]})`;
-		}
-		if ($store.words.plays.length) {
-			const lastPlay = $store.words.plays.slice(-1)[0];
-			const words = lastPlayWords(lastPlay);
-			title += ` [Last play: ${words} for ${lastPlay.score}]`;
-		}
-		store.dispatch(custom_title(title));
 	}
 	$: if ($store.words.plays.length) {
 		turnRows = [];
@@ -117,9 +128,12 @@
 	function lastPlayWords(lastPlay: TurnRecord) {
 		return [lastPlay.mainWord, lastPlay.sideWords].flat().map((x) => x.toUpperCase());
 	}
+	function playerName(email: string) {
+		return $store.users.emailToUser[email].name.split(' ')[0];
+	}
 	function lastPlayName(lastPlay: TurnRecord) {
 		const email = $store.words.players[lastPlay.playerIndex];
-		return $store.users.emailToUser[email].name.split(' ')[0];
+		return playerName(email);
 	}
 </script>
 
