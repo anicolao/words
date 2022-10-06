@@ -4,8 +4,8 @@
 	import { draw_tiles, initialWordsState, play, words, type WordsState } from './words';
 
 	export let tableId = '';
-	export let numRows = 15;
-	export let numCols = 15;
+	export let numRows = 0;
+	export let numCols = 0;
 	export let letterm = '';
 	export let wordm = '';
 	export let tiles = '';
@@ -153,26 +153,28 @@
 </script>
 
 <div class="boardcontainer" bind:clientWidth={w} bind:clientHeight={h}>
-	<div class="board" style="--wd:{boardWidth};--ht:{boardHeight}">
-		{#each squareTypes as row, r}<div class="row">
-				{#each row as square, c}{#if state.board[r][c]}<div
-							style="--wd:{tileWidth};--ht:{tileHeight}"
-							class="tile boardCell {tileToValue[state.board[r][c]] === 0 ? 'blank' : ''}"
-						>
-							{state.board[r][c]}<span>{tileToValue[state.board[r][c]]}</span>
-						</div>{:else}<div
-							on:click={cell(r, c)}
-							class="{c === selectedCol && r === selectedRow
-								? goVertical
-									? 'arrow-down'
-									: 'arrow-right'
-								: ''} boardCell {square}"
-							style="--wd:{tileWidth};--ht:{tileHeight}"
-						>
-							{content[square]}
-						</div>{/if}{/each}
-			</div>{/each}
-	</div>
+	{#if state.board && state.board.length && state.board[0] && state.board[0].length}
+		<div class="board" style="--wd:{boardWidth};--ht:{boardHeight}">
+			{#each squareTypes as row, r}<div class="row">
+					{#each row as square, c}{#if state.board[r][c]}<div
+								style="--wd:{tileWidth};--ht:{tileHeight}"
+								class="tile boardCell {tileToValue[state.board[r][c]] === 0 ? 'blank' : ''}"
+							>
+								{state.board[r][c]}<span>{tileToValue[state.board[r][c]]}</span>
+							</div>{:else}<div
+								on:click={cell(r, c)}
+								class="{c === selectedCol && r === selectedRow
+									? goVertical
+										? 'arrow-down'
+										: 'arrow-right'
+									: ''} boardCell {square}"
+								style="--wd:{tileWidth};--ht:{tileHeight}"
+							>
+								{content[square]}
+							</div>{/if}{/each}
+				</div>{/each}
+		</div>
+	{/if}
 	{#if rack}
 		<div class="rack">
 			{#each rack.split('') as letter}<div

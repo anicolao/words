@@ -62,25 +62,46 @@
 	let wordm: string;
 	let tiles: string;
 	let values: string;
+	let numRows: number;
+	let numCols: number;
 	$: if (gamedef) {
 		letterm = gamedef.letterm;
 		wordm = gamedef.wordm;
 		tiles = gamedef.tiles;
 		values = gamedef.values;
+		numRows = gamedef.numRows;
+		numCols = gamedef.numCols;
 	}
 	$: console.log({ gamedef });
 	$: boardState = $store.words;
 
 	$: currentPlayer = $store.words.players[$store.words.currentPlayerIndex];
 	$: if (currentPlayer) {
+		const playerIndex = $store.words.currentPlayerIndex;
 		const name = $store.users.emailToUser[currentPlayer].name.split(' ');
-		store.dispatch(custom_title(`${name[0]}'s turn`));
+		let title = `${name[0]}'s turn (${$store.words.scores[playerIndex]})   `;
+		for (let i = playerIndex + 1; i < $store.words.players.length; ++i) {
+			const email = $store.words.players[i];
+			const name = $store.users.emailToUser[email].name.split(' ')[0];
+			title += `vs ${name} (${$store.words.scores[i]})`
+		}
+		for (let i = 0; i < playerIndex; ++i) {
+			const email = $store.words.players[i];
+			const name = $store.users.emailToUser[email].name.split(' ')[0];
+			title += `vs  ${name} (${$store.words.scores[i]})`
+		}
+		if ($store.words.plays.length) {
+			const lastPlay = $store.words.plays.slice(-1)[0];
+			const words = [lastPlay.mainWord, lastPlay.sideWords].flat().map(x => x.toUpperCase());
+			title += ` [Last play: ${words} for ${lastPlay.score}]`
+		}
+		store.dispatch(custom_title(title));
 	}
 </script>
 
 <div class="container">
 	<p class="titlepadding" />
-	<Board bind:rack {tableId} {tiles} {values} {letterm} {wordm} {boardState} />
+	<Board bind:rack {tableId} {numRows} {numCols} {tiles} {values} {letterm} {wordm} {boardState} />
 </div>
 
 <style>

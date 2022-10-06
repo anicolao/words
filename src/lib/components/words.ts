@@ -78,7 +78,10 @@ export const initialWordsState = {
 	wordm: '',
 	gameOver: false,
 	scores: [],
-	plays: []
+	plays: [],
+	letterToValue: {},
+	lmTable: [],
+	wmTable: [],
 } as WordsState;
 
 export const words = createReducer(initialWordsState, (r) => {
@@ -147,7 +150,7 @@ export const words = createReducer(initialWordsState, (r) => {
 			mainWordMultiplier *= state.wmTable[y * state.width + x];
 			mainWordScore += state.letterToValue[l] * letterMultiplier;
 			placedTile = true;
-			function findSideWord(x: number, y: number, xoff, yoff) {
+			function findSideWord(x: number, y: number, xoff: number, yoff: number) {
 				const board = newBoard;
 				if (isOccupied(board, x + xoff, y + yoff) || isOccupied(board, x - xoff, y - yoff)) {
 					let sideWord = '';
@@ -178,6 +181,7 @@ export const words = createReducer(initialWordsState, (r) => {
 				score += wordMultiplier * swScore;
 				sideWords.push(potentialSideWord);
 			}
+			legalPlay = legalPlay || hasAdjacentTile(state.board, x, y);
 			while (newBoard[y][x]) {
 				if (!placedTile) {
 					const addedLetter = newBoard[y][x];
@@ -190,7 +194,6 @@ export const words = createReducer(initialWordsState, (r) => {
 					break;
 				}
 			}
-			legalPlay = legalPlay || hasAdjacentTile(state.board, x, y);
 		}
 		if (legalPlay) {
 			legalPlay = payload.player === state.players[state.currentPlayerIndex];
