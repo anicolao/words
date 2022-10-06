@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import Board from '$lib/components/Board.svelte';
 	import { custom_title } from '$lib/components/nav';
-	import type { play, TurnRecord } from '$lib/components/words';
+	import type { play, TurnRecord, words } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
@@ -143,6 +143,13 @@
 					>{/each}
 			</tr>
 		{/each}
+		{#if $store.words.gameOver}
+			<tr
+				><td />{#each boardState.finalScoreAdjustment as a, i}<td>Game Over</td><td>{a}</td><td
+						>{boardState.scores[i]}</td
+					>{/each}
+			</tr>
+		{/if}
 	</table>
 </div>
 

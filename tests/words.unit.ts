@@ -219,7 +219,8 @@ describe('words', () => {
 			letters: 'hell',
 			player: 'Alex@gmail.com'
 		};
-		const firstState = words(makeGameStartState(), play(horizontal));
+		const firstState = words(makeGameStartState('hello_ogodbyes'), play(horizontal));
+
 		const vertical: WordsMove = {
 			x: 0,
 			y: 0,
@@ -243,7 +244,6 @@ describe('words', () => {
 		expect(lastTurn.mainWord).to.equal('godh');
 		expect(lastTurn.sideWords.length).to.equal(0);
 		expect(lastTurn.score).to.equal(27);
-		console.log(nextState.emailToRack);
 
 		const twoWaySetup: WordsMove = {
 			x: 1,
@@ -271,6 +271,35 @@ describe('words', () => {
 		expect(lastTurn.sideWords.length).to.equal(1);
 		expect(lastTurn.sideWords[0]).to.equal('oy');
 		expect(lastTurn.score).to.equal(36);
+		expect(twenty.scores[0]).to.equal(22);
+		expect(twenty.scores[1]).to.equal(63);
+
+		//'11111 31111 goo
+		// 12121 12111 oy
+		// 11111 11111 d L
+		// 12121 11121 hell.
+		const lastMove: WordsMove = {
+			x: 2,
+			y: 2,
+			isVertical: false,
+			letters: 'L',
+			player: 'Alex@gmail.com'
+		};
+		let gameOver = words(twenty, play(lastMove));
+		lastTurn = gameOver.plays.slice(-1)[0];
+		expect(lastTurn.playerIndex).to.equal(0);
+		expect(lastTurn.mainWord).to.equal('L');
+		expect(lastTurn.sideWords.length).to.equal(1);
+		expect(lastTurn.sideWords[0]).to.equal('Ll');
+		expect(lastTurn.score).to.equal(1); // the double is already covered
+		expect(gameOver.gameOver).to.be.false;
+		gameOver = words(gameOver, draw_tiles(lastMove.player));
+		console.log(gameOver.emailToRack);
+		expect(gameOver.gameOver).to.be.true;
+		expect(gameOver.finalScoreAdjustment[0]).to.equal(4);
+		expect(gameOver.finalScoreAdjustment[1]).to.equal(-4);
+		expect(gameOver.scores[0]).to.equal(23 + 4);
+		expect(gameOver.scores[1]).to.equal(63 - 4);
 	});
 
 	it('initialize draw pile', () => {

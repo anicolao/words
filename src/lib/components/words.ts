@@ -17,6 +17,7 @@ export interface WordsState {
 	wordm: string;
 	gameOver: boolean;
 	scores: number[];
+	finalScoreAdjustment: number[];
 	plays: TurnRecord[];
 	letterToValue: { [k: string]: number };
 	lmTable: number[];
@@ -78,6 +79,7 @@ export const initialWordsState = {
 	wordm: '',
 	gameOver: false,
 	scores: [],
+	finalScoreAdjustment: [],
 	plays: [],
 	letterToValue: {},
 	lmTable: [],
@@ -206,6 +208,9 @@ export const words = createReducer(initialWordsState, (r) => {
 		}
 		if (!legalPlay) return state;
 		score += mainWordScore * mainWordMultiplier;
+		if (letters.length === 7) {
+			score += 50;
+		}
 		state.plays.push({ playerIndex, mainWord, sideWords, score });
 		state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
 		state.emailToRack[payload.player] = remainingRack;
@@ -217,6 +222,7 @@ export const words = createReducer(initialWordsState, (r) => {
 	r.addCase(join_game, (state, { payload }) => {
 		state.players.push(payload);
 		state.scores.push(0);
+		state.finalScoreAdjustment.push(0);
 		state.emailToRack[payload] = '';
 		return state;
 	});
@@ -231,6 +237,20 @@ export const words = createReducer(initialWordsState, (r) => {
 		const drawn = state.drawPile.slice(0, numNeeded);
 		state.drawPile = state.drawPile.slice(numNeeded);
 		state.emailToRack[payload] = rack + drawn;
+		if (state.drawPile.length === 0 && state.emailToRack[payload].length === 0) {
+			state.gameOver = true;
+			let bonusScore = 0;
+			state.players.forEach((player, i) => {
+				const rack = state.emailToRack[player];
+				let scoreRack = 0;
+				rack.split('').forEach((x) => (scoreRack += state.letterToValue[x]));
+				bonusScore += scoreRack;
+				state.finalScoreAdjustment[i] = -scoreRack;
+			});
+			const playerIndex = state.players.indexOf(payload);
+			state.finalScoreAdjustment[playerIndex] += bonusScore;
+			state.finalScoreAdjustment.forEach((adjust, i) => (state.scores[i] += adjust));
+		}
 		return state;
 	});
 	r.addCase(initial_tiles, (state, { payload }) => {
