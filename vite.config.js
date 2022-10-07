@@ -4,7 +4,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 const config = {
 	plugins: [sveltekit()],
 	build: { target: 'es2020' },
-	test: { include: ['tests/**/*.unit.ts'] }
+	test: { include: ['tests/**/*.unit.ts'], watch: false }
 };
 
 export default config;
