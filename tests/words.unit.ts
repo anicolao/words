@@ -211,6 +211,32 @@ describe('words', () => {
 		expect(nextState.scores[1]).to.equal(16);
 	});
 
+	it('scores single letter wrong dir correctly', () => {
+		const horizontal: WordsMove = {
+			x: 0,
+			y: 3,
+			isVertical: false,
+			letters: 'hell',
+			player: 'Alex@gmail.com'
+		};
+		const firstState = words(makeGameStartState('hello_ogodbyes'), play(horizontal));
+
+		const vertical: WordsMove = {
+			x: 1,
+			y: 2,
+			isVertical: false,
+			letters: 'd',
+			player: 'Bob@gmail.com'
+		};
+		const nextState = words(firstState, play(vertical));
+		expect(nextState.board[3].join('')).to.be.equal('hell');
+		const transposedBoard = transpose(nextState.board);
+		expect(transposedBoard[1].join('')).to.be.equal('de');
+		const singleLetterTurn = nextState.plays[1];
+		expect(singleLetterTurn.score).to.equal(3);
+		expect(singleLetterTurn.sideWords.length).to.equal(0);
+		expect(singleLetterTurn.mainWord).to.equal('de');
+	});
 	it('scores the triple word score', () => {
 		const horizontal: WordsMove = {
 			x: 0,
@@ -288,9 +314,8 @@ describe('words', () => {
 		let gameOver = words(twenty, play(lastMove));
 		lastTurn = gameOver.plays.slice(-1)[0];
 		expect(lastTurn.playerIndex).to.equal(0);
-		expect(lastTurn.mainWord).to.equal('L');
-		expect(lastTurn.sideWords.length).to.equal(1);
-		expect(lastTurn.sideWords[0]).to.equal('Ll');
+		expect(lastTurn.mainWord).to.equal('Ll');
+		expect(lastTurn.sideWords.length).to.equal(0);
 		expect(lastTurn.score).to.equal(1); // the double is already covered
 		expect(gameOver.gameOver).to.be.false;
 		gameOver = words(gameOver, draw_tiles(lastMove.player));

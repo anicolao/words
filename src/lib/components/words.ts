@@ -121,7 +121,8 @@ export const words = createReducer(initialWordsState, (r) => {
 
 	r.addCase(play, (state, { payload }) => {
 		let { x, y } = payload;
-		const { letters, isVertical } = payload;
+		const { letters } = payload;
+		let { isVertical } = payload;
 		const newBoard = state.board.map((x) => [...x]);
 		let legalPlay = payload?.allowIllegalMoves || false;
 		const rack: string = state.emailToRack[payload.player] || '';
@@ -154,7 +155,15 @@ export const words = createReducer(initialWordsState, (r) => {
 			}
 			return undefined;
 		}
-		const prefix = findSideWord(x, y, isVertical ? 0 : -1, isVertical ? -1 : 0);
+		let prefix = findSideWord(x, y, isVertical ? 0 : -1, isVertical ? -1 : 0);
+		if (!prefix && letters.length === 1) {
+			// check for wrong play direction
+			const suffix = findSideWord(x, y, isVertical ? 0 : 1, isVertical ? 1 : 0);
+			if (!suffix) {
+				isVertical = !isVertical;
+				prefix = findSideWord(x, y, isVertical ? 0 : -1, isVertical ? -1 : 0);
+			}
+		}
 		if (prefix) {
 			mainWord = prefix;
 			prefix.split('').forEach((x) => (mainWordScore += state.letterToValue[x]));
