@@ -63,9 +63,12 @@ export const initial_tiles = createAction<{
 	num_cols: number;
 }>('initial_tiles');
 export const draw_tiles = createAction<string>('draw_tiles');
-export const dump = createAction<{ player: string; newRack: string; reshuffledDrawPile: string }>(
-	'dump'
-);
+export const dump = createAction<{
+	player: string;
+	newRack: string;
+	reshuffledDrawPile: string;
+	numDumped: number;
+}>('dump');
 export const join_game = createAction<string>('join_game');
 export const leave_game = createAction<string>('leave_game');
 export const set_current_player = createAction<number>('set_current_player');
@@ -232,7 +235,8 @@ export const words = createReducer(initialWordsState, (r) => {
 	});
 	r.addCase(dump, (state, { payload }) => {
 		const playerIndex = state.players.indexOf(payload.player);
-		state.plays.push({ playerIndex, mainWord: 'Dump Tiles', sideWords: [], score: 0 });
+		const mainWord = payload.numDumped ? `Dump ${payload.numDumped}` : 'Dump Tiles';
+		state.plays.push({ playerIndex, mainWord, sideWords: [], score: 0 });
 		state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
 		state.emailToRack[payload.player] = payload.newRack;
 		state.drawPile = payload.reshuffledDrawPile;

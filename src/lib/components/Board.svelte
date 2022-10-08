@@ -131,7 +131,12 @@
 				const newDrawPile = state.drawPile + wordSoFar;
 				const shuffleArrray = shuffle(newDrawPile.split(''));
 				const reshuffledDrawPile = shuffleArrray.join('');
-				const dumpTiles = dump({ player: me, newRack: state.emailToRack[me], reshuffledDrawPile });
+				const dumpTiles = dump({
+					player: me,
+					newRack: state.emailToRack[me],
+					reshuffledDrawPile,
+					numDumped: wordSoFar.length
+				});
 				state = boardState;
 				wordSoFar = '';
 				dispatchToTable(tableId, dumpTiles);
