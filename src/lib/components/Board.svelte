@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { store } from '$lib/store';
+	import Button, { Label } from '@smui/button';
 	import IconButton from '@smui/icon-button/src/IconButton.svelte';
 	import { dispatchToTable, shuffle } from './gameutil';
 	import { draw_tiles, dump, initialWordsState, play, words, type WordsState } from './words';
@@ -72,6 +73,7 @@
 	const me = $store.auth.email || '';
 	$: rack = state.emailToRack[me];
 	let wordSoFar = '';
+	let score = 0;
 	function handleLetter(letter: string) {
 		async function previewMove(expectedChange: number) {
 			const move = play({
@@ -92,6 +94,9 @@
 					wordSoFar = wordSoFar.slice(0, -1);
 					previewMove(0);
 				}
+			} else {
+				console.log({ plays: state.plays });
+				score = state.plays.slice(-1)[0].score;
 			}
 		}
 		if (letter.length === 1 && letter >= 'a' && letter <= 'z') {
@@ -212,9 +217,10 @@
 		</div>
 		<div class="controls">
 			{#if wordSoFar}
-				<IconButton class="material-icons" on:click={() => handleLetter('enter')}
-					>arrow_forward</IconButton
-				>
+				<Button on:click={() => handleLetter('enter')}>
+					<Label>Score {score}</Label>
+					<i class="material-icons" aria-hidden="true">arrow_forward</i>
+				</Button>
 				<IconButton class="material-icons" on:click={() => handleLetter('escape')}>undo</IconButton>
 				{#if $store.words.drawPile.length >= 7}
 					<IconButton class="material-icons" on:click={() => handleLetter('dump')}
