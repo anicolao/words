@@ -209,6 +209,8 @@
 					{letter}<span>{tileToValue[letter]}</span>
 				</div>
 			{/each}
+		</div>
+		<div class="controls">
 			{#if wordSoFar}
 				<IconButton class="material-icons" on:click={() => handleLetter('enter')}
 					>arrow_forward</IconButton
