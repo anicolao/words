@@ -7,7 +7,7 @@
 		"public": "build",
 		"ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
 		"cleanUrls": true,
-		"trailingSlash": false
+		"trailingSlash": true
 	},
 	"emulators": {
 		"firestore": {
