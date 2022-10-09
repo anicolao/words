@@ -16,14 +16,7 @@
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import Button from '@smui/button';
-	import {
-		collection,
-		onSnapshot,
-		orderBy,
-		query,
-		setIndexConfiguration,
-		type Unsubscribe
-	} from 'firebase/firestore';
+	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
 
 	const tableId = $page.url.searchParams.get('slug');
 
@@ -141,13 +134,17 @@
 			<Button on:click={reveal}>Reveal Category</Button>
 			{#if gameState.roundReady}
 				<Button on:click={showRound}>Start Round</Button>
+			{:else}
+			<p>Waiting for:</p>
+			<ul>
+				{#each $store.things.players as p, i}
+					{#if !$store.things.playerToAnswer[p]}
+						<li>{playerName(i)}</li>
+					{/if}
+				{/each}
+			</ul>
 			{/if}
 		{:else}
-			<table>
-				{#each shuffle($store.things.players) as p}
-					<tr><td>{$store.things.playerToAnswer[p]}</td></tr>
-				{/each}
-			</table>
 			<p>The current player is {$store.things.players[$store.things.currentPlayerIndex]}</p>
 			{#each $store.things.players as p, i}
 				{#if $store.things.alive[i] && i !== $store.things.currentPlayerIndex}

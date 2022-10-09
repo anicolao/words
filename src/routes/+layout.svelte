@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	/* app bar */
 	import type { TopAppBarComponentDev } from '@smui/top-app-bar';
@@ -30,6 +31,7 @@
 	import { create_user, type User } from '$lib/components/users';
 	import { define_game } from '$lib/components/gamedefs';
 
+	const suppressHeaders = !!$page.url.searchParams.get('cc');
 	$: open = width > 720;
 	$: active = $store.nav.active.split('/')[0];
 
@@ -173,71 +175,75 @@
 	</div>
 {:else}
 	<div class="drawer-container">
-		<TopAppBar bind:this={topAppBar} variant="fixed">
-			<Row>
-				<div class={width > 720 ? 'desk-margin' : 'mobile-margin'}>
-					<Section>
-						{#if width <= 720}
-							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
-								>menu</IconButton
-							>
-						{:else if !customTitle}
-							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
-								>{active}</IconButton
-							>
-						{/if}
-						{#if !customTitle}
-							<Title>{textLookup(active)}</Title>
-						{:else}
-							<Title>{customTitle}</Title>
-						{/if}
+		{#if !suppressHeaders}
+			<TopAppBar bind:this={topAppBar} variant="fixed">
+				<Row>
+					<div class={width > 720 ? 'desk-margin' : 'mobile-margin'}>
+						<Section>
+							{#if width <= 720}
+								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
+									>menu</IconButton
+								>
+							{:else if !customTitle}
+								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
+									>{active}</IconButton
+								>
+							{/if}
+							{#if !customTitle}
+								<Title>{textLookup(active)}</Title>
+							{:else}
+								<Title>{customTitle}</Title>
+							{/if}
+						</Section>
+					</div>
+					<Section align="end" toolbar>
+						<span on:click={() => setActive('account_circle')}><Avatar /></span>
 					</Section>
-				</div>
-				<Section align="end" toolbar>
-					<span on:click={() => setActive('account_circle')}><Avatar /></span>
-				</Section>
-			</Row>
-		</TopAppBar>
+				</Row>
+			</TopAppBar>
 
-		<AutoAdjust {topAppBar} />
+			<AutoAdjust {topAppBar} />
 
-		<Drawer
-			variant={width > 720 ? undefined : 'modal'}
-			fixed={width > 720 ? undefined : false}
-			bind:open
-		>
-			<Header>
-				<Title>Words</Title>
-				<Subtitle>Word Game</Subtitle>
-			</Header>
-			<Content>
-				<List>
-					<Item
-						href="javascript:void(0)"
-						on:click={() => setActive('table_bar')}
-						activated={active === 'table_bar'}
-					>
-						<Graphic class="material-icons" aria-hidden="true">table_bar</Graphic>
-						<Text>{textLookup('table_bar')}</Text>
-					</Item>
-					<Separator />
-					<Subheader component={H6}>Settings</Subheader>
-					<Item
-						href="javascript:void(0)"
-						on:click={() => setActive('account_circle')}
-						activated={active === 'account_circle'}
-					>
-						<Graphic class="material-icons" aria-hidden="true">account_circle</Graphic>
-						<Text>{textLookup('account_circle')}</Text>
-					</Item>
-				</List>
-			</Content>
-		</Drawer>
+			<Drawer
+				variant={width > 720 ? undefined : 'modal'}
+				fixed={width > 720 ? undefined : false}
+				bind:open
+			>
+				<Header>
+					<Title>Words</Title>
+					<Subtitle>Word Game</Subtitle>
+				</Header>
+				<Content>
+					<List>
+						<Item
+							href="javascript:void(0)"
+							on:click={() => setActive('table_bar')}
+							activated={active === 'table_bar'}
+						>
+							<Graphic class="material-icons" aria-hidden="true">table_bar</Graphic>
+							<Text>{textLookup('table_bar')}</Text>
+						</Item>
+						<Separator />
+						<Subheader component={H6}>Settings</Subheader>
+						<Item
+							href="javascript:void(0)"
+							on:click={() => setActive('account_circle')}
+							activated={active === 'account_circle'}
+						>
+							<Graphic class="material-icons" aria-hidden="true">account_circle</Graphic>
+							<Text>{textLookup('account_circle')}</Text>
+						</Item>
+					</List>
+				</Content>
+			</Drawer>
 
-		<Scrim fixed={false} />
-		<AppContent class="app-content">
+			<Scrim fixed={false} />
+			<AppContent class="app-content">
+				<slot />
+			</AppContent>
+		{:else}
 			<slot />
-		</AppContent>
+		{/if}
 	</div>
 {/if}
 

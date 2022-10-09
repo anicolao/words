@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import QRCode from '$lib/components/QRCode.svelte';
 	import { initialGameDefsState } from '$lib/components/gamedefs';
 	import { dispatchToTable, shuffle } from '$lib/components/gameutil';
 	import { custom_title } from '$lib/components/nav';
@@ -66,7 +67,7 @@
 	let gameId: string = '';
 	let table: Table;
 	let gamedef: any;
-	let name = 'unknown game';
+	let name = 'Loading...';
 	$: if ($store.tables.tableIdToTable[tableId]) {
 		gameId = $store.tables.tableIdToTable[tableId].gameid;
 		table = $store.tables.tableIdToTable[tableId];
@@ -121,6 +122,8 @@
 		const index = $store.things.players.indexOf(email);
 		return $store.things.alive[index];
 	}
+
+	const baseURL = $page.url.origin;
 </script>
 
 <div class="container">
@@ -129,6 +132,7 @@
 		<h1>Things ... {$store.things.currentCategory}</h1>
 	{:else}
 		<h1>{name}</h1>
+		<QRCode codeValue="{baseURL}" squareSize=200/>
 	{/if}
 	{#if $store.things.showRound}
 		<div class="row">
