@@ -31,7 +31,7 @@
 	import { create_user, type User } from '$lib/components/users';
 	import { define_game } from '$lib/components/gamedefs';
 
-	const suppressHeaders = !!$page.url.searchParams.get('cc');
+	const suppressHeaders = $page.url.pathname.slice(-3) === 'cc/';
 	$: open = width > 720;
 	$: active = $store.nav.active.split('/')[0];
 
