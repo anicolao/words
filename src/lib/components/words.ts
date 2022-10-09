@@ -44,11 +44,11 @@ export function makeValues(values: string) {
 	return values.split('').map((x) => parseInt(x, 16));
 }
 export function makeLetterToValueMap(tiles: string, values: string) {
-	let tileToValue: { [letter: string]: number } = {};
+	const tileToValue: { [letter: string]: number } = {};
 	const tArray = tiles.split('');
 	const vArray = makeValues(values);
 	tArray.forEach((letter, i) => (tileToValue[letter] = vArray[i]));
-	tArray.forEach((letter, i) => (tileToValue[letter.toUpperCase()] = tileToValue['_']));
+	tArray.forEach((letter) => (tileToValue[letter.toUpperCase()] = tileToValue['_']));
 	return tileToValue;
 }
 
@@ -135,7 +135,7 @@ export const words = createReducer(initialWordsState, (r) => {
 		let score = 0;
 		let mainWordScore = 0;
 		let mainWordMultiplier = 1;
-		let sideWords: string[] = [];
+		const sideWords: string[] = [];
 		if (remainingRack === undefined) return state;
 		let placedTile = false;
 		function findSideWord(x: number, y: number, xoff: number, yoff: number) {
@@ -290,7 +290,7 @@ export const words = createReducer(initialWordsState, (r) => {
 			letterToValue: makeLetterToValueMap(payload.tiles, payload.values),
 			lmTable: makeValues(payload.letterm),
 			wmTable: makeValues(payload.wordm),
-			board: new Array(payload.num_rows).fill('').map((x) => new Array(payload.num_cols))
+			board: new Array(payload.num_rows).fill('').map(() => new Array(payload.num_cols))
 		};
 	});
 

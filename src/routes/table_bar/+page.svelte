@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import { gamedefs } from '$lib/components/gamedefs';
 	import { dispatchToTable, shuffle } from '$lib/components/gameutil';
 	import {
 		create_table,
@@ -21,14 +22,16 @@
 	$: tableIds = $store.tables.tableIds;
 
 	const me = $store.auth.email || '';
-	async function newTable() {
-		const tableid = await addDoc(collection(firebase.firestore, 'tables'), {
-			creator: $store.auth.uid
-		});
-		const owner = me;
-		const action = create_table({ tableid: tableid.id, gameid: 'ofzl7s0llmrDqf1ON3h6', owner });
-		console.log({ action });
-		firebase.dispatch(action);
+	function newTable(gameid: string) {
+		return async () => {
+			const tableid = await addDoc(collection(firebase.firestore, 'tables'), {
+				creator: $store.auth.uid
+			});
+			const owner = me;
+			const action = create_table({ tableid: tableid.id, gameid, owner });
+			console.log({ action });
+			firebase.dispatch(action);
+		};
 	}
 
 	function destroy(tableid: string) {
@@ -48,43 +51,56 @@
 	}
 	function start(tableid: string) {
 		return async () => {
-			const players = shuffle($store.tables.tableIdToTable[tableid].players);
-			const gameProps =
-				$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[tableid].gameid].properties;
-			const shuffledTiles = shuffle(gameProps.tiles.split(''));
-			const tiles = gameProps.tiles;
-			const values = gameProps.values;
-			const letterm = gameProps.letterm;
-			const wordm = gameProps.wordm;
-			const num_cols = parseInt(gameProps.numCols);
-			const num_rows = parseInt(gameProps.numRows);
-			const setupActions = [];
-			setupActions.push(
-				initial_tiles({
-					draw_pile: shuffledTiles.join(''),
-					tiles,
-					values,
-					letterm,
-					wordm,
-					num_cols,
-					num_rows
-				})
-			);
-			players.forEach((player) => setupActions.push(join_game(player)));
-			players.forEach((player) => setupActions.push(draw_tiles(player)));
+			const table = $store.tables.tableIdToTable[tableid];
+			if (table.gameid === 'ofzl7s0llmrDqf1ON3h6') {
+				const players = shuffle($store.tables.tableIdToTable[tableid].players);
+				const gameProps =
+					$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[tableid].gameid].properties;
+				const shuffledTiles = shuffle(gameProps.tiles.split(''));
+				const tiles = gameProps.tiles;
+				const values = gameProps.values;
+				const letterm = gameProps.letterm;
+				const wordm = gameProps.wordm;
+				const num_cols = parseInt(gameProps.numCols);
+				const num_rows = parseInt(gameProps.numRows);
+				const setupActions = [];
+				setupActions.push(
+					initial_tiles({
+						draw_pile: shuffledTiles.join(''),
+						tiles,
+						values,
+						letterm,
+						wordm,
+						num_cols,
+						num_rows
+					})
+				);
+				players.forEach((player) => setupActions.push(join_game(player)));
+				players.forEach((player) => setupActions.push(draw_tiles(player)));
 
-			setupActions.forEach((action) => {
-				dispatchToTable(tableid, action);
-			});
+				setupActions.forEach((action) => {
+					dispatchToTable(tableid, action);
+				});
 
-			firebase.dispatch(start_table({ tableid }));
-			goto('table_bar/' + tableid);
+				firebase.dispatch(start_table({ tableid }));
+				goto('table_bar/' + tableid);
+			} else {
+				const gameDef = $store.gamedefs.gameIdToGame[table.gameid];
+				firebase.dispatch(start_table({ tableid }));
+				goto(gameDef.properties.path + '/' + tableid);
+			}
 		};
 	}
 	function navigateTo(tableid: string) {
 		return async () => {
 			console.log('go to ', tableid);
-			goto('table_bar/' + tableid);
+			const table = $store.tables.tableIdToTable[tableid];
+			const gameDef = $store.gamedefs.gameIdToGame[table.gameid];
+			if (gameDef.properties.path) {
+				goto(gameDef.properties.path + '/' + tableid);
+			} else {
+				goto('table_bar/' + tableid);
+			}
 		};
 	}
 </script>
@@ -116,5 +132,11 @@
 			</li>
 		{/each}
 	</ul>
-	<Button on:click={newTable}>New Table</Button>
+	{#each $store.gamedefs.gameΙds as gameid}
+		<p>
+			<Button on:click={newTable(gameid)}
+				>New {$store.gamedefs.gameIdToGame[gameid].properties.name} Table</Button
+			>
+		</p>
+	{/each}
 </Content>

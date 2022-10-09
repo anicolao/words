@@ -29,6 +29,7 @@
 	import type { AnyAction } from '@reduxjs/toolkit';
 	import { create_user, type User } from '$lib/components/users';
 	import { define_game } from '$lib/components/gamedefs';
+	import { onMount } from 'svelte';
 
 	$: open = width > 720;
 	$: active = $store.nav.active.split('/')[0];
@@ -151,6 +152,21 @@
 	}
 
 	$: customTitle = $store.nav.customTitle;
+
+	let gwin: any = undefined;
+	onMount(() => {
+		gwin = window;
+	});
+	function getWindow() {
+		return gwin;
+	}
+	$: if (getWindow()) {
+		console.log(getWindow().location.href.split('/').slice(-2, -1).slice(-2));
+	} else {
+		console.log('window not found');
+	}
+	//$: hideScaffolding = getWindow() && getWindow().location.href.split('/').slice(-2,-1).slice(-2) === 'cc';
+	$: hideScaffolding = active === 'account_circle';
 </script>
 
 <svelte:window bind:innerWidth={width} />
@@ -173,37 +189,39 @@
 	</div>
 {:else}
 	<div class="drawer-container">
-		<TopAppBar bind:this={topAppBar} variant="fixed">
-			<Row>
-				<div class={width > 720 ? 'desk-margin' : 'mobile-margin'}>
-					<Section>
-						{#if width <= 720}
-							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
-								>menu</IconButton
-							>
-						{:else if !customTitle}
-							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
-								>{active}</IconButton
-							>
-						{/if}
-						{#if !customTitle}
-							<Title>{textLookup(active)}</Title>
-						{:else}
-							<Title>{customTitle}</Title>
-						{/if}
+		{#if !hideScaffolding}
+			<TopAppBar bind:this={topAppBar} variant="fixed">
+				<Row>
+					<div class={width > 720 ? 'desk-margin' : 'mobile-margin'}>
+						<Section>
+							{#if width <= 720}
+								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
+									>menu</IconButton
+								>
+							{:else if !customTitle}
+								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
+									>{active}</IconButton
+								>
+							{/if}
+							{#if !customTitle}
+								<Title>{textLookup(active)}</Title>
+							{:else}
+								<Title>{customTitle}</Title>
+							{/if}
+						</Section>
+					</div>
+					<Section align="end" toolbar>
+						<span on:click={() => setActive('account_circle')}><Avatar /></span>
 					</Section>
-				</div>
-				<Section align="end" toolbar>
-					<span on:click={() => setActive('account_circle')}><Avatar /></span>
-				</Section>
-			</Row>
-		</TopAppBar>
+				</Row>
+			</TopAppBar>
+		{/if}
 
 		<AutoAdjust {topAppBar} />
 
 		<Drawer
-			variant={width > 720 ? undefined : 'modal'}
-			fixed={width > 720 ? undefined : false}
+			variant={width > 720 && !hideScaffolding ? undefined : 'modal'}
+			fixed={width > 720 && !hideScaffolding ? undefined : false}
 			bind:open
 		>
 			<Header>
@@ -235,9 +253,11 @@
 		</Drawer>
 
 		<Scrim fixed={false} />
-		<AppContent class="app-content">
+		{#if !hideScaffolding}
+			<AppContent class="app-content" />
+		{:else}
 			<slot />
-		</AppContent>
+		{/if}
 	</div>
 {/if}
 

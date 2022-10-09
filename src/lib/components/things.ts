@@ -7,6 +7,7 @@ export interface ThingsState {
 	currentCategory: string;
 	playerToAnswer: { [k: string]: string };
 	roundReady: boolean;
+	showRound: boolean;
 	roundOver: boolean;
 	players: string[];
 	alive: boolean[];
@@ -18,6 +19,7 @@ export interface ThingsState {
 export const join_game = createAction<string>('join_game');
 export const leave_game = createAction<string>('leave_game');
 export const set_current_player = createAction<number>('set_current_player');
+export const show_round = createAction<boolean>('show_round');
 export const set_category = createAction<string>('set_category');
 export const answer_category = createAction<{ answer: string; player: string }>('answer_category');
 export const guesses = createAction<{ player: string; dead_player: string }>('eliminates');
@@ -28,6 +30,7 @@ export const initialThingsState = {
 	players: [],
 	alive: [],
 	roundReady: false,
+	showRound: false,
 	roundOver: false,
 	currentPlayerIndex: 0,
 	scores: []
@@ -35,9 +38,11 @@ export const initialThingsState = {
 
 export const things = createReducer(initialThingsState, (r) => {
 	r.addCase(join_game, (state, { payload }) => {
-		state.players.push(payload);
-		state.scores.push(0);
-		state.alive.push(true);
+		if (state.players.indexOf(payload) === -1) {
+			state.players.push(payload);
+			state.scores.push(0);
+			state.alive.push(true);
+		}
 		return state;
 	});
 	r.addCase(leave_game, (state, { payload }) => {
@@ -47,12 +52,16 @@ export const things = createReducer(initialThingsState, (r) => {
 	r.addCase(set_current_player, (state, { payload }) => {
 		state.currentPlayerIndex = payload % state.players.length;
 	});
+	r.addCase(show_round, (state) => {
+		state.showRound = true;
+	});
 	r.addCase(set_category, (state, { payload }) => {
 		state.currentCategory = payload;
-		state.alive = state.players.map((x) => true);
+		state.alive = state.players.map(() => true);
 		state.playerToAnswer = {};
 		state.roundOver = false;
 		state.roundReady = false;
+		state.showRound = false;
 	});
 	r.addCase(answer_category, (state, { payload }) => {
 		const playerIndex = state.players.indexOf(payload.player);
