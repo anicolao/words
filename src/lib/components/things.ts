@@ -55,6 +55,11 @@ export const things = createReducer(initialThingsState, (r) => {
 			state.players.splice(playerIndex, 1);
 			state.scores.splice(playerIndex, 1);
 			state.alive.splice(playerIndex, 1);
+			let roundReady = true;
+			state.players.forEach((player) => {
+				roundReady = roundReady && !!state.playerToAnswer[player];
+			});
+			state.roundReady = roundReady;
 		}
 		return state;
 	});
