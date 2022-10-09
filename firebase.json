@@ -7,9 +7,10 @@
 		"public": "build",
 		"ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
 		"cleanUrls": true,
-		"rewrites": [
+		"redirects": [
 			{
 				"source": "**",
+				"type": 301,
 				"destination": "/index.html"
 			}
 		],
