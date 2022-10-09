@@ -166,7 +166,8 @@
 		console.log('window not found');
 	}
 	//$: hideScaffolding = getWindow() && getWindow().location.href.split('/').slice(-2,-1).slice(-2) === 'cc';
-	$: hideScaffolding = active === 'account_circle';
+	//$: hideScaffolding = active === 'account_circle';
+	let hideScaffolding = false;
 </script>
 
 <svelte:window bind:innerWidth={width} />
