@@ -107,12 +107,19 @@
 	$: if ($store.things.showRound) {
 		if (shuffledPlayers.length === 0) {
 			shuffledPlayers = shuffle($store.things.players);
+		} else {
+			shuffledPlayers = shuffledPlayers;
 		}
 	} else {
 		shuffledPlayers = [];
 	}
 	function emailToName(email: string) {
 		return $store.users.emailToUser[email].name.split(' ')[0];
+	}
+
+	function isAlive(email:string) {
+		const index = $store.things.players.indexOf(email);
+		return $store.things.alive[index];
 	}
 </script>
 
@@ -128,7 +135,7 @@
 			<div class="maincolumn">
 				<table>
 					{#each shuffledPlayers as p}
-						<tr><td>{$store.things.playerToAnswer[p]}</td></tr>
+						<tr class="{isAlive(p) ? '' : 'dead'}"><td>{$store.things.playerToAnswer[p]}</td></tr>
 					{/each}
 				</table>
 			</div>
