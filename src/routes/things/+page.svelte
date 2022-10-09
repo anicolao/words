@@ -6,11 +6,13 @@
 	import type { Table } from '$lib/components/tables';
 	import {
 		answer_category,
+		guesses,
 		set_category,
 		show_round,
+		things,
 		type ThingsState
 	} from '$lib/components/things';
-	import { join_game } from '$lib/components/words';
+	import { join_game, set_current_player } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import Button from '@smui/button';
@@ -23,7 +25,7 @@
 		type Unsubscribe
 	} from 'firebase/firestore';
 
-	const tableId = $page.params.slug;
+	const tableId = $page.url.searchParams.get('slug');
 
 	let unsub: Unsubscribe | undefined;
 	let subbedTableId = '';
@@ -103,69 +105,80 @@
 			}
 		}, 1000);
 	}
-	let shuffledPlayers: string[] = [];
-	$: if ($store.things.showRound) {
-		if (shuffledPlayers.length === 0) {
-			shuffledPlayers = shuffle($store.things.players);
-		} else {
-			shuffledPlayers = shuffledPlayers;
-		}
-	} else {
-		shuffledPlayers = [];
-	}
-	function emailToName(email: string) {
+
+	function playerName(index: number) {
+		const email = $store.things.players[index];
 		return $store.users.emailToUser[email].name.split(' ')[0];
 	}
 
-	function isAlive(email: string) {
-		const index = $store.things.players.indexOf(email);
-		return $store.things.alive[index];
+	function eliminate(p: number, dP: number) {
+		return () => {
+			const player = $store.things.players[p];
+			const dead_player = $store.things.players[dP];
+			dispatchToTable(tableId, guesses({ player, dead_player }));
+		};
+	}
+
+	function nextPlayer() {
+		let next = $store.things.currentPlayerIndex + 1;
+		next %= $store.things.players.length;
+		while (!$store.things.alive[next]) {
+			next++;
+			next %= $store.things.players.length;
+		}
+		dispatchToTable(tableId, set_current_player(next));
 	}
 </script>
 
 <div class="container">
 	<p class="titlepadding" />
-	{#if $store.things.showRound}
-		<h1>Things ... {$store.things.currentCategory}</h1>
-	{:else}
-		<h1>{name}</h1>
+	<p>{name}</p>
+	{#if table && me === table.owner}
+		<p>You are the moderator</p>
+		<p>Things ... {$store.things.currentCategory}</p>
+		{#if !$store.things.showRound || $store.things.roundOver}
+			<input bind:value={categoryString} />
+			<Button on:click={reveal}>Reveal Category</Button>
+			{#if gameState.roundReady}
+				<Button on:click={showRound}>Start Round</Button>
+			{/if}
+		{:else}
+			<table>
+				{#each shuffle($store.things.players) as p}
+					<tr><td>{$store.things.playerToAnswer[p]}</td></tr>
+				{/each}
+			</table>
+			<p>The current player is {$store.things.players[$store.things.currentPlayerIndex]}</p>
+			{#each $store.things.players as p, i}
+				{#if $store.things.alive[i] && i !== $store.things.currentPlayerIndex}
+					<Button on:click={eliminate($store.things.currentPlayerIndex, i)}
+						>{playerName($store.things.currentPlayerIndex)} eliminates {playerName(i)}</Button
+					>
+				{/if}
+			{/each}
+			<Button on:click={nextPlayer}
+				>{playerName($store.things.currentPlayerIndex)} guesses wrong</Button
+			>
+		{/if}
 	{/if}
-	{#if $store.things.showRound}
-		<div class="row">
-			<div class="maincolumn">
-				<table>
-					{#each shuffledPlayers as p}
-						<tr class={isAlive(p) ? '' : 'dead'}><td>{$store.things.playerToAnswer[p]}</td></tr>
-					{/each}
-				</table>
-			</div>
-			<div class="column">
-				<table>
-					{#each $store.things.players as p, i}
-						<tr
-							class="{$store.things.alive[i] ? 'live' : 'dead'} {i ===
-							$store.things.currentPlayerIndex
-								? 'current'
-								: ''}"><td>{emailToName(p)}</td><td>{$store.things.scores[i]}</td></tr
-						>
-					{/each}
-				</table>
-			</div>
-		</div>
+	{#if gameState && gameState.players.indexOf(me) !== -1}
+		<p>You are player #{gameState.players.indexOf(me)}</p>
+		<p>Things ... {gameState.currentCategory}</p>
+		<p>Your current answer: <b>{$store.things.playerToAnswer[me]}</b></p>
+		<input bind:value={guessString} />
+		<Button on:click={answer}>Submit Answer</Button>
+	{:else}
+		<p>no game state</p>
 	{/if}
 </div>
 
 <style>
+	input {
+		width: 90%;
+	}
 	td {
-		border: 1px solid grey;
-		padding: 0.5em;
-		text-align: left;
-	}
-	.current {
-		background-color: #deffde;
-	}
-	.dead {
-		background-color: #ffdede;
+		padding: 0.3em;
+		text-align: center;
 	}
 	.container {
 		width: 100%;
@@ -173,22 +186,5 @@
 	}
 	.titlepadding {
 		height: 1px;
-	}
-	.row {
-		display: flex;
-		flex-direction: row;
-		flex-wrap: wrap;
-		width: 100%;
-	}
-
-	.column {
-		display: flex;
-		flex-direction: column;
-	}
-	.maincolumn {
-		display: flex;
-		flex-direction: column;
-		flex-basis: 100%;
-		flex: 1;
 	}
 </style>

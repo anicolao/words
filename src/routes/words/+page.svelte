@@ -7,7 +7,7 @@
 	import { store } from '$lib/store';
 	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
 
-	const tableId = $page.params.slug;
+	const tableId = $page.url.searchParams.get('slug');
 
 	let unsub: Unsubscribe | undefined;
 	let subbedTableId = '';

@@ -82,13 +82,10 @@
 					dispatchToTable(tableid, action);
 				});
 
-				firebase.dispatch(start_table({ tableid }));
-				goto('table_bar/' + tableid);
-			} else {
-				const gameDef = $store.gamedefs.gameIdToGame[table.gameid];
-				firebase.dispatch(start_table({ tableid }));
-				goto(gameDef.properties.path + '/' + tableid);
 			}
+			const gameDef = $store.gamedefs.gameIdToGame[table.gameid];
+			firebase.dispatch(start_table({ tableid }));
+			goto('/' + gameDef.properties.path + '/?slug=' + tableid);
 		};
 	}
 	function navigateTo(tableid: string) {
@@ -96,11 +93,7 @@
 			console.log('go to ', tableid);
 			const table = $store.tables.tableIdToTable[tableid];
 			const gameDef = $store.gamedefs.gameIdToGame[table.gameid];
-			if (gameDef.properties.path) {
-				goto(gameDef.properties.path + '/' + tableid);
-			} else {
-				goto('table_bar/' + tableid);
-			}
+			goto('/' + gameDef.properties.path + '/?slug=' + tableid);
 		};
 	}
 </script>
