@@ -132,7 +132,7 @@
 		<h1>Things ... {$store.things.currentCategory}</h1>
 	{:else}
 		<h1>{name}</h1>
-		<QRCode codeValue="{baseURL}" squareSize=200/>
+		<QRCode codeValue={baseURL} squareSize="200" />
 	{/if}
 	{#if $store.things.showRound}
 		<div class="row">

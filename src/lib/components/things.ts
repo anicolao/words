@@ -46,7 +46,16 @@ export const things = createReducer(initialThingsState, (r) => {
 		return state;
 	});
 	r.addCase(leave_game, (state, { payload }) => {
-		state.players = state.players.filter((x) => x !== payload);
+		const playerIndex = state.players.indexOf(payload);
+		if (playerIndex !== -1) {
+			if (state.currentPlayerIndex >= playerIndex) {
+				state.currentPlayerIndex--;
+				if (state.currentPlayerIndex < 0) state.currentPlayerIndex = 0;
+			}
+			state.players.splice(playerIndex, 1);
+			state.scores.splice(playerIndex, 1);
+			state.alive.splice(playerIndex, 1);
+		}
 		return state;
 	});
 	r.addCase(set_current_player, (state, { payload }) => {

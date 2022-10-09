@@ -12,13 +12,13 @@
 		things,
 		type ThingsState
 	} from '$lib/components/things';
-	import { join_game, set_current_player } from '$lib/components/words';
+	import { join_game, leave_game, set_current_player } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import Button from '@smui/button';
 	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
 
-	const tableId = $page.url.searchParams.get('slug');
+	const tableId = $page.url.searchParams.get('slug')!;
 
 	let unsub: Unsubscribe | undefined;
 	let subbedTableId = '';
@@ -112,6 +112,12 @@
 		};
 	}
 
+	function remove(p: string) {
+		return () => {
+			dispatchToTable(tableId, leave_game(p));
+		};
+	}
+
 	function nextPlayer() {
 		let next = $store.things.currentPlayerIndex + 1;
 		next %= $store.things.players.length;
@@ -127,7 +133,10 @@
 	<p class="titlepadding" />
 	<p>{name}</p>
 	{#if table && me === table.owner}
-		<p>You are the moderator</p>
+		<p>
+			You are the moderator. Cast
+			<a href="/thingscc/?slug={tableId}" target="_blank">this link</a>.
+		</p>
 		<p>Things ... {$store.things.currentCategory}</p>
 		{#if !$store.things.showRound || $store.things.roundOver}
 			<input bind:value={categoryString} />
@@ -135,14 +144,14 @@
 			{#if gameState.roundReady}
 				<Button on:click={showRound}>Start Round</Button>
 			{:else}
-			<p>Waiting for:</p>
-			<ul>
-				{#each $store.things.players as p, i}
-					{#if !$store.things.playerToAnswer[p]}
-						<li>{playerName(i)}</li>
-					{/if}
-				{/each}
-			</ul>
+				<p>Waiting for:</p>
+				<ul>
+					{#each $store.things.players as p, i}
+						{#if !$store.things.playerToAnswer[p]}
+							<li>{playerName(i)}<Button on:click={remove(p)}>Remove</Button></li>
+						{/if}
+					{/each}
+				</ul>
 			{/if}
 		{:else}
 			<p>The current player is {$store.things.players[$store.things.currentPlayerIndex]}</p>

@@ -81,7 +81,6 @@
 				setupActions.forEach((action) => {
 					dispatchToTable(tableid, action);
 				});
-
 			}
 			const gameDef = $store.gamedefs.gameIdToGame[table.gameid];
 			firebase.dispatch(start_table({ tableid }));
