@@ -7,13 +7,6 @@
 		"public": "build",
 		"ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
 		"cleanUrls": true,
-		"redirects": [
-			{
-				"source": "**",
-				"type": 301,
-				"destination": "/index.html"
-			}
-		],
 		"trailingSlash": false
 	},
 	"emulators": {
