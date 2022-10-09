@@ -173,31 +173,31 @@
 	</div>
 {:else}
 	<div class="drawer-container">
-			<TopAppBar bind:this={topAppBar} variant="fixed">
-				<Row>
-					<div class={width > 720 ? 'desk-margin' : 'mobile-margin'}>
-						<Section>
-							{#if width <= 720}
-								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
-									>menu</IconButton
-								>
-							{:else if !customTitle}
-								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
-									>{active}</IconButton
-								>
-							{/if}
-							{#if !customTitle}
-								<Title>{textLookup(active)}</Title>
-							{:else}
-								<Title>{customTitle}</Title>
-							{/if}
-						</Section>
-					</div>
-					<Section align="end" toolbar>
-						<span on:click={() => setActive('account_circle')}><Avatar /></span>
+		<TopAppBar bind:this={topAppBar} variant="fixed">
+			<Row>
+				<div class={width > 720 ? 'desk-margin' : 'mobile-margin'}>
+					<Section>
+						{#if width <= 720}
+							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
+								>menu</IconButton
+							>
+						{:else if !customTitle}
+							<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
+								>{active}</IconButton
+							>
+						{/if}
+						{#if !customTitle}
+							<Title>{textLookup(active)}</Title>
+						{:else}
+							<Title>{customTitle}</Title>
+						{/if}
 					</Section>
-				</Row>
-			</TopAppBar>
+				</div>
+				<Section align="end" toolbar>
+					<span on:click={() => setActive('account_circle')}><Avatar /></span>
+				</Section>
+			</Row>
+		</TopAppBar>
 
 		<AutoAdjust {topAppBar} />
 

@@ -117,7 +117,7 @@
 		return $store.users.emailToUser[email].name.split(' ')[0];
 	}
 
-	function isAlive(email:string) {
+	function isAlive(email: string) {
 		const index = $store.things.players.indexOf(email);
 		return $store.things.alive[index];
 	}
@@ -135,7 +135,7 @@
 			<div class="maincolumn">
 				<table>
 					{#each shuffledPlayers as p}
-						<tr class="{isAlive(p) ? '' : 'dead'}"><td>{$store.things.playerToAnswer[p]}</td></tr>
+						<tr class={isAlive(p) ? '' : 'dead'}><td>{$store.things.playerToAnswer[p]}</td></tr>
 					{/each}
 				</table>
 			</div>
