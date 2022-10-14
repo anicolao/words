@@ -115,7 +115,7 @@
 			const lastPlay = $store.words.plays[i];
 			while (totals.length < lastPlay.playerIndex + 1) totals.push(0);
 			console.log({ totals, pi: lastPlay.playerIndex, ti: totals[lastPlay.playerIndex] });
-			totals[lastPlay.playerIndex] += lastPlay.score;
+			if (!lastPlay.challenged) totals[lastPlay.playerIndex] += lastPlay.score;
 			const data = { ...lastPlay, totalScore: totals[lastPlay.playerIndex] };
 			if (lastPlay.playerIndex === 0 || turnRows.length === 0) {
 				turnRows.push([data]);
@@ -152,7 +152,9 @@
 			{/if}
 			<tr
 				><td>{i + 1}</td>
-				{#each turn as play}<td>{lastPlayWords(play)}</td><td>{play.score}</td><td
+				{#each turn as play}<td class={play.challenged ? 'challenged' : 'good'}
+						>{lastPlayWords(play)}</td
+					><td class={play.challenged ? 'challenged' : 'good'}>{play.score}</td><td
 						>{play.totalScore}</td
 					>{/each}
 			</tr>
@@ -178,5 +180,8 @@
 	}
 	.titlepadding {
 		height: 1px;
+	}
+	.challenged {
+		text-decoration: line-through;
 	}
 </style>

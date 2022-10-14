@@ -1,9 +1,21 @@
 <script lang="ts">
+	import { words as ospd } from '$lib/components/ospd4';
 	import { store } from '$lib/store';
 	import Button, { Label } from '@smui/button';
 	import IconButton from '@smui/icon-button/src/IconButton.svelte';
 	import { dispatchToTable, shuffle } from './gameutil';
-	import { draw_tiles, dump, initialWordsState, play, words, type WordsState } from './words';
+	import { generateDictionary } from './trie';
+	import {
+		draw_tiles,
+		dump,
+		initialWordsState,
+		pass,
+		play,
+		words,
+		type WordsState,
+		fail_challenge,
+		challenge
+	} from './words';
 
 	export let tableId = '';
 	export let numRows = 0;
@@ -130,6 +142,7 @@
 			previewMove(-1);
 		} else if (letter === 'dump') {
 			if (state.drawPile.length >= 7) {
+				const letters = wordSoFar;
 				previewMove(0);
 				const draw = draw_tiles(me);
 				state = words(state, draw);
@@ -140,7 +153,8 @@
 					player: me,
 					newRack: state.emailToRack[me],
 					reshuffledDrawPile,
-					numDumped: wordSoFar.length
+					numDumped: wordSoFar.length,
+					letters
 				});
 				state = boardState;
 				wordSoFar = '';
@@ -178,6 +192,39 @@
 		selectedCol = Math.max(0, selectedCol);
 		selectedRow = Math.min(numRows - 1, selectedRow);
 		selectedCol = Math.min(numCols - 1, selectedCol);
+	}
+	function passTurn() {
+		const passAction = pass(me);
+		dispatchToTable(tableId, passAction);
+	}
+	let dictionary = generateDictionary(ospd);
+	function challengePlay() {
+		const lastPlay = $store.words.plays.slice(-1)[0];
+		const allWords = [lastPlay.mainWord, lastPlay.sideWords].flat();
+		const inDictionary = allWords.map((x) => dictionary.contains(x));
+		let legal = true;
+		inDictionary.forEach((x) => (legal = legal && x));
+		if (!legal) {
+			const rebagLetters = lastPlay.letters.split('');
+			const newDrawPile = [$store.words.drawPile.split(''), rebagLetters].flat();
+			const drawString = shuffle(newDrawPile).join('');
+			const challengeAction = challenge(drawString);
+			dispatchToTable(tableId, challengeAction);
+		} else {
+			const failed = fail_challenge(me);
+			dispatchToTable(tableId, failed);
+		}
+	}
+	$: myIndex = $store.words.players.indexOf(me);
+	let lastPlayWasntMine = false;
+	$: if ($store.words.plays.length > 0) {
+		const lastPlay = $store.words.plays.slice(-1)[0];
+		lastPlayWasntMine = lastPlay.playerIndex !== myIndex;
+	}
+	$: if ($store.words.currentPlayerIndex === myIndex) {
+		if ($store.words.emailToPass[me]) {
+			passTurn();
+		}
 	}
 </script>
 
@@ -227,6 +274,12 @@
 						>recycling</IconButton
 					>
 				{/if}
+			{/if}
+			{#if lastPlayWasntMine}
+				<Button on:click={challengePlay}>Challenge</Button>
+			{/if}
+			{#if $store.words.currentPlayerIndex === myIndex}
+				<Button on:click={passTurn}>Pass</Button>
 			{/if}
 		</div>
 	{/if}

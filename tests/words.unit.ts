@@ -4,12 +4,14 @@ import {
 	words,
 	play,
 	initialWordsState,
-	type WordsState,
 	type WordsMove,
 	initial_tiles,
 	draw_tiles,
 	join_game,
-	leave_game
+	leave_game,
+	pass,
+	challenge,
+	fail_challenge
 } from '$lib/components/words';
 import { describe, it } from 'vitest';
 
@@ -26,8 +28,8 @@ describe('words', () => {
 			{ ...initialWordsState },
 			initial_tiles({
 				draw_pile,
-				tiles: '_abddeeeeeeeeghhllllmoooorrrrssstty',
-				values: '01322111111112441111311111111000114',
+				tiles: '_abddeeeeeeeeghhllllmoooorrrrsssttyw',
+				values: '013221111111124411113111111110001144',
 				letterm,
 				wordm: '31111121111111111121111111111111113',
 				num_rows: 7,
@@ -74,6 +76,7 @@ describe('words', () => {
 		expect(nextState.board[3].join('')).to.be.equal('hellO');
 	});
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function transpose(array: any[][]) {
 		return array.map((_, colIndex) => array.map((row) => row[colIndex]));
 	}
@@ -349,5 +352,71 @@ describe('words', () => {
 		nextState = words(nextState, draw_tiles('Alex@gmail.com'));
 		expect(nextState.emailToRack['Alex@gmail.com']).to.equal('hel');
 		expect(nextState.drawPile).to.equal('');
+	});
+
+	it('lets the current player pass', () => {
+		let nextState = makeGameStartState('hel');
+		expect(nextState.players.length).to.equal(2);
+		expect(nextState.currentPlayerIndex).to.equal(0);
+		nextState = words(nextState, pass('Alex@gmail.com'));
+		expect(nextState.currentPlayerIndex).to.equal(1);
+	});
+
+	it('reverses a bad word when challenged', () => {
+		let nextState = makeGameStartState('helloworldherearesomeletters');
+		expect(nextState.players.length).to.equal(2);
+		expect(nextState.players[0]).to.equal('Alex@gmail.com');
+		expect(nextState.players[1]).to.equal('Bob@gmail.com');
+		expect(nextState.scores[0]).to.equal(0);
+		expect(nextState.scores[1]).to.equal(0);
+		expect(nextState.emailToRack['Alex@gmail.com']).to.equal('hellowo');
+		expect(nextState.drawPile).to.equal('aresomeletters');
+		expect(nextState.emailToRack['Bob@gmail.com']).to.equal('rldhere');
+		const lastMove: WordsMove = {
+			x: 0,
+			y: 3,
+			isVertical: false,
+			letters: 'wolle',
+			player: 'Alex@gmail.com'
+		};
+		expect(nextState.board[3].join('')).to.be.equal('');
+		nextState = words(nextState, play(lastMove));
+		expect(nextState.scores[0]).to.equal(20);
+		nextState = words(nextState, draw_tiles('Alex@gmail.com'));
+		expect(nextState.emailToRack['Alex@gmail.com']).to.equal('hoareso');
+		expect(nextState.drawPile).to.equal('meletters');
+		expect(nextState.board[3].join('')).to.be.equal('wolle');
+		expect(nextState.plays[0].challenged).to.equal(false);
+		nextState = words(nextState, challenge('melettersareso'));
+		expect(nextState.emailToRack['Alex@gmail.com']).to.equal('howolle');
+		expect(nextState.drawPile).to.equal('melettersareso');
+		expect(nextState.board[3].join('')).to.be.equal('');
+		expect(nextState.plays[0].challenged).to.equal(true);
+		expect(nextState.scores[0]).to.equal(0);
+	});
+
+	it('forces a pass due to bad challenge', () => {
+		let nextState = makeGameStartState('helloworldherearesomeletters');
+		expect(nextState.players.length).to.equal(2);
+		expect(nextState.players[0]).to.equal('Alex@gmail.com');
+		expect(nextState.players[1]).to.equal('Bob@gmail.com');
+		expect(nextState.emailToRack['Alex@gmail.com']).to.equal('hellowo');
+		expect(nextState.drawPile).to.equal('aresomeletters');
+		expect(nextState.emailToRack['Bob@gmail.com']).to.equal('rldhere');
+		const lastMove: WordsMove = {
+			x: 0,
+			y: 3,
+			isVertical: false,
+			letters: 'wolle',
+			player: 'Alex@gmail.com'
+		};
+		nextState = words(nextState, play(lastMove));
+		nextState = words(nextState, draw_tiles('Alex@gmail.com'));
+		expect(nextState.emailToRack['Alex@gmail.com']).to.equal('hoareso');
+		expect(nextState.drawPile).to.equal('meletters');
+		nextState = words(nextState, fail_challenge('Bob@gmail.com'));
+		expect(nextState.emailToPass['Bob@gmail.com']).to.equal(true);
+		nextState = words(nextState, pass('Bob@gmail.com'));
+		expect(nextState.emailToPass['Bob@gmail.com']).to.equal(false);
 	});
 });
