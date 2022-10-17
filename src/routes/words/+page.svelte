@@ -29,11 +29,8 @@
 							let doc = change.doc;
 							let action = doc.data() as any;
 							if (action.timestamp) {
-								console.log('server side action: ', action);
 								delete action.timestamp;
 								store.dispatch(action);
-							} else {
-								console.log('Ignore local echo for consistency', action);
 							}
 						}
 					});
@@ -70,7 +67,6 @@
 		numRows = gamedef.numRows;
 		numCols = gamedef.numCols;
 	}
-	$: console.log({ gamedef });
 	$: boardState = $store.words;
 
 	$: currentPlayer = $store.words.players[$store.words.currentPlayerIndex];
@@ -114,7 +110,6 @@
 		for (let i = 0; i < $store.words.plays.length; ++i) {
 			const lastPlay = $store.words.plays[i];
 			while (totals.length < lastPlay.playerIndex + 1) totals.push(0);
-			console.log({ totals, pi: lastPlay.playerIndex, ti: totals[lastPlay.playerIndex] });
 			if (!lastPlay.challenged) totals[lastPlay.playerIndex] += lastPlay.score;
 			const data = { ...lastPlay, totalScore: totals[lastPlay.playerIndex] };
 			if (lastPlay.playerIndex === 0 || turnRows.length === 0) {
@@ -122,7 +117,6 @@
 			} else {
 				turnRows[turnRows.length - 1].push(data);
 			}
-			console.log('Turn Rows so far: ', turnRows);
 		}
 	}
 	function lastPlayWords(lastPlay: TurnRecord) {
