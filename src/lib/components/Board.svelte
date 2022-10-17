@@ -205,7 +205,10 @@
 		let legal = true;
 		inDictionary.forEach((x) => (legal = legal && x));
 		if (!legal) {
-			const rebagLetters = lastPlay.letters.split('');
+			const numToRebag = lastPlay.letters.length;
+			const sadPlayer = $store.words.players[lastPlay.playerIndex];
+			const rebagLetters = $store.words.emailToRack[sadPlayer].slice(-numToRebag).split('');
+			console.log('Rebagging ', rebagLetters);
 			const newDrawPile = [$store.words.drawPile.split(''), rebagLetters].flat();
 			const drawString = shuffle(newDrawPile).join('');
 			const challengeAction = challenge(drawString);
@@ -262,27 +265,31 @@
 				</div>
 			{/each}
 		</div>
-		<div class="controls">
-			{#if wordSoFar}
-				<Button on:click={() => handleLetter('enter')}>
-					<Label>Score {score}</Label>
-					<i class="material-icons" aria-hidden="true">arrow_forward</i>
-				</Button>
-				<IconButton class="material-icons" on:click={() => handleLetter('escape')}>undo</IconButton>
-				{#if $store.words.drawPile.length >= 7}
-					<IconButton class="material-icons" on:click={() => handleLetter('dump')}
-						>recycling</IconButton
-					>
-				{/if}
-			{/if}
-			{#if lastPlayWasntMine}
-				<Button on:click={challengePlay}>Challenge</Button>
-			{/if}
-			{#if $store.words.currentPlayerIndex === myIndex}
-				<Button on:click={passTurn}>Pass</Button>
-			{/if}
-		</div>
 	{/if}
+	<div class="controls">
+		{#if wordSoFar}
+			<Button on:click={() => handleLetter('enter')}>
+				<Label>Score {score}</Label>
+				<i class="material-icons" aria-hidden="true">arrow_forward</i>
+			</Button>
+			<Button on:click={() => handleLetter('escape')}>
+				<Label>Undo</Label>
+				<i class="material-icons" aria-hidden="true">undo</i>
+			</Button>
+			{#if $store.words.drawPile.length >= 7}
+				<Button on:click={() => handleLetter('dump')}>
+					<Label>Dump ({$store.words.drawPile.length} left)</Label>
+					<i class="material-icons" aria-hidden="true">recycling</i>
+				</Button>
+			{/if}
+		{/if}
+		{#if lastPlayWasntMine}
+			<Button on:click={challengePlay}>Challenge</Button>
+		{/if}
+		{#if $store.words.currentPlayerIndex === myIndex}
+			<Button on:click={passTurn}>Pass</Button>
+		{/if}
+	</div>
 </div>
 
 <svelte:window on:keydown|preventDefault={onKeyDown} />
