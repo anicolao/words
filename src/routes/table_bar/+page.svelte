@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import Avatar from '$lib/components/Avatar.svelte';
-	import { gamedefs } from '$lib/components/gamedefs';
 	import { dispatchToTable, shuffle } from '$lib/components/gameutil';
 	import {
 		create_table,
 		destroy_table,
 		join_table,
 		leave_table,
-		start_table,
-		tables
+		start_table
 	} from '$lib/components/tables';
 	import { draw_tiles, initial_tiles, join_game } from '$lib/components/words';
 	import firebase from '$lib/firebase';
@@ -17,7 +15,7 @@
 	import Button from '@smui/button';
 	import { Content } from '@smui/card';
 	import IconButton from '@smui/icon-button';
-	import { addDoc, collection, serverTimestamp, setIndexConfiguration } from 'firebase/firestore';
+	import { addDoc, collection } from 'firebase/firestore';
 
 	$: tableIds = $store.tables.tableIds;
 

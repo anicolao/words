@@ -1,15 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { initialGameDefsState } from '$lib/components/gamedefs';
-	import { dispatchToTable, shuffle } from '$lib/components/gameutil';
-	import { custom_title } from '$lib/components/nav';
+	import { dispatchToTable } from '$lib/components/gameutil';
 	import type { Table } from '$lib/components/tables';
 	import {
 		answer_category,
 		guesses,
 		set_category,
 		show_round,
-		things,
 		type ThingsState
 	} from '$lib/components/things';
 	import { join_game, leave_game, set_current_player } from '$lib/components/words';
@@ -181,10 +178,6 @@
 <style>
 	input {
 		width: 90%;
-	}
-	td {
-		padding: 0.3em;
-		text-align: center;
 	}
 	.container {
 		width: 100%;

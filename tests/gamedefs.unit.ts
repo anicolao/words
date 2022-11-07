@@ -3,9 +3,7 @@ import { describe, it } from 'vitest';
 
 import {
 	gamedefs,
-	play,
 	initialGameDefsState,
-	type GameDefsState,
 	type GameDefinition,
 	define_game
 } from '$lib/components/gamedefs';

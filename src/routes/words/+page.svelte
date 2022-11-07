@@ -2,12 +2,12 @@
 	import { page } from '$app/stores';
 	import Board from '$lib/components/Board.svelte';
 	import { custom_title } from '$lib/components/nav';
-	import type { play, TurnRecord, words } from '$lib/components/words';
+	import type { TurnRecord } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
 
-	const tableId = $page.url.searchParams.get('slug');
+	const tableId = $page.url.searchParams.get('slug') || undefined;
 
 	let unsub: Unsubscribe | undefined;
 	let subbedTableId = '';
@@ -17,37 +17,39 @@
 				console.log('unsubscribe from old table: ', { subbedTableId });
 				unsub();
 			}
-			subbedTableId = tableId;
-			console.log('subscribe to new table: ', { subbedTableId });
-			const gameActions = collection(firebase.firestore, 'tables', tableId, 'actions');
-			unsub = onSnapshot(
-				query(gameActions, orderBy('timestamp')),
-				{ includeMetadataChanges: true },
-				(querySnapshot) => {
-					querySnapshot.docChanges().forEach((change) => {
-						if (change.type === 'added' || (change.type === 'modified' && change.doc)) {
-							let doc = change.doc;
-							let action = doc.data() as any;
-							if (action.timestamp) {
-								delete action.timestamp;
-								store.dispatch(action);
+			if (tableId) {
+				subbedTableId = tableId;
+				console.log('subscribe to new table: ', { subbedTableId });
+				const gameActions = collection(firebase.firestore, 'tables', tableId, 'actions');
+				unsub = onSnapshot(
+					query(gameActions, orderBy('timestamp')),
+					{ includeMetadataChanges: true },
+					(querySnapshot) => {
+						querySnapshot.docChanges().forEach((change) => {
+							if (change.type === 'added' || (change.type === 'modified' && change.doc)) {
+								let doc = change.doc;
+								let action = doc.data() as any;
+								if (action.timestamp) {
+									delete action.timestamp;
+									store.dispatch(action);
+								}
 							}
-						}
-					});
-				},
-				(error) => {
-					console.log('actions query failing: ');
-					console.error(error);
-				}
-			);
+						});
+					},
+					(error) => {
+						console.log('actions query failing: ');
+						console.error(error);
+					}
+				);
+			}
 		}
 	}
 
 	const me = $store.auth.email || '';
-	let rack;
+	let rack = '';
 	let gameId: string = '';
 	let gamedef: any;
-	$: if ($store.tables.tableIdToTable[tableId]) {
+	$: if (tableId && $store.tables.tableIdToTable[tableId]) {
 		gameId = $store.tables.tableIdToTable[tableId].gameid;
 	}
 	$: if (gameId && $store.gamedefs.gameIdToGame[gameId]) {
@@ -134,7 +136,7 @@
 <div class="container">
 	<p class="titlepadding" />
 	<Board bind:rack {tableId} {numRows} {numCols} {tiles} {values} {letterm} {wordm} {boardState} />
-	<table border="1" cellspacing="0" style="margin-top: 50px">
+	<table border={1} cellspacing="0" style="margin-top: 50px">
 		{#each turnRows as turn, i}
 			{#if i === 0}
 				<tr

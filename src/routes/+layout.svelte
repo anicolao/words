@@ -7,7 +7,7 @@
 	import IconButton from '@smui/icon-button';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Login from '$lib/components/Login.svelte';
-	import Card, { Content as CardContent, Actions } from '@smui/card';
+	import Card, { Content as CardContent } from '@smui/card';
 	import { store } from '$lib/store';
 
 	let topAppBar: TopAppBarComponentDev;

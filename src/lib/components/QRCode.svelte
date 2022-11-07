@@ -1,8 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
 
-	export let codeValue;
-	export let squareSize;
+	export let codeValue = '';
+	export let squareSize = 100;
 
 	let qrcode;
 
