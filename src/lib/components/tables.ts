@@ -14,6 +14,7 @@ export interface Table {
 	owner: string;
 	players: string[];
 	started: boolean;
+	completed: boolean;
 }
 
 export const create_table = createAction<{ tableid: string; gameid: string; owner: string }>(
@@ -22,6 +23,7 @@ export const create_table = createAction<{ tableid: string; gameid: string; owne
 export const join_table = createAction<{ tableid: string; player: string }>('join_table');
 export const leave_table = createAction<{ tableid: string; player: string }>('leave_table');
 export const start_table = createAction<{ tableid: string }>('start_table');
+export const complete_table = createAction<{ tableid: string }>('complete_table');
 export const destroy_table = createAction<{ tableid: string }>('destroy_table');
 
 export const initialTablesState = {
@@ -31,7 +33,7 @@ export const initialTablesState = {
 
 export const tables = createReducer(initialTablesState, (r) => {
 	r.addCase(create_table, (state, { payload }) => {
-		const table = { ...payload, players: [payload.owner], started: false };
+		const table = { ...payload, players: [payload.owner], started: false, completed: false };
 		state.tableIdToTable[payload.tableid] = table;
 		state.tableIds.push(payload.tableid);
 	});
@@ -52,6 +54,10 @@ export const tables = createReducer(initialTablesState, (r) => {
 
 	r.addCase(start_table, (state, { payload }) => {
 		state.tableIdToTable[payload.tableid].started = true;
+	});
+
+	r.addCase(complete_table, (state, { payload }) => {
+		state.tableIdToTable[payload.tableid].completed = true;
 	});
 
 	r.addCase(destroy_table, (state, { payload }) => {

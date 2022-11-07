@@ -17,7 +17,7 @@
 	import IconButton from '@smui/icon-button';
 	import { addDoc, collection } from 'firebase/firestore';
 
-	$: tableIds = $store.tables.tableIds;
+	$: tableIds = $store.tables.tableIds.filter((x) => !$store.tables.tableIdToTable[x].completed);
 
 	const me = $store.auth.email || '';
 	function newTable(gameid: string) {

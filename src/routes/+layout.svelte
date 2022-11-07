@@ -90,8 +90,12 @@
 						if (change.type === 'added') {
 							let doc = change.doc;
 							let action = doc.data() as AnyAction;
-							delete action.timestamp;
-							store.dispatch(action);
+							if (action.type) {
+								delete action.timestamp;
+								store.dispatch(action);
+							} else {
+								console.error('INVALID ACTION: ', action);
+							}
 						}
 					});
 				},
@@ -114,7 +118,6 @@
 						if (change.type === 'added') {
 							let doc = change.doc;
 							let user = doc.data() as User;
-							console.log('Incoming user ', user);
 							store.dispatch(create_user(user));
 							//delete action.timestamp;
 							//store.dispatch(action);

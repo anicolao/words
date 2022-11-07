@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import Board from '$lib/components/Board.svelte';
 	import { custom_title } from '$lib/components/nav';
+	import { complete_table } from '$lib/components/tables';
 	import type { TurnRecord } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
@@ -104,6 +105,9 @@
 			});
 			let title = `Game Over! ${winner} wins with ${winningScore}!`;
 			store.dispatch(custom_title(title));
+			if (tableId && !$store.tables.tableIdToTable[tableId].completed) {
+				firebase.dispatch(complete_table({ tableid: tableId }));
+			}
 		}
 	}
 	$: if ($store.words.plays.length) {
