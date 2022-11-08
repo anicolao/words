@@ -9,6 +9,7 @@ import { words } from './components/words';
 import { things } from './components/things';
 import { users } from './components/users';
 import { gamedefs } from './components/gamedefs';
+import { alchemists } from './components/alchemists';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
@@ -30,6 +31,7 @@ function svelteStoreEnhancer(createStoreApi: (arg0: any, arg1: any) => any) {
 }
 
 const reducer = {
+	alchemists,
 	auth,
 	gamedefs,
 	nav,

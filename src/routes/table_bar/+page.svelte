@@ -1,5 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import {
+		draw_favour,
+		draw_ingredient,
+		Favours,
+		Ingredients,
+		initial_setup as alch_initial_setup
+	} from '$lib/components/alchemists';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import { dispatchToTable, shuffle } from '$lib/components/gameutil';
 	import {
@@ -76,6 +83,34 @@
 				players.forEach((player) => setupActions.push(join_game(player)));
 				players.forEach((player) => setupActions.push(draw_tiles(player)));
 
+				setupActions.forEach((action) => {
+					dispatchToTable(tableid, action);
+				});
+			} else if (table.gameid === 'r2TizEhIPpYu5bXN6qtb') {
+				const players = shuffle($store.tables.tableIdToTable[tableid].players);
+				const gameType = 'base';
+				let ingredientPile: Ingredients[] = [];
+				let favoursPile: Favours[] = [];
+				for (let i = 0; i < 12; ++i) {
+					for (let ingredient = 0; ingredient < 8; ++ingredient) {
+						ingredientPile.push(ingredient);
+					}
+				}
+				for (let i = 0; i < 4; ++i) {
+					for (let favour = 0; favour < 8; ++favour) {
+						favoursPile.push(favour);
+					}
+				}
+				ingredientPile = shuffle(ingredientPile);
+				favoursPile = shuffle(favoursPile);
+				const setupActions: any[] = [alch_initial_setup({ gameType, ingredientPile, favoursPile })];
+				players.forEach((player) => {
+					setupActions.push(join_game(player));
+					setupActions.push(draw_ingredient(player));
+					setupActions.push(draw_ingredient(player));
+					setupActions.push(draw_favour(player));
+					setupActions.push(draw_favour(player));
+				});
 				setupActions.forEach((action) => {
 					dispatchToTable(tableid, action);
 				});
