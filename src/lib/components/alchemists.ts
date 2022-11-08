@@ -1,3 +1,4 @@
+import type { AnyAction } from '@reduxjs/toolkit';
 import * as toolkitRaw from '@reduxjs/toolkit';
 import { play } from './words';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,6 +37,9 @@ export interface PlayerState {
 	ingredients: Ingredients[];
 	favours: Favours[];
 	seals: Seals[];
+	required: string[];
+	pending: AnyAction[];
+	undone: AnyAction[];
 }
 const initialPlayerState = {
 	coins: 2,
@@ -53,7 +57,10 @@ const initialPlayerState = {
 		Seals.threePoints,
 		Seals.fivePoints,
 		Seals.fivePoints
-	]
+	],
+	required: ['discard_favour'],
+	pending: [],
+	undone: []
 };
 
 export interface AlchemistsState {
@@ -74,6 +81,11 @@ export const initial_setup = createAction<{
 export const join_game = createAction<string>('join_game');
 export const draw_ingredient = createAction<string>('draw_ingredient');
 export const draw_favour = createAction<string>('draw_favour');
+export const queue_pending = createAction<{ player: string; action: AnyAction }>('queue_pending');
+export const undo_pending = createAction<{ player: string }>('undo_pending');
+export const redo_pending = createAction<{ player: string }>('redo_pending');
+export const discard_favour = createAction<{ player: string; index: number }>('discard_favour');
+export const commit = createAction<{ player: string }>('commit');
 
 export const initialState: AlchemistsState = {
 	gameType: 'base',
@@ -106,4 +118,55 @@ export const alchemists = createReducer(initialState, (r) => {
 		playerState.favours = [...playerState.favours, ...state.favoursPile.splice(0, 1)];
 		state.emailToPlayerState[payload] = playerState;
 	});
+	r.addCase(queue_pending, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		playerState.pending = [...playerState.pending, payload.action];
+		playerState.undone = []; // clear the redo queue if we take a new action
+		state.emailToPlayerState[payload.player] = playerState;
+	});
+	r.addCase(undo_pending, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		const undone = playerState.pending.splice(playerState.pending.length - 1, 1);
+		playerState.pending = [...playerState.pending];
+		playerState.undone = [...undone, ...playerState.undone];
+		state.emailToPlayerState[payload.player] = playerState;
+	});
+
+	r.addCase(redo_pending, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		const redone = playerState.undone.splice(0, 1);
+		playerState.undone = [...playerState.undone];
+		playerState.pending = [...playerState.pending, ...redone];
+		state.emailToPlayerState[payload.player] = playerState;
+	});
+
+	r.addCase(discard_favour, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		playerState.favours.splice(payload.index, 1);
+	});
+	r.addCase(commit, (state, { payload }) => {
+		let playerState = state.emailToPlayerState[payload.player];
+		const actions = playerState.pending;
+		actions.forEach((a) => (state = alchemists(state, a)));
+		playerState = state.emailToPlayerState[payload.player];
+		playerState.pending = [];
+		state.emailToPlayerState[payload.player] = playerState;
+	});
+
+	r.addMatcher(
+		() => true,
+		(state, action) => {
+			const payload = action.payload;
+			if (payload && payload.player) {
+				const playerState = state.emailToPlayerState[payload.player];
+				if (playerState) {
+					const requiredIndex = playerState.required.indexOf(action.type);
+					if (requiredIndex !== -1) {
+						playerState.required.splice(requiredIndex, 1);
+					}
+					state.emailToPlayerState[payload.player] = playerState;
+				}
+			}
+		}
+	);
 });

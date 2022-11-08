@@ -1,8 +1,22 @@
 <script lang="ts">
+	import IconButton from '@smui/icon-button/src/IconButton.svelte';
+	import { createEventDispatcher } from 'svelte';
+
+	const fireEvent = createEventDispatcher();
+
 	export let favour = -1;
+	export let discard = false;
+
+	function discardCard() {
+		console.log('Discard card ', favour);
+		fireEvent('discard');
+	}
 </script>
 
 <img alt="favour {favour}" src="favour_{favour}.jpg" />
+{#if discard}
+	<IconButton class="material-icons" on:click={discardCard}>delete</IconButton>
+{/if}
 
 <style>
 	img {

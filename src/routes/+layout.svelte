@@ -32,12 +32,13 @@
 	import { define_game } from '$lib/components/gamedefs';
 
 	const suppressHeaders = $page.url.pathname.slice(-3) === 'cc/';
-	$: open = width > 720;
+	const DRAWER_POPPED_WIDTH = 1800;
+	$: open = width > DRAWER_POPPED_WIDTH;
 	$: active = $store.nav.active.split('/')[0];
 
 	function setActive(value: string) {
 		store.dispatch(navigate_to(value));
-		open = false || width > 720;
+		open = false || width > DRAWER_POPPED_WIDTH;
 		goto('/' + value);
 	}
 
@@ -181,14 +182,17 @@
 		{#if !suppressHeaders}
 			<TopAppBar bind:this={topAppBar} variant="fixed">
 				<Row>
-					<div class={width > 720 ? 'desk-margin' : 'mobile-margin'}>
+					<div class={width > DRAWER_POPPED_WIDTH ? 'desk-margin' : 'mobile-margin'}>
 						<Section>
-							{#if width <= 720}
-								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
-									>menu</IconButton
+							{#if width <= DRAWER_POPPED_WIDTH}
+								<IconButton
+									class="material-icons"
+									on:click={() => (open = !open || width > DRAWER_POPPED_WIDTH)}>menu</IconButton
 								>
 							{:else if !customTitle}
-								<IconButton class="material-icons" on:click={() => (open = !open || width > 720)}
+								<IconButton
+									class="material-icons"
+									on:click={() => (open = !open || width > DRAWER_POPPED_WIDTH)}
 									>{active}</IconButton
 								>
 							{/if}
@@ -208,8 +212,8 @@
 			<AutoAdjust {topAppBar} />
 
 			<Drawer
-				variant={width > 720 ? undefined : 'modal'}
-				fixed={width > 720 ? undefined : false}
+				variant={width > DRAWER_POPPED_WIDTH ? undefined : 'modal'}
+				fixed={width > DRAWER_POPPED_WIDTH ? undefined : false}
 				bind:open
 			>
 				<Header>
