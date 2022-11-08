@@ -161,12 +161,16 @@
 	</div>
 	<div class="row">
 		{#each favours as favour, i}
-			<Favour {favour} discard={action === 'discard_favour'} on:discard={discardFavour(i)} />
+			<span class="card larger">
+				<Favour {favour} discard={action === 'discard_favour'} on:discard={discardFavour(i)} />
+			</span>
 		{/each}
 	</div>
 	<div class="row">
 		{#each ingredients as ingredient}
-			<Ingredient {ingredient} />
+			<span class="card">
+				<Ingredient {ingredient} />
+			</span>
 		{/each}
 	</div>
 	<div class="row">
@@ -177,6 +181,13 @@
 </div>
 
 <style>
+	.card {
+		width: 80px;
+		margin: 4px;
+	}
+	.larger {
+		width: 120px;
+	}
 	.container {
 		display: flex;
 		flex-direction: column;

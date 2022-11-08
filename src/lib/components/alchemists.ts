@@ -66,6 +66,7 @@ const initialPlayerState = {
 export interface AlchemistsState {
 	gameType: string;
 	ingredientPile: Ingredients[];
+	faceupIngredients: Ingredients[];
 	favoursPile: Favours[];
 	players: string[];
 	scores: number[];
@@ -90,6 +91,7 @@ export const commit = createAction<{ player: string }>('commit');
 export const initialState: AlchemistsState = {
 	gameType: 'base',
 	ingredientPile: [],
+	faceupIngredients: [],
 	favoursPile: [],
 	players: [],
 	scores: [],
@@ -99,7 +101,10 @@ export const initialState: AlchemistsState = {
 
 export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(initial_setup, (state, { payload }) => {
-		return { ...initialState, ...payload };
+		let ret = { ...initialState, ...payload };
+		ret.faceupIngredients = ret.ingredientPile.slice(0, 5);
+		ret.ingredientPile = ret.ingredientPile.slice(5);
+		return { ...ret };
 	});
 	r.addCase(join_game, (state, { payload }) => {
 		state.players.push(payload);

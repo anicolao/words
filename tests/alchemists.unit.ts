@@ -26,7 +26,11 @@ describe('alchemists', () => {
 	it('shuffle cards', () => {
 		const startState = alchemists(
 			initialState,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1], favoursPile: [7, 2] })
+			initial_setup({
+				gameType: 'golem',
+				ingredientPile: [0, 1, 0, 1, 7, 0, 1, 2, 3],
+				favoursPile: [7, 2]
+			})
 		);
 		expect(startState.gameType).to.equal('golem');
 		expect(startState.ingredientPile.length).to.equal(4);
@@ -37,11 +41,11 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1], favoursPile: [7, 2] })
+			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1, 2], favoursPile: [7, 2] })
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
-		expect(state.ingredientPile.length).to.equal(4);
+		expect(state.ingredientPile.length).to.equal(0);
 		expect(state.favoursPile.length).to.equal(2);
 		expect(state.players.length).to.equal(1);
 		expect(state.players[0]).to.equal('alex@gmail.com');
@@ -55,7 +59,11 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1], favoursPile: [7, 2] })
+			initial_setup({
+				gameType: 'golem',
+				ingredientPile: [0, 1, 0, 1, 7, 0, 1, 4, 3],
+				favoursPile: [7, 2]
+			})
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
@@ -78,11 +86,11 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1], favoursPile: [7, 2] })
+			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1, 2], favoursPile: [7, 2] })
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
-		expect(state.ingredientPile.length).to.equal(4);
+		expect(state.ingredientPile.length).to.equal(0);
 		expect(state.favoursPile.length).to.equal(2);
 		expect(state.players.length).to.equal(1);
 		expect(state.players[0]).to.equal('alex@gmail.com');
@@ -101,11 +109,15 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1], favoursPile: [7, 2] })
+			initial_setup({
+				gameType: 'golem',
+				ingredientPile: [0, 1, 0, 1, 2, 2, 3],
+				favoursPile: [7, 2]
+			})
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
-		expect(state.ingredientPile.length).to.equal(4);
+		expect(state.ingredientPile.length).to.equal(2);
 		expect(state.favoursPile.length).to.equal(2);
 		expect(state.players.length).to.equal(1);
 		expect(state.players[0]).to.equal('alex@gmail.com');
@@ -137,11 +149,12 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1], favoursPile: [7, 2] })
+			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1, 2, 2], favoursPile: [7, 2] })
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
-		expect(state.ingredientPile.length).to.equal(4);
+		expect(state.ingredientPile.length).to.equal(1);
+		expect(state.faceupIngredients.length).to.equal(5);
 		expect(state.favoursPile.length).to.equal(2);
 		expect(state.players.length).to.equal(1);
 		expect(state.players[0]).to.equal('alex@gmail.com');
