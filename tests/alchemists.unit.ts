@@ -142,7 +142,8 @@ describe('alchemists', () => {
 		state = alchemists(state, commit({ player: 'alex@gmail.com' }));
 		expect(state.emailToPlayerState[state.players[0]].favours.length).to.equal(0);
 		expect(state.emailToPlayerState[state.players[0]].pending.length).to.equal(0);
-		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(0);
+		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(1);
+		expect(state.emailToPlayerState[state.players[0]].required[0]).to.equal('turn_order');
 	});
 
 	it('undo/redo/commit operates correctly', () => {
@@ -178,7 +179,8 @@ describe('alchemists', () => {
 		const previewPending = state.emailToPlayerState[state.players[0]].pending[0];
 		let previewState = alchemists(state, previewPending);
 		expect(previewState.emailToPlayerState[state.players[0]].favours.length).to.equal(0);
-		expect(previewState.emailToPlayerState[state.players[0]].required.length).to.equal(0);
+		expect(previewState.emailToPlayerState[state.players[0]].required.length).to.equal(1);
+		expect(previewState.emailToPlayerState[state.players[0]].required[0]).to.equal('turn_order');
 
 		state = alchemists(state, undo_pending({ player: 'alex@gmail.com' }));
 		expect(state.emailToPlayerState[state.players[0]].pending.length).to.equal(0);

@@ -14,6 +14,7 @@
 		discard_favour,
 		queue_pending,
 		redo_pending,
+		turn_order,
 		undo_pending,
 		type AlchemistsState,
 		type PlayerState
@@ -21,6 +22,7 @@
 	import { isPending, type AnyAction } from '@reduxjs/toolkit';
 	import { dispatchToTable } from '$lib/components/gameutil';
 	import Button, { Label } from '@smui/button';
+	import { EdgesGeometry } from 'three';
 
 	// TODO: centralize this
 	const tableId = $page.url.searchParams.get('slug') || undefined;
@@ -62,13 +64,31 @@
 	}
 
 	function previewPlayerState(storeState: AlchemistsState, email: string) {
+		const origState = storeState;
 		const pending = storeState.emailToPlayerState[email]?.pending;
-		if (pending) pending.forEach((action) => (storeState = alchemists(storeState, action)));
+		console.log('ppS');
+		if (pending) {
+			let count = 0;
+			pending.forEach((action) => {
+				try {
+					storeState = alchemists(storeState, action);
+					count++;
+				} catch (err) {
+					console.log(err);
+					for (let i = 0; i < storeState.emailToPlayerState[me].pending.length - count; ++i) {
+						console.log('discarding pending actions');
+						undoPending();
+					}
+					return origState;
+				}
+			});
+		}
+		console.log('ppS end');
 		return storeState;
 	}
 	const me = $store.auth.email || '';
-	$: localStore = previewPlayerState($store.alchemists, me);
-	$: state = localStore?.emailToPlayerState[me];
+	$: previewStore = previewPlayerState($store.alchemists, me);
+	$: state = previewStore?.emailToPlayerState[me];
 	$: seals = state?.seals || [];
 	$: favours = state?.favours || [];
 	$: ingredients = state?.ingredients || [];
@@ -79,11 +99,21 @@
 
 	function describeAction(name: string, count: number) {
 		const display: { [k: string]: string } = {
-			discard_favour: 'Discard your starting favour.'
+			discard_favour: 'Discard your starting favour.',
+			turn_order: 'Choose your place in turn order.',
+			place_cube: 'Place an action cube.'
 		};
 		let suffix = '';
 		if (count > 1) {
-			const nTimes = ['', '', ' (Twice!)', ' (Tree times!)', ' (Four times!)'];
+			const nTimes = [
+				'',
+				'',
+				' (Twice!)',
+				' (Three times!)',
+				' (Four times!)',
+				'(Five times!)',
+				'(Six times!)'
+			];
 			suffix = nTimes[count];
 		}
 		return display[name] + suffix;
@@ -93,10 +123,14 @@
 			action = state.required[0];
 			const num = state.required.filter((x) => x === action).length;
 			const prompt = describeAction(action, num);
-			store.dispatch(custom_title(prompt));
+			if (prompt !== 'undefined') store.dispatch(custom_title(prompt));
+			else store.dispatch(custom_title(action));
+		} else if (!canCommit(state)) {
+			const waitingOn = $store.alchemists.players[$store.alchemists.currentPlayerIndex];
+			store.dispatch(custom_title('Waiting on ' + waitingOn));
 		} else {
 			action = '';
-			store.dispatch(custom_title(me));
+			store.dispatch(custom_title('Commit or undo your actions.'));
 		}
 	}
 
@@ -115,8 +149,22 @@
 			enqueue(action);
 		};
 	}
+	function conflict() {
+		if (
+			$store.alchemists.emailToPlayerState[me].pending.filter((x) => x.type === 'turn_order')
+				.length > 0
+		) {
+			return $store.alchemists.currentPlayerIndex !== player;
+		}
+		return false;
+	}
 	function canCommit(previewState: PlayerState) {
-		return previewState && previewState.required.length === 0 && previewState.pending.length > 0;
+		return (
+			previewState &&
+			previewState.required.length === 0 &&
+			previewState.pending.length > 0 &&
+			!conflict()
+		);
 	}
 	function canUndo(previewState: PlayerState) {
 		return previewState && previewState.pending.length > 0;
@@ -139,11 +187,17 @@
 			dispatchToTable(tableId, redo_pending({ player: me }));
 		}
 	}
+	function clickBoard(e: CustomEvent) {
+		console.log(e.detail);
+		if (action === 'turn_order' && e?.detail.startsWith('turn')) {
+			enqueue(turn_order({ player: me, order: e.detail }));
+		}
+	}
 </script>
 
 <div class="container">
 	<div class="row">
-		<AlchemistsBoard {round} {numPlayers} />
+		<AlchemistsBoard {previewStore} {numPlayers} on:cube={clickBoard} />
 	</div>
 	<div class="row">
 		<Button disabled={!canUndo(state)} on:click={undoPending}>

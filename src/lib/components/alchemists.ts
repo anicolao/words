@@ -72,6 +72,9 @@ export interface AlchemistsState {
 	scores: number[];
 	finalScoreAdjustment: number[];
 	emailToPlayerState: { [k: string]: PlayerState };
+	turnOrderToPlayerEmail: { [k: string]: string };
+	currentPlayerIndex: number;
+	round: number;
 }
 
 export const initial_setup = createAction<{
@@ -80,13 +83,14 @@ export const initial_setup = createAction<{
 	favoursPile: Favours[];
 }>('initial_setup');
 export const join_game = createAction<string>('join_game');
-export const draw_ingredient = createAction<string>('draw_ingredient');
-export const draw_favour = createAction<string>('draw_favour');
 export const queue_pending = createAction<{ player: string; action: AnyAction }>('queue_pending');
 export const undo_pending = createAction<{ player: string }>('undo_pending');
 export const redo_pending = createAction<{ player: string }>('redo_pending');
 export const discard_favour = createAction<{ player: string; index: number }>('discard_favour');
 export const commit = createAction<{ player: string }>('commit');
+export const draw_ingredient = createAction<string>('draw_ingredient');
+export const draw_favour = createAction<string>('draw_favour');
+export const turn_order = createAction<{ player: string; order: string }>('turn_order');
 
 export const initialState: AlchemistsState = {
 	gameType: 'base',
@@ -96,7 +100,10 @@ export const initialState: AlchemistsState = {
 	players: [],
 	scores: [],
 	finalScoreAdjustment: [],
-	emailToPlayerState: {}
+	turnOrderToPlayerEmail: {},
+	emailToPlayerState: {},
+	currentPlayerIndex: 0,
+	round: 0
 };
 
 export const alchemists = createReducer(initialState, (r) => {
@@ -148,6 +155,7 @@ export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(discard_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.favours.splice(payload.index, 1);
+		playerState.required = [...playerState.required, 'turn_order'];
 	});
 	r.addCase(commit, (state, { payload }) => {
 		let playerState = state.emailToPlayerState[payload.player];
@@ -156,6 +164,39 @@ export const alchemists = createReducer(initialState, (r) => {
 		playerState = state.emailToPlayerState[payload.player];
 		playerState.pending = [];
 		state.emailToPlayerState[payload.player] = playerState;
+	});
+
+	r.addCase(turn_order, (state, { payload }) => {
+		console.log(payload);
+		if (state.turnOrderToPlayerEmail[payload.order] === undefined) {
+			state.turnOrderToPlayerEmail[payload.order] = payload.player;
+			state.currentPlayerIndex++;
+			if (state.currentPlayerIndex === state.players.length) {
+				state.currentPlayerIndex %= state.players.length;
+				const turns = Object.keys(state.turnOrderToPlayerEmail).sort();
+				const playerOrder = [];
+				for (let i = turns.length - 1; i >= 0; --i) {
+					const email = state.turnOrderToPlayerEmail[turns[i]];
+					playerOrder.push(email);
+					const playerState = state.emailToPlayerState[email];
+					playerState.required = [...playerState.required, 'place_cube'];
+					playerState.required = [...playerState.required, 'place_cube'];
+					playerState.required = [...playerState.required, 'place_cube'];
+					if (state.round > 0) {
+						playerState.required = [...playerState.required, 'place_cube'];
+						if (state.players.length < 4) {
+							playerState.required = [...playerState.required, 'place_cube'];
+							if (state.players.length < 3) {
+								playerState.required = [...playerState.required, 'place_cube'];
+							}
+						}
+					}
+				}
+				state.players = playerOrder;
+			}
+		} else {
+			throw 'move conflict for turn order';
+		}
 	});
 
 	r.addMatcher(

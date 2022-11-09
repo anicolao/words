@@ -5,6 +5,7 @@
 
 	export let numPlayers = -1;
 	export let round = -1;
+	export let previewStore = $store.alchemists;
 
 	$: boardName = numPlayers === 4 ? 'board4' : 'board2';
 
@@ -23,8 +24,13 @@
 	$: cubeW = boardWidth ? scaleX(20) : 0;
 	$: cubeH = boardHeight ? scaleY(20) : 0;
 
+	import { createEventDispatcher } from 'svelte';
+	import Flask from './Flask.svelte';
+	const fireEvent = createEventDispatcher();
 	function cube(id: any) {
-		return () => console.log('Got click on ' + id);
+		return () => {
+			fireEvent('cube', id);
+		};
 	}
 
 	interface Target {
@@ -129,9 +135,11 @@
 		targets = targets;
 	}
 
-	$: ingredients = $store.alchemists.faceupIngredients;
-	$: ingredientDeckCount = $store.alchemists.ingredientPile.length;
-	$: favourDeckCount = $store.alchemists.favoursPile.length;
+	$: ingredients = previewStore.faceupIngredients;
+	$: ingredientDeckCount = previewStore.ingredientPile.length;
+	$: favourDeckCount = previewStore.favoursPile.length;
+	$: turns = previewStore.turnOrderToPlayerEmail;
+	$: console.log(turns);
 </script>
 
 <svelte:window bind:innerHeight={h} />
@@ -156,6 +164,8 @@
 				{:else if target.id === 'draw_favour'}
 					<Favour favour={-1} />
 					<span class="cardcount">{favourDeckCount}</span>
+				{:else if target.id.startsWith('turn') && turns[target.id] !== undefined}
+					<Flask {scaleX} email={turns[target.id]} />
 				{/if}</span
 			>
 		{/each}
