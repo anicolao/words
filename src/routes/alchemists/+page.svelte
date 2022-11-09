@@ -12,6 +12,7 @@
 		alchemists,
 		commit,
 		discard_favour,
+		place_cube,
 		queue_pending,
 		redo_pending,
 		turn_order,
@@ -19,7 +20,7 @@
 		type AlchemistsState,
 		type PlayerState
 	} from '$lib/components/alchemists';
-	import { isPending, type AnyAction } from '@reduxjs/toolkit';
+	import type { AnyAction } from '@reduxjs/toolkit';
 	import { dispatchToTable } from '$lib/components/gameutil';
 	import Button, { Label } from '@smui/button';
 	import { EdgesGeometry } from 'three';
@@ -66,7 +67,6 @@
 	function previewPlayerState(storeState: AlchemistsState, email: string) {
 		const origState = storeState;
 		const pending = storeState.emailToPlayerState[email]?.pending;
-		console.log('ppS');
 		if (pending) {
 			let count = 0;
 			pending.forEach((action) => {
@@ -76,14 +76,12 @@
 				} catch (err) {
 					console.log(err);
 					for (let i = 0; i < storeState.emailToPlayerState[me].pending.length - count; ++i) {
-						console.log('discarding pending actions');
 						undoPending();
 					}
 					return origState;
 				}
 			});
 		}
-		console.log('ppS end');
 		return storeState;
 	}
 	const me = $store.auth.email || '';
@@ -101,6 +99,7 @@
 		const display: { [k: string]: string } = {
 			discard_favour: 'Discard your starting favour.',
 			turn_order: 'Choose your place in turn order.',
+			commit: 'Commit or undo/redo your actions.',
 			place_cube: 'Place an action cube.'
 		};
 		let suffix = '';
@@ -150,18 +149,19 @@
 		};
 	}
 	function conflict() {
-		if (
-			$store.alchemists.emailToPlayerState[me].pending.filter((x) => x.type === 'turn_order')
-				.length > 0
-		) {
-			return $store.alchemists.currentPlayerIndex !== player;
+		const sequential = ['turn_order', 'place_cube'];
+		const pending = $store.alchemists.emailToPlayerState[me].pending;
+		for (let i = 0; i < sequential.length; ++i) {
+			if (pending.filter((x) => x.type === sequential[i]).length > 0) {
+				if ($store.alchemists.currentPlayerIndex !== player) return true;
+			}
 		}
 		return false;
 	}
 	function canCommit(previewState: PlayerState) {
 		return (
 			previewState &&
-			previewState.required.length === 0 &&
+			(previewState.required.length === 0 || previewState.required[0] === 'commit') &&
 			previewState.pending.length > 0 &&
 			!conflict()
 		);
@@ -191,6 +191,29 @@
 		console.log(e.detail);
 		if (action === 'turn_order' && e?.detail.startsWith('turn')) {
 			enqueue(turn_order({ player: me, order: e.detail }));
+		} else if (action === 'place_cube' && e?.detail.startsWith('cube_')) {
+			const actionSplit = e?.detail.split('_');
+			if (actionSplit && actionSplit.length > 2) {
+				const chosenCategory = actionSplit[1];
+				console.log('Clicking for actions on ', chosenCategory);
+				switch (chosenCategory) {
+					case 'forage':
+					case 'transmute':
+					case 'shop':
+					case 'student':
+					case 'drink':
+						break;
+					case 'debunk':
+					case 'sell':
+					case 'publish':
+						if (previewStore.round > 1) break;
+					default:
+						console.log('Erroneous click on ', chosenCategory);
+						return;
+				}
+				console.log('Successful click on ', chosenCategory);
+				enqueue(place_cube({ player: me, cube: e?.detail }));
+			}
 		}
 	}
 </script>

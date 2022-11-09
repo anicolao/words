@@ -9,9 +9,5 @@
 </script>
 
 {#if index >= 0}
-	<img
-		alt="player {index}"
-		src="flask_{index}.png"
-		style="width: {scaleX(30)}px; margin-top: {scaleX(-22)}px;"
-	/>
+	<img alt="action cube {index}" src="cube_{index}.png" style="width: {scaleX(20)}px" />
 {/if}

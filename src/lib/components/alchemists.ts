@@ -40,6 +40,7 @@ export interface PlayerState {
 	required: string[];
 	pending: AnyAction[];
 	undone: AnyAction[];
+	color: number;
 }
 const initialPlayerState = {
 	coins: 2,
@@ -58,9 +59,22 @@ const initialPlayerState = {
 		Seals.fivePoints,
 		Seals.fivePoints
 	],
-	required: ['discard_favour'],
+	required: ['discard_favour', 'commit'],
 	pending: [],
+	color: -1,
 	undone: []
+};
+
+export const actionToColumnCubeCount: { [k: string]: number[] } = {
+	forage: [1, 1, 1],
+	transmute: [1, 2],
+	sell: [2],
+	shop: [1, 2],
+	debunk: [1, 1],
+	publish: [1, 2],
+	student: [1, 1],
+	drink: [1, 1],
+	exhibit: [1, 1, 1, 1]
 };
 
 export interface AlchemistsState {
@@ -73,6 +87,7 @@ export interface AlchemistsState {
 	finalScoreAdjustment: number[];
 	emailToPlayerState: { [k: string]: PlayerState };
 	turnOrderToPlayerEmail: { [k: string]: string };
+	cubeActionToPlayerEmails: { [k: string]: string[] };
 	currentPlayerIndex: number;
 	round: number;
 }
@@ -91,6 +106,7 @@ export const commit = createAction<{ player: string }>('commit');
 export const draw_ingredient = createAction<string>('draw_ingredient');
 export const draw_favour = createAction<string>('draw_favour');
 export const turn_order = createAction<{ player: string; order: string }>('turn_order');
+export const place_cube = createAction<{ player: string; cube: string }>('place_cube');
 
 export const initialState: AlchemistsState = {
 	gameType: 'base',
@@ -101,6 +117,7 @@ export const initialState: AlchemistsState = {
 	scores: [],
 	finalScoreAdjustment: [],
 	turnOrderToPlayerEmail: {},
+	cubeActionToPlayerEmails: {},
 	emailToPlayerState: {},
 	currentPlayerIndex: 0,
 	round: 0
@@ -114,10 +131,11 @@ export const alchemists = createReducer(initialState, (r) => {
 		return { ...ret };
 	});
 	r.addCase(join_game, (state, { payload }) => {
+		const color = state.players.length;
 		state.players.push(payload);
 		state.scores.push(10);
 		state.finalScoreAdjustment.push(0);
-		state.emailToPlayerState[payload] = { ...initialPlayerState };
+		state.emailToPlayerState[payload] = { ...initialPlayerState, color };
 		return state;
 	});
 	r.addCase(draw_ingredient, (state, { payload }) => {
@@ -167,7 +185,6 @@ export const alchemists = createReducer(initialState, (r) => {
 	});
 
 	r.addCase(turn_order, (state, { payload }) => {
-		console.log(payload);
 		if (state.turnOrderToPlayerEmail[payload.order] === undefined) {
 			state.turnOrderToPlayerEmail[payload.order] = payload.player;
 			state.currentPlayerIndex++;
@@ -179,6 +196,9 @@ export const alchemists = createReducer(initialState, (r) => {
 					const email = state.turnOrderToPlayerEmail[turns[i]];
 					playerOrder.push(email);
 					const playerState = state.emailToPlayerState[email];
+					if (playerState.required.length > 0) {
+						playerState.required = [...playerState.required, 'commit'];
+					}
 					playerState.required = [...playerState.required, 'place_cube'];
 					playerState.required = [...playerState.required, 'place_cube'];
 					playerState.required = [...playerState.required, 'place_cube'];
@@ -192,11 +212,23 @@ export const alchemists = createReducer(initialState, (r) => {
 						}
 					}
 				}
+				state.round++;
 				state.players = playerOrder;
 			}
 		} else {
 			throw 'move conflict for turn order';
 		}
+	});
+
+	r.addCase(place_cube, (state, { payload }) => {
+		const player = payload.player;
+		const splitSpot = payload.cube.split('_');
+		const action = splitSpot[1];
+		let priors: string[] = [];
+		if (state.cubeActionToPlayerEmails[action]) {
+			priors = [...state.cubeActionToPlayerEmails[action]];
+		}
+		state.cubeActionToPlayerEmails[action] = [...priors, player];
 	});
 
 	r.addMatcher(
@@ -209,6 +241,24 @@ export const alchemists = createReducer(initialState, (r) => {
 					const requiredIndex = playerState.required.indexOf(action.type);
 					if (requiredIndex !== -1) {
 						playerState.required.splice(requiredIndex, 1);
+						if (action.type === 'place_cube') {
+							const splitSpot = payload.cube.split('_');
+							const spot = splitSpot[1];
+							const cubes = [...state.cubeActionToPlayerEmails[spot]];
+							const playerCubes = cubes.filter((x) => x === payload.player);
+							const costs = playerCubes.map((_, i) => actionToColumnCubeCount[spot][i]);
+							let lastCost = costs[costs.length - 1];
+							while (lastCost > 1) {
+								lastCost--;
+								const ri = playerState.required.indexOf(action.type);
+								if (ri === -1) throw 'not enough action cubes';
+								playerState.required.splice(ri, 1);
+							}
+							if (playerState.required.indexOf('place_cube') === -1) {
+								state.currentPlayerIndex++;
+								state.currentPlayerIndex %= state.players.length;
+							}
+						}
 					}
 					state.emailToPlayerState[payload.player] = playerState;
 				}
