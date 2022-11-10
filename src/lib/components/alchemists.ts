@@ -32,6 +32,32 @@ export enum Ingredients {
 	scorpion,
 	feather
 }
+export enum Artifacts_I {
+	periscope,
+	mortar,
+	speed,
+	discount,
+	printingpress,
+	respect
+}
+
+export enum Artifacts_II {
+	chalice,
+	rhetoric,
+	thinking,
+	trunk,
+	hypnotic,
+	authority
+}
+
+export enum Artifacts_III {
+	featherincap,
+	cabinet,
+	altar,
+	wisdom,
+	mirror,
+	cup
+}
 export interface PlayerState {
 	coins: number;
 	ingredients: Ingredients[];
@@ -82,6 +108,10 @@ export interface AlchemistsState {
 	ingredientPile: Ingredients[];
 	faceupIngredients: Ingredients[];
 	favoursPile: Favours[];
+	shop: [Artifacts_I[], Artifacts_II[], Artifacts_III[]];
+	levelI: Artifacts_I[];
+	levelII: Artifacts_II[];
+	levelIII: Artifacts_III[];
 	players: string[];
 	scores: number[];
 	finalScoreAdjustment: number[];
@@ -96,6 +126,9 @@ export const initial_setup = createAction<{
 	gameType: 'base' | 'golem';
 	ingredientPile: Ingredients[];
 	favoursPile: Favours[];
+	levelI: Artifacts_I[];
+	levelII: Artifacts_II[];
+	levelIII: Artifacts_III[];
 }>('initial_setup');
 export const join_game = createAction<string>('join_game');
 export const queue_pending = createAction<{ player: string; action: AnyAction }>('queue_pending');
@@ -112,6 +145,10 @@ export const initialState: AlchemistsState = {
 	gameType: 'base',
 	ingredientPile: [],
 	faceupIngredients: [],
+	shop: [[], [], []],
+	levelI: [],
+	levelII: [],
+	levelIII: [],
 	favoursPile: [],
 	players: [],
 	scores: [],
@@ -128,6 +165,7 @@ export const alchemists = createReducer(initialState, (r) => {
 		let ret = { ...initialState, ...payload };
 		ret.faceupIngredients = ret.ingredientPile.slice(0, 5);
 		ret.ingredientPile = ret.ingredientPile.slice(5);
+		ret.shop = [ret.levelI.slice(0, 3), ret.levelII.slice(0, 3), ret.levelIII.slice(0, 3)];
 		return { ...ret };
 	});
 	r.addCase(join_game, (state, { payload }) => {

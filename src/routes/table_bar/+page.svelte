@@ -91,19 +91,25 @@
 				const gameType = 'base';
 				let ingredientPile: Ingredients[] = [];
 				let favoursPile: Favours[] = [];
-				for (let i = 0; i < 12; ++i) {
+				for (let i = 0; i < 5; ++i) {
 					for (let ingredient = 0; ingredient < 8; ++ingredient) {
 						ingredientPile.push(ingredient);
 					}
 				}
-				for (let i = 0; i < 4; ++i) {
-					for (let favour = 0; favour < 8; ++favour) {
+				const favourCount = [4, 3, 2, 3, 4, 2, 2, 2];
+				for (let favour = 0; favour < 8; ++favour) {
+					for (let i = 0; i < favourCount[favour]; ++i) {
 						favoursPile.push(favour);
 					}
 				}
 				ingredientPile = shuffle(ingredientPile);
 				favoursPile = shuffle(favoursPile);
-				const setupActions: any[] = [alch_initial_setup({ gameType, ingredientPile, favoursPile })];
+				let levelI = shuffle([0, 1, 2, 3, 4, 5]);
+				let levelII = shuffle([0, 1, 2, 3, 4, 5]);
+				let levelIII = shuffle([0, 1, 2, 3, 4, 5]);
+				const setupActions: any[] = [
+					alch_initial_setup({ gameType, ingredientPile, favoursPile, levelI, levelII, levelIII })
+				];
 				players.forEach((player) => {
 					setupActions.push(join_game(player));
 					setupActions.push(draw_ingredient(player));

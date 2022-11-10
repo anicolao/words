@@ -29,6 +29,9 @@ describe('alchemists', () => {
 			initial_setup({
 				gameType: 'golem',
 				ingredientPile: [0, 1, 0, 1, 7, 0, 1, 2, 3],
+				levelI: [0, 1, 2, 3, 4, 5],
+				levelII: [0, 1, 2, 3, 4, 5],
+				levelIII: [0, 1, 2, 3, 4, 5],
 				favoursPile: [7, 2]
 			})
 		);
@@ -41,7 +44,14 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1, 2], favoursPile: [7, 2] })
+			initial_setup({
+				gameType: 'golem',
+				ingredientPile: [0, 1, 0, 1, 2],
+				favoursPile: [7, 2],
+				levelI: [0, 1, 2, 3, 4, 5],
+				levelII: [0, 1, 2, 3, 4, 5],
+				levelIII: [0, 1, 2, 3, 4, 5]
+			})
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
@@ -62,6 +72,9 @@ describe('alchemists', () => {
 			initial_setup({
 				gameType: 'golem',
 				ingredientPile: [0, 1, 0, 1, 7, 0, 1, 4, 3],
+				levelI: [0, 1, 2, 3, 4, 5],
+				levelII: [0, 1, 2, 3, 4, 5],
+				levelIII: [0, 1, 2, 3, 4, 5],
 				favoursPile: [7, 2]
 			})
 		);
@@ -86,7 +99,14 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1, 2], favoursPile: [7, 2] })
+			initial_setup({
+				gameType: 'golem',
+				ingredientPile: [0, 1, 0, 1, 2],
+				favoursPile: [7, 2],
+				levelI: [0, 1, 2, 3, 4, 5],
+				levelII: [0, 1, 2, 3, 4, 5],
+				levelIII: [0, 1, 2, 3, 4, 5]
+			})
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
@@ -112,6 +132,9 @@ describe('alchemists', () => {
 			initial_setup({
 				gameType: 'golem',
 				ingredientPile: [0, 1, 0, 1, 2, 2, 3],
+				levelI: [0, 1, 2, 3, 4, 5],
+				levelII: [0, 1, 2, 3, 4, 5],
+				levelIII: [0, 1, 2, 3, 4, 5],
 				favoursPile: [7, 2]
 			})
 		);
@@ -130,14 +153,14 @@ describe('alchemists', () => {
 		expect(state.favoursPile[0]).to.equal(2);
 		expect(state.emailToPlayerState[state.players[0]].favours.length).to.equal(1);
 		expect(state.emailToPlayerState[state.players[0]].favours[0]).to.equal(7);
-		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(1);
+		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(2);
 
 		const discard = discard_favour({ player: 'alex@gmail.com', index: 0 });
 		state = alchemists(state, queue_pending({ player: 'alex@gmail.com', action: discard }));
 		expect(state.emailToPlayerState[state.players[0]].favours.length).to.equal(1);
 		expect(state.emailToPlayerState[state.players[0]].favours[0]).to.equal(7);
 		expect(state.emailToPlayerState[state.players[0]].pending.length).to.equal(1);
-		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(1);
+		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(2);
 
 		state = alchemists(state, commit({ player: 'alex@gmail.com' }));
 		expect(state.emailToPlayerState[state.players[0]].favours.length).to.equal(0);
@@ -150,7 +173,14 @@ describe('alchemists', () => {
 		let state = initialState;
 		state = alchemists(
 			state,
-			initial_setup({ gameType: 'golem', ingredientPile: [0, 1, 0, 1, 2, 2], favoursPile: [7, 2] })
+			initial_setup({
+				gameType: 'golem',
+				ingredientPile: [0, 1, 0, 1, 2, 2],
+				favoursPile: [7, 2],
+				levelI: [0, 1, 2, 3, 4, 5],
+				levelII: [0, 1, 2, 3, 4, 5],
+				levelIII: [0, 1, 2, 3, 4, 5]
+			})
 		);
 		state = alchemists(state, join_game('alex@gmail.com'));
 		expect(state.gameType).to.equal('golem');
@@ -168,19 +198,20 @@ describe('alchemists', () => {
 		expect(state.favoursPile[0]).to.equal(2);
 		expect(state.emailToPlayerState[state.players[0]].favours.length).to.equal(1);
 		expect(state.emailToPlayerState[state.players[0]].favours[0]).to.equal(7);
-		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(1);
+		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(2);
 
 		const discard = discard_favour({ player: 'alex@gmail.com', index: 0 });
 		state = alchemists(state, queue_pending({ player: 'alex@gmail.com', action: discard }));
 		expect(state.emailToPlayerState[state.players[0]].favours.length).to.equal(1);
 		expect(state.emailToPlayerState[state.players[0]].pending.length).to.equal(1);
-		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(1);
+		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(2);
 
 		const previewPending = state.emailToPlayerState[state.players[0]].pending[0];
 		let previewState = alchemists(state, previewPending);
 		expect(previewState.emailToPlayerState[state.players[0]].favours.length).to.equal(0);
-		expect(previewState.emailToPlayerState[state.players[0]].required.length).to.equal(1);
-		expect(previewState.emailToPlayerState[state.players[0]].required[0]).to.equal('turn_order');
+		expect(previewState.emailToPlayerState[state.players[0]].required.length).to.equal(2);
+		expect(previewState.emailToPlayerState[state.players[0]].required[0]).to.equal('commit');
+		expect(previewState.emailToPlayerState[state.players[0]].required[1]).to.equal('turn_order');
 
 		state = alchemists(state, undo_pending({ player: 'alex@gmail.com' }));
 		expect(state.emailToPlayerState[state.players[0]].pending.length).to.equal(0);

@@ -3,6 +3,7 @@
 	import Favour from './Favour.svelte';
 	import Cube from './Cube.svelte';
 	import Ingredient from './Ingredient.svelte';
+	import Artifact from './Artifact.svelte';
 	import { actionToColumnCubeCount } from './alchemists';
 
 	export let numPlayers = -1;
@@ -144,6 +145,8 @@
 	}
 
 	$: ingredients = previewStore.faceupIngredients;
+	$: level = 1;
+	$: artifacts = previewStore.shop[level - 1];
 	$: ingredientDeckCount = previewStore.ingredientPile.length;
 	$: favourDeckCount = previewStore.favoursPile.length;
 	$: turns = previewStore.turnOrderToPlayerEmail;
@@ -187,8 +190,11 @@
 					? scaleX(target.height)
 					: cubeH}px; top: {scaleY(target.y)}px; left: {scaleX(target.x)}px"
 				on:click={cube(target.id)}
-				>{#if target.id.startsWith('forest') && ingredients[parseInt(target.id.substring(6))]}<Ingredient
+				>{#if target.id.startsWith('forest') && ingredients[parseInt(target.id.substring(6))] >= 0}<Ingredient
 						ingredient={ingredients[parseInt(target.id.substring(6))]}
+					/>{:else if target.id.startsWith('artifact') && artifacts[parseInt(target.id.substring(8)) - 1] >= 0}<Artifact
+						{level}
+						artifact={artifacts[parseInt(target.id.substring(8)) - 1]}
 					/>{:else if target.id === 'draw_ingredient'}<Ingredient ingredient={-1} /><span
 						class="cardcount">{ingredientDeckCount}</span
 					>{:else if target.id === 'draw_favour'}<Favour favour={-1} /><span class="cardcount"
