@@ -12,6 +12,6 @@
 	<img
 		alt="action cube {index}"
 		src="cube_{index}.png"
-		style="width: {scaleX(20)}px; postion: absolute; top: 0; left: 0;"
+		style="width: {scaleX(20)}px; position: absolute; top: 0; left: 0;"
 	/>
 {/if}
