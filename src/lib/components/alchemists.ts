@@ -249,6 +249,7 @@ export const alchemists = createReducer(initialState, (r) => {
 							}
 						}
 					}
+					playerState.required = [...playerState.required, 'commit'];
 				}
 				state.round++;
 				state.players = playerOrder;
@@ -297,6 +298,33 @@ export const alchemists = createReducer(initialState, (r) => {
 								state.currentPlayerIndex %= state.players.length;
 							}
 						}
+					}
+					if (playerState.required.length === 0) {
+						const phaseOrder = [
+							'forage',
+							'transmute',
+							'sell',
+							'shop',
+							'debunk',
+							'publish',
+							'student',
+							'drink'
+						];
+						for (let i = 0; i < phaseOrder.length && playerState.required.length === 0; ++i) {
+							const myCubes = state.cubeActionToPlayerEmails[phaseOrder[i]]?.filter(
+								(x) => x === payload.player
+							);
+							if (myCubes) {
+								playerState.required = [...myCubes.map(() => phaseOrder[i])];
+								console.log({ myCubes, req: playerState.required });
+							}
+						}
+						if (playerState.required.length) {
+							playerState.required = [...playerState.required, 'commit'];
+						}
+					}
+					if (playerState.required.length === 0) {
+						console.log('Player ', payload.player, ' is out of things to do!');
 					}
 					state.emailToPlayerState[payload.player] = playerState;
 				}

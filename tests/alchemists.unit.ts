@@ -9,8 +9,10 @@ import {
 	initialState,
 	initial_setup,
 	join_game,
+	place_cube,
 	queue_pending,
 	redo_pending,
+	turn_order,
 	undo_pending
 } from '$lib/components/alchemists';
 
@@ -97,12 +99,14 @@ describe('alchemists', () => {
 		expect(state4.emailToPlayerState[state4.players[0]].favours[0]).to.equal(7);
 		expect(state4.emailToPlayerState[state4.players[0]].pending.length).to.equal(1);
 		expect(state4.emailToPlayerState[state4.players[0]].required.length).to.equal(2);
+	});
 
-		let state = alchemists(state4, commit({ player: 'alex@gmail.com' }));
-		expect(state.emailToPlayerState[state.players[0]].favours.length).to.equal(0);
-		expect(state.emailToPlayerState[state.players[0]].pending.length).to.equal(0);
-		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(1);
-		expect(state.emailToPlayerState[state.players[0]].required[0]).to.equal('turn_order');
+	const state4a = alchemists(state4, commit({ player: 'alex@gmail.com' }));
+	it('discards favours correctly pt II', () => {
+		expect(state4a.emailToPlayerState[state4a.players[0]].favours.length).to.equal(0);
+		expect(state4a.emailToPlayerState[state4a.players[0]].pending.length).to.equal(0);
+		expect(state4a.emailToPlayerState[state4a.players[0]].required.length).to.equal(1);
+		expect(state4a.emailToPlayerState[state4a.players[0]].required[0]).to.equal('turn_order');
 	});
 
 	const state5 = alchemists(state3, queue_pending({ player: 'alex@gmail.com', action: discard }));
@@ -113,7 +117,7 @@ describe('alchemists', () => {
 		expect(state.emailToPlayerState[state.players[0]].required.length).to.equal(2);
 
 		const previewPending = state.emailToPlayerState[state.players[0]].pending[0];
-		let previewState = alchemists(state, previewPending);
+		const previewState = alchemists(state, previewPending);
 		expect(previewState.emailToPlayerState[state.players[0]].favours.length).to.equal(0);
 		expect(previewState.emailToPlayerState[state.players[0]].required.length).to.equal(2);
 		expect(previewState.emailToPlayerState[state.players[0]].required[0]).to.equal('commit');
@@ -127,5 +131,75 @@ describe('alchemists', () => {
 		state = alchemists(state, redo_pending({ player: 'alex@gmail.com' }));
 		expect(state.emailToPlayerState[state.players[0]].pending.length).to.equal(1);
 		expect(state.emailToPlayerState[state.players[0]].undone.length).to.equal(0);
+	});
+
+	const state6 = alchemists(state4a, join_game('anna@gmail.com'));
+	it('second player can join the game', () => {
+		expect(state6.players.length).to.equal(2);
+		expect(state6.players[1]).to.equal('anna@gmail.com');
+		expect(state6.currentPlayerIndex).to.equal(0);
+	});
+
+	const state7 = alchemists(state6, turn_order({ player: 'alex@gmail.com', order: 'turn4' }));
+	it('player can choose turn order', () => {
+		expect(state7.turnOrderToPlayerEmail['turn4']).to.equal('alex@gmail.com');
+	});
+	it('player conflicts throw exceptions', () => {
+		try {
+			alchemists(state7, turn_order({ player: 'anna@gmail.com', order: 'turn4' }));
+		} catch (err) {
+			return;
+		}
+		expect(false).to.be.true;
+	});
+
+	const discard2 = discard_favour({ player: 'anna@gmail.com', index: 0 });
+	const state8 = alchemists(state7, queue_pending({ player: 'anna@gmail.com', action: discard2 }));
+	it('second player can queue action', () => {
+		const p2State = state8.emailToPlayerState['anna@gmail.com'];
+		expect(p2State.pending.length).to.equal(1);
+	});
+	const state9 = alchemists(state8, commit({ player: 'anna@gmail.com' }));
+	const state10 = alchemists(state9, turn_order({ player: 'anna@gmail.com', order: 'turn5' }));
+
+	it('queues up action cubes for the players', () => {
+		const p1State = state10.emailToPlayerState['alex@gmail.com'];
+		expect(p1State.required.length).to.equal(4);
+		expect(p1State.required.toString()).to.equal('place_cube,place_cube,place_cube,commit');
+		const p2State = state10.emailToPlayerState['anna@gmail.com'];
+		expect(p2State.required.length).to.equal(5);
+		expect(p2State.required.toString()).to.equal('commit,place_cube,place_cube,place_cube,commit');
+
+		expect(state10.round).to.equal(1);
+		expect(state10.players[0]).to.equal('anna@gmail.com');
+		expect(state10.players[1]).to.equal('alex@gmail.com');
+	});
+
+	const alex = 'alex@gmail.com';
+	const anna = 'anna@gmail.com';
+	let actions = state10;
+	actions = alchemists(actions, place_cube({ player: alex, cube: 'cube_forage_11' }));
+	actions = alchemists(actions, place_cube({ player: alex, cube: 'cube_forage_21' }));
+	actions = alchemists(actions, place_cube({ player: alex, cube: 'cube_student_11' }));
+	actions = alchemists(actions, commit({ player: alex }));
+	actions = alchemists(actions, commit({ player: anna }));
+	actions = alchemists(actions, place_cube({ player: anna, cube: 'cube_forage_12' }));
+	actions = alchemists(actions, place_cube({ player: anna, cube: 'cube_forage_22' }));
+	actions = alchemists(actions, place_cube({ player: anna, cube: 'cube_student_12' }));
+	const state11 = alchemists(actions, commit({ player: anna }));
+
+	it('lets the users place cubes', () => {
+		const p1State = state11.emailToPlayerState['alex@gmail.com'];
+		expect(p1State.required.length).to.equal(3);
+		expect(p1State.required.toString()).to.equal('forage,forage,commit');
+
+		const p2State = state11.emailToPlayerState['anna@gmail.com'];
+		expect(p2State.required.length).to.equal(3);
+		expect(p2State.required.toString()).to.equal('forage,forage,commit');
+
+		const forageCubes = state11.cubeActionToPlayerEmails['forage'];
+		expect(forageCubes.toString()).to.equal([alex, alex, anna, anna].toString());
+		const testCubes = state11.cubeActionToPlayerEmails['student'];
+		expect(testCubes.toString()).to.equal([alex, anna].toString());
 	});
 });

@@ -115,6 +115,9 @@
 			];
 			suffix = nTimes[count];
 		}
+		if (name === 'commit' && !canCommit(state)) {
+			return "Wait to check other player's choices.";
+		}
 		return display[name] + suffix;
 	}
 	$: if (state) {
