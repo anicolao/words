@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { dispatchToTable, shuffle } from '$lib/components/gameutil';
 	import QRCode from '$lib/components/QRCode.svelte';
@@ -48,6 +49,10 @@
 			}
 		}
 	}
+	onDestroy(() => {
+		if (unsub) unsub();
+		unsub = undefined;
+	});
 
 	const me = $store.auth.email || '';
 	let gameId: string = '';

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import Board from '$lib/components/Board.svelte';
 	import { custom_title } from '$lib/components/nav';
@@ -45,6 +46,10 @@
 			}
 		}
 	}
+	onDestroy(() => {
+		if (unsub) unsub();
+		unsub = undefined;
+	});
 
 	const me = $store.auth.email || '';
 	let rack = '';

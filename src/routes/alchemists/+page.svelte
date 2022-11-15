@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { store } from '$lib/store';
 	import Seal from '$lib/components/Seal.svelte';
@@ -65,6 +66,11 @@
 			}
 		}
 	}
+
+	onDestroy(() => {
+		if (unsub) unsub();
+		unsub = undefined;
+	});
 
 	function previewPlayerState(storeState: AlchemistsState, email: string) {
 		const origState = storeState;

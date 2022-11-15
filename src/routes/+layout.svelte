@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	/* app bar */
@@ -155,6 +156,12 @@
 			);
 		}
 	}
+	onDestroy(() => {
+		if (unsubGamedefs) unsubGamedefs();
+		if (unsubUsers) unsubUsers();
+		if (unsubActions) unsubActions();
+		if (unsubRequests) unsubRequests();
+	});
 
 	$: customTitle = $store.nav.customTitle;
 </script>

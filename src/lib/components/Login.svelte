@@ -1,4 +1,5 @@
 <script>
+	import { onDestroy } from 'svelte';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import Button, { Label } from '@smui/button';
@@ -10,7 +11,7 @@
 	const gAuthProvider = firebase.google_auth_provider;
 	import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 	import { error, signed_in, signed_out } from './auth';
-	onAuthStateChanged(auth, (user) => {
+	const unsub = onAuthStateChanged(auth, (user) => {
 		if (user) {
 			store.dispatch(
 				signed_in({
@@ -39,6 +40,7 @@
 			store.dispatch(signed_out());
 		}
 	});
+	onDestroy(() => unsub());
 
 	function signin() {
 		signInWithPopup(auth, gAuthProvider).catch((message) => {
