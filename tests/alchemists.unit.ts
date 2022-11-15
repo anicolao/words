@@ -76,7 +76,7 @@ describe('alchemists', () => {
 		expect(state1.emailToPlayerState[state1.players[0]].seals.length).to.equal(11);
 	});
 
-	const state2 = alchemists(state1, draw_ingredient('alex@gmail.com'));
+	const state2 = alchemists(state1, draw_ingredient({ player: 'alex@gmail.com' }));
 	it('can draw an ingredient card', () => {
 		expect(state2.ingredientPile.length).to.equal(3);
 		expect(state2.ingredientPile[0]).to.equal(1);

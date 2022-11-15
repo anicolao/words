@@ -12,9 +12,11 @@
 		alchemists,
 		commit,
 		discard_favour,
+		draw_ingredient,
 		place_cube,
 		queue_pending,
 		redo_pending,
+		transmute,
 		turn_order,
 		undo_pending,
 		type AlchemistsState,
@@ -86,10 +88,11 @@
 	}
 	const me = $store.auth.email || '';
 	$: previewStore = previewPlayerState($store.alchemists, me);
+	$: cstate = $store.alchemists.emailToPlayerState[me];
 	$: state = previewStore?.emailToPlayerState[me];
 	$: seals = state?.seals || [];
 	$: favours = state?.favours || [];
-	$: ingredients = state?.ingredients || [];
+	$: ingredients = state?.ingredients.map((x, i) => (i < cstate.ingredients.length ? x : -2)) || [];
 	$: player = state ? $store.alchemists.players.indexOf(me) : -1;
 	$: numPlayers = $store.alchemists.players.length;
 
@@ -99,6 +102,8 @@
 		const display: { [k: string]: string } = {
 			discard_favour: 'Discard your starting favour.',
 			turn_order: 'Choose your place in turn order.',
+			forage: 'Forage for an ingredient.',
+			transmute: 'Transmute an ingredient.',
 			commit: 'Commit or undo/redo your actions.',
 			place_cube: 'Place an action cube.'
 		};
@@ -217,7 +222,18 @@
 				console.log('Successful click on ', chosenCategory);
 				enqueue(place_cube({ player: me, cube: e?.detail }));
 			}
+		} else if (action === 'forage' && e?.detail.startsWith('draw')) {
+			enqueue(draw_ingredient({ player: me }));
+		} else if (action === 'forage' && e?.detail.startsWith('forest')) {
+			console.log('Draw specific ingredient...');
 		}
+	}
+	function clickIngredient(i: number) {
+		return () => {
+			if (action === 'transmute') {
+				enqueue(transmute({ player: me, index: i }));
+			}
+		};
 	}
 </script>
 
@@ -247,8 +263,8 @@
 		{/each}
 	</div>
 	<div class="row">
-		{#each ingredients as ingredient}
-			<span class="card">
+		{#each ingredients as ingredient, i}
+			<span class="card" on:click={clickIngredient(i)}>
 				<Ingredient {ingredient} />
 			</span>
 		{/each}

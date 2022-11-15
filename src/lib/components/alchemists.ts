@@ -1,6 +1,5 @@
 import type { AnyAction } from '@reduxjs/toolkit';
 import * as toolkitRaw from '@reduxjs/toolkit';
-import { play } from './words';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { createAction, createReducer } = ((toolkitRaw as any).default ??
 	toolkitRaw) as typeof toolkitRaw;
@@ -118,6 +117,7 @@ export interface AlchemistsState {
 	emailToPlayerState: { [k: string]: PlayerState };
 	turnOrderToPlayerEmail: { [k: string]: string };
 	cubeActionToPlayerEmails: { [k: string]: string[] };
+	completedCubeActionToPlayerEmails: { [k: string]: string[] };
 	currentPlayerIndex: number;
 	round: number;
 }
@@ -136,7 +136,8 @@ export const undo_pending = createAction<{ player: string }>('undo_pending');
 export const redo_pending = createAction<{ player: string }>('redo_pending');
 export const discard_favour = createAction<{ player: string; index: number }>('discard_favour');
 export const commit = createAction<{ player: string }>('commit');
-export const draw_ingredient = createAction<string>('draw_ingredient');
+export const draw_ingredient = createAction<{ player: string }>('draw_ingredient');
+export const transmute = createAction<{ player: string; index: number }>('transmute');
 export const draw_favour = createAction<string>('draw_favour');
 export const turn_order = createAction<{ player: string; order: string }>('turn_order');
 export const place_cube = createAction<{ player: string; cube: string }>('place_cube');
@@ -155,6 +156,7 @@ export const initialState: AlchemistsState = {
 	finalScoreAdjustment: [],
 	turnOrderToPlayerEmail: {},
 	cubeActionToPlayerEmails: {},
+	completedCubeActionToPlayerEmails: {},
 	emailToPlayerState: {},
 	currentPlayerIndex: 0,
 	round: 0
@@ -162,7 +164,7 @@ export const initialState: AlchemistsState = {
 
 export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(initial_setup, (state, { payload }) => {
-		let ret = { ...initialState, ...payload };
+		const ret = { ...initialState, ...payload };
 		ret.faceupIngredients = ret.ingredientPile.slice(0, 5);
 		ret.ingredientPile = ret.ingredientPile.slice(5);
 		ret.shop = [ret.levelI.slice(0, 3), ret.levelII.slice(0, 3), ret.levelIII.slice(0, 3)];
@@ -177,9 +179,9 @@ export const alchemists = createReducer(initialState, (r) => {
 		return state;
 	});
 	r.addCase(draw_ingredient, (state, { payload }) => {
-		const playerState = state.emailToPlayerState[payload];
+		const playerState = state.emailToPlayerState[payload.player];
 		playerState.ingredients = [...playerState.ingredients, ...state.ingredientPile.splice(0, 1)];
-		state.emailToPlayerState[payload] = playerState;
+		state.emailToPlayerState[payload.player] = playerState;
 	});
 	r.addCase(draw_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload];
@@ -212,6 +214,11 @@ export const alchemists = createReducer(initialState, (r) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.favours.splice(payload.index, 1);
 		playerState.required = [...playerState.required, 'turn_order'];
+	});
+	r.addCase(transmute, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		playerState.ingredients.splice(payload.index, 1);
+		playerState.coins++;
 	});
 	r.addCase(commit, (state, { payload }) => {
 		let playerState = state.emailToPlayerState[payload.player];
@@ -277,9 +284,31 @@ export const alchemists = createReducer(initialState, (r) => {
 			if (payload && payload.player) {
 				const playerState = state.emailToPlayerState[payload.player];
 				if (playerState) {
-					const requiredIndex = playerState.required.indexOf(action.type);
+					let requiredIndex = playerState.required.indexOf(action.type);
+					if (requiredIndex === -1) {
+						const alternates: { [k: string]: string } = {};
+						alternates['draw_ingredient'] = 'forage';
+						const alias = alternates[action.type];
+						if (alias) {
+							console.log('lookup alias', alias);
+							requiredIndex = playerState.required.indexOf(alias);
+						}
+					}
 					if (requiredIndex !== -1) {
-						playerState.required.splice(requiredIndex, 1);
+						const done = playerState.required.splice(requiredIndex, 1)[0];
+						if (state.cubeActionToPlayerEmails[done]) {
+							const myCube = state.cubeActionToPlayerEmails[done].indexOf(payload.player);
+							if (myCube !== -1) {
+								state.cubeActionToPlayerEmails[done].splice(myCube, 1);
+								if (state.completedCubeActionToPlayerEmails[done] === undefined) {
+									state.completedCubeActionToPlayerEmails[done] = [];
+								}
+								state.completedCubeActionToPlayerEmails[done] = [
+									...state.completedCubeActionToPlayerEmails[done],
+									payload.player
+								];
+							}
+						}
 						if (action.type === 'place_cube') {
 							const splitSpot = payload.cube.split('_');
 							const spot = splitSpot[1];
@@ -316,7 +345,6 @@ export const alchemists = createReducer(initialState, (r) => {
 							);
 							if (myCubes) {
 								playerState.required = [...myCubes.map(() => phaseOrder[i])];
-								console.log({ myCubes, req: playerState.required });
 							}
 						}
 						if (playerState.required.length) {

@@ -112,8 +112,8 @@
 				];
 				players.forEach((player) => {
 					setupActions.push(join_game(player));
-					setupActions.push(draw_ingredient(player));
-					setupActions.push(draw_ingredient(player));
+					setupActions.push(draw_ingredient({ player }));
+					setupActions.push(draw_ingredient({ player }));
 					setupActions.push(draw_favour(player));
 					setupActions.push(draw_favour(player));
 				});

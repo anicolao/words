@@ -4,6 +4,8 @@
 
 {#if ingredient === -1}
 	<img alt="ingredient back" src="ingd_back_s.jpg" />
+{:else if ingredient === -2}
+	<img alt="ingredient back" src="ingd_back.jpg" />
 {:else}
 	<img alt="ingredient {ingredient}" src="ingd_{ingredient}.jpg" />
 {/if}

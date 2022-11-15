@@ -159,11 +159,15 @@
 			const num = previewStore.players.length;
 			const offset = num === 2 ? 1 : 0;
 			const playerIndexes = players.map((x) => num - previewStore.players.indexOf(x) + offset);
-			const piCounts = previewStore.players.map((x) => 1);
+			const piCounts = previewStore.players.map((x) => {
+				const count =
+					previewStore.completedCubeActionToPlayerEmails[key]?.filter((y) => x === y).length || 0;
+				return count + 1;
+			});
 			for (let i = 0; i < playerIndexes.length; ++i) {
 				const pi = playerIndexes[i];
 				const player = previewStore.players[-(pi - num - offset)];
-				const piCount = piCounts[pi - offset - 1]++;
+				const piCount = piCounts[previewStore.players.indexOf(player)]++;
 				const cubeCount = actionToColumnCubeCount[key][piCount - 1];
 				if (cubeCount === 1) {
 					cubes[`cube_${key}_${piCount}${pi}`] = player;
