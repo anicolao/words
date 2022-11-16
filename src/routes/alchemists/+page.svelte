@@ -14,6 +14,7 @@
 		commit,
 		discard_favour,
 		draw_ingredient,
+		forage,
 		place_cube,
 		queue_pending,
 		redo_pending,
@@ -102,7 +103,7 @@
 	$: player = state ? $store.alchemists.players.indexOf(me) : -1;
 	$: numPlayers = $store.alchemists.players.length;
 
-	let action = '';
+	$: currentActionKey = state?.currentActionKey;
 
 	function describeAction(name: string, count: number) {
 		const display: { [k: string]: string } = {
@@ -131,18 +132,36 @@
 		}
 		return display[name] + suffix;
 	}
+	function nextPlayerForAction() {
+		const npStore = $store.alchemists;
+		const cubeCount = npStore.players.map((p) => {
+			let cubes = npStore.cubeActionToPlayerEmails[currentActionKey];
+			if (cubes) {
+				return cubes.filter((x) => x === p).length;
+			} else {
+				return 0;
+			}
+		});
+		let maxCubes = 0;
+		let maxCubePlayer = $store.alchemists.players[$store.alchemists.currentPlayerIndex];
+		for (let i = 0; i < npStore.players.length; ++i) {
+			if (cubeCount[i] > maxCubes) {
+				maxCubes = cubeCount[i];
+				maxCubePlayer = npStore.players[i];
+			}
+		}
+		return maxCubePlayer;
+	}
 	$: if (state) {
 		if (state.required.length) {
-			action = state.required[0];
-			const num = state.required.filter((x) => x === action).length;
-			const prompt = describeAction(action, num);
+			const num = state.required.filter((x) => x === currentActionKey).length;
+			const prompt = describeAction(currentActionKey, num);
 			if (prompt !== 'undefined') store.dispatch(custom_title(prompt));
-			else store.dispatch(custom_title(action));
+			else store.dispatch(custom_title(currentActionKey));
 		} else if (!canCommit(state)) {
-			const waitingOn = $store.alchemists.players[$store.alchemists.currentPlayerIndex];
+			const waitingOn = nextPlayerForAction();
 			store.dispatch(custom_title('Waiting on ' + waitingOn));
 		} else {
-			action = '';
 			store.dispatch(custom_title('Commit or undo your actions.'));
 		}
 	}
@@ -154,6 +173,11 @@
 			dispatchToTable(tableId, queue_pending({ player: me, action }));
 		}
 	}
+	function immediate(action: AnyAction) {
+		if (tableId) {
+			dispatchToTable(tableId, action);
+		}
+	}
 
 	function discardFavour(index: number) {
 		return () => {
@@ -163,11 +187,11 @@
 		};
 	}
 	function conflict() {
-		const sequential = ['turn_order', 'place_cube'];
+		const sequential = ['turn_order', 'place_cube', 'forage'];
 		const pending = $store.alchemists.emailToPlayerState[me].pending;
 		for (let i = 0; i < sequential.length; ++i) {
 			if (pending.filter((x) => x.type === sequential[i]).length > 0) {
-				if ($store.alchemists.currentPlayerIndex !== player) return true;
+				if (nextPlayerForAction() !== me) return true;
 			}
 		}
 		return false;
@@ -203,9 +227,9 @@
 	}
 	function clickBoard(e: CustomEvent) {
 		console.log(e.detail);
-		if (action === 'turn_order' && e?.detail.startsWith('turn')) {
+		if (currentActionKey === 'turn_order' && e?.detail.startsWith('turn')) {
 			enqueue(turn_order({ player: me, order: e.detail }));
-		} else if (action === 'place_cube' && e?.detail.startsWith('cube_')) {
+		} else if (currentActionKey === 'place_cube' && e?.detail.startsWith('cube_')) {
 			const actionSplit = e?.detail.split('_');
 			if (actionSplit && actionSplit.length > 2) {
 				const chosenCategory = actionSplit[1];
@@ -228,15 +252,17 @@
 				console.log('Successful click on ', chosenCategory);
 				enqueue(place_cube({ player: me, cube: e?.detail }));
 			}
-		} else if (action === 'forage' && e?.detail.startsWith('draw')) {
-			enqueue(draw_ingredient({ player: me }));
-		} else if (action === 'forage' && e?.detail.startsWith('forest')) {
+		} else if (currentActionKey === 'forage' && e?.detail.startsWith('draw')) {
+			immediate(draw_ingredient({ player: me }));
+		} else if (currentActionKey === 'forage' && e?.detail.startsWith('forest')) {
 			console.log('Draw specific ingredient...');
+			const index = parseInt(e?.detail.substring(6));
+			enqueue(forage({ player: me, index }));
 		}
 	}
 	function clickIngredient(i: number) {
 		return () => {
-			if (action === 'transmute') {
+			if (currentActionKey === 'transmute') {
 				enqueue(transmute({ player: me, index: i }));
 			}
 		};
@@ -264,7 +290,11 @@
 	<div class="row">
 		{#each favours as favour, i}
 			<span class="card larger">
-				<Favour {favour} discard={action === 'discard_favour'} on:discard={discardFavour(i)} />
+				<Favour
+					{favour}
+					discard={currentActionKey === 'discard_favour'}
+					on:discard={discardFavour(i)}
+				/>
 			</span>
 		{/each}
 	</div>

@@ -63,9 +63,11 @@ export interface PlayerState {
 	favours: Favours[];
 	seals: Seals[];
 	required: string[];
+	currentActionKey: string;
 	pending: AnyAction[];
 	undone: AnyAction[];
 	color: number;
+	hasStartButton: boolean;
 }
 const initialPlayerState = {
 	coins: 2,
@@ -85,8 +87,10 @@ const initialPlayerState = {
 		Seals.fivePoints
 	],
 	required: ['discard_favour', 'commit'],
+	currentActionKey: 'discard_favour',
 	pending: [],
 	color: -1,
+	hasStartButton: false,
 	undone: []
 };
 
@@ -137,6 +141,7 @@ export const redo_pending = createAction<{ player: string }>('redo_pending');
 export const discard_favour = createAction<{ player: string; index: number }>('discard_favour');
 export const commit = createAction<{ player: string }>('commit');
 export const draw_ingredient = createAction<{ player: string }>('draw_ingredient');
+export const forage = createAction<{ player: string; index: number }>('forage');
 export const transmute = createAction<{ player: string; index: number }>('transmute');
 export const draw_favour = createAction<string>('draw_favour');
 export const turn_order = createAction<{ player: string; order: string }>('turn_order');
@@ -175,12 +180,28 @@ export const alchemists = createReducer(initialState, (r) => {
 		state.players.push(payload);
 		state.scores.push(10);
 		state.finalScoreAdjustment.push(0);
-		state.emailToPlayerState[payload] = { ...initialPlayerState, color };
+		state.emailToPlayerState[payload] = {
+			...initialPlayerState,
+			color,
+			hasStartButton: color === 0
+		};
 		return state;
 	});
 	r.addCase(draw_ingredient, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.ingredients = [...playerState.ingredients, ...state.ingredientPile.splice(0, 1)];
+		state.emailToPlayerState[payload.player] = playerState;
+	});
+	r.addCase(forage, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		const newHand = [
+			...playerState.ingredients,
+			...state.faceupIngredients.splice(payload.index, 1, -1)
+		];
+		if (newHand.indexOf(-1) !== -1) {
+			throw 'card already drawn';
+		}
+		playerState.ingredients = newHand;
 		state.emailToPlayerState[payload.player] = playerState;
 	});
 	r.addCase(draw_favour, (state, { payload }) => {
@@ -214,6 +235,7 @@ export const alchemists = createReducer(initialState, (r) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.favours.splice(payload.index, 1);
 		playerState.required = [...playerState.required, 'turn_order'];
+		playerState.currentActionKey = playerState.required[0];
 	});
 	r.addCase(transmute, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
@@ -245,6 +267,7 @@ export const alchemists = createReducer(initialState, (r) => {
 						playerState.required = [...playerState.required, 'commit'];
 					}
 					playerState.required = [...playerState.required, 'place_cube'];
+					playerState.currentActionKey = playerState.required[0];
 					playerState.required = [...playerState.required, 'place_cube'];
 					playerState.required = [...playerState.required, 'place_cube'];
 					if (state.round > 0) {
@@ -259,7 +282,7 @@ export const alchemists = createReducer(initialState, (r) => {
 					playerState.required = [...playerState.required, 'commit'];
 				}
 				state.round++;
-				state.players = playerOrder;
+				state.players = playerOrder.reverse();
 			}
 		} else {
 			throw 'move conflict for turn order';
@@ -290,12 +313,14 @@ export const alchemists = createReducer(initialState, (r) => {
 						alternates['draw_ingredient'] = 'forage';
 						const alias = alternates[action.type];
 						if (alias) {
-							console.log('lookup alias', alias);
 							requiredIndex = playerState.required.indexOf(alias);
 						}
 					}
 					if (requiredIndex !== -1) {
 						const done = playerState.required.splice(requiredIndex, 1)[0];
+						if (playerState.required.length > 0) {
+							playerState.currentActionKey = playerState.required[0];
+						}
 						if (state.cubeActionToPlayerEmails[done]) {
 							const myCube = state.cubeActionToPlayerEmails[done].indexOf(payload.player);
 							if (myCube !== -1) {
@@ -321,6 +346,9 @@ export const alchemists = createReducer(initialState, (r) => {
 								const ri = playerState.required.indexOf(action.type);
 								if (ri === -1) throw 'not enough action cubes';
 								playerState.required.splice(ri, 1);
+								if (playerState.required.length > 0) {
+									playerState.currentActionKey = playerState.required[0];
+								}
 							}
 							if (playerState.required.indexOf('place_cube') === -1) {
 								state.currentPlayerIndex++;
@@ -328,7 +356,7 @@ export const alchemists = createReducer(initialState, (r) => {
 							}
 						}
 					}
-					if (playerState.required.length === 0) {
+					if (playerState.required.length === 0 && playerState.pending.length === 0) {
 						const phaseOrder = [
 							'forage',
 							'transmute',
@@ -343,16 +371,24 @@ export const alchemists = createReducer(initialState, (r) => {
 							const myCubes = state.cubeActionToPlayerEmails[phaseOrder[i]]?.filter(
 								(x) => x === payload.player
 							);
-							if (myCubes) {
-								playerState.required = [...myCubes.map(() => phaseOrder[i])];
+							if (myCubes && myCubes.length > 0) {
+								playerState.required = [phaseOrder[i]];
 							}
-						}
-						if (playerState.required.length) {
-							playerState.required = [...playerState.required, 'commit'];
 						}
 					}
 					if (playerState.required.length === 0) {
-						console.log('Player ', payload.player, ' is out of things to do!');
+						if (playerState.hasStartButton) {
+							console.log(
+								'Player ',
+								payload.player,
+								' is out of things to do, and holds the button!'
+							);
+							//playerState.required = ['pass_button'];
+						} else {
+							console.log('Player ', payload.player, ' is out of things to do!');
+						}
+					} else {
+						playerState.currentActionKey = playerState.required[0];
 					}
 					state.emailToPlayerState[payload.player] = playerState;
 				}

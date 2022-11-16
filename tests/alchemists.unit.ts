@@ -171,8 +171,8 @@ describe('alchemists', () => {
 		expect(p2State.required.toString()).to.equal('commit,place_cube,place_cube,place_cube,commit');
 
 		expect(state10.round).to.equal(1);
-		expect(state10.players[0]).to.equal('anna@gmail.com');
-		expect(state10.players[1]).to.equal('alex@gmail.com');
+		expect(state10.players[1]).to.equal('anna@gmail.com');
+		expect(state10.players[0]).to.equal('alex@gmail.com');
 	});
 
 	const alex = 'alex@gmail.com';
@@ -190,12 +190,12 @@ describe('alchemists', () => {
 
 	it('lets the users place cubes', () => {
 		const p1State = state11.emailToPlayerState['alex@gmail.com'];
-		expect(p1State.required.length).to.equal(3);
-		expect(p1State.required.toString()).to.equal('forage,forage,commit');
+		expect(p1State.required.toString()).to.equal('forage');
+		expect(p1State.required.length).to.equal(1);
 
 		const p2State = state11.emailToPlayerState['anna@gmail.com'];
-		expect(p2State.required.length).to.equal(3);
-		expect(p2State.required.toString()).to.equal('forage,forage,commit');
+		expect(p2State.required.length).to.equal(1);
+		expect(p2State.required.toString()).to.equal('forage');
 
 		const forageCubes = state11.cubeActionToPlayerEmails['forage'];
 		expect(forageCubes.toString()).to.equal([alex, alex, anna, anna].toString());

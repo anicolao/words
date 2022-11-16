@@ -157,8 +157,8 @@
 		keys.forEach((key) => {
 			const players = previewStore.cubeActionToPlayerEmails[key];
 			const num = previewStore.players.length;
-			const offset = num === 2 ? 1 : 0;
-			const playerIndexes = players.map((x) => num - previewStore.players.indexOf(x) + offset);
+			const offset = num === 2 ? 2 : 1;
+			const playerIndexes = players.map((x) => previewStore.players.indexOf(x) + offset);
 			const piCounts = previewStore.players.map((x) => {
 				const count =
 					previewStore.completedCubeActionToPlayerEmails[key]?.filter((y) => x === y).length || 0;
@@ -166,7 +166,7 @@
 			});
 			for (let i = 0; i < playerIndexes.length; ++i) {
 				const pi = playerIndexes[i];
-				const player = previewStore.players[-(pi - num - offset)];
+				const player = previewStore.players[pi - offset];
 				const piCount = piCounts[previewStore.players.indexOf(player)]++;
 				const cubeCount = actionToColumnCubeCount[key][piCount - 1];
 				if (cubeCount === 1) {
