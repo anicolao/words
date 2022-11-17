@@ -146,6 +146,7 @@ export const transmute = createAction<{ player: string; index: number }>('transm
 export const draw_favour = createAction<string>('draw_favour');
 export const turn_order = createAction<{ player: string; order: string }>('turn_order');
 export const place_cube = createAction<{ player: string; cube: string }>('place_cube');
+export const pass = createAction<{ player: string }>('pass');
 
 export const initialState: AlchemistsState = {
 	gameType: 'base',
@@ -298,6 +299,30 @@ export const alchemists = createReducer(initialState, (r) => {
 			priors = [...state.cubeActionToPlayerEmails[action]];
 		}
 		state.cubeActionToPlayerEmails[action] = [...priors, player];
+		if (!state.cubeActionToPlayerEmails['pass']) {
+			state.cubeActionToPlayerEmails['pass'] = [];
+		}
+		if (state.cubeActionToPlayerEmails['pass'].indexOf(player) === -1) {
+			priors = [];
+			if (state.cubeActionToPlayerEmails['pass']) {
+				priors = [...state.cubeActionToPlayerEmails['pass']];
+			}
+			state.cubeActionToPlayerEmails['pass'] = [...priors, player];
+		}
+	});
+
+	r.addCase(pass, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		playerState.required = [...playerState.required, 'turn_order'];
+		playerState.currentActionKey = playerState.required[0];
+		if (state.completedCubeActionToPlayerEmails['pass']) {
+			if (state.completedCubeActionToPlayerEmails['pass'].length === state.players.length - 1) {
+				console.log('*** I am the last passer ' + payload.player);
+				state.turnOrderToPlayerEmail = {};
+				state.cubeActionToPlayerEmails = {};
+				state.completedCubeActionToPlayerEmails = {};
+			}
+		}
 	});
 
 	r.addMatcher(
@@ -365,7 +390,8 @@ export const alchemists = createReducer(initialState, (r) => {
 							'debunk',
 							'publish',
 							'student',
-							'drink'
+							'drink',
+							'pass'
 						];
 						for (let i = 0; i < phaseOrder.length && playerState.required.length === 0; ++i) {
 							const myCubes = state.cubeActionToPlayerEmails[phaseOrder[i]]?.filter(
@@ -376,18 +402,7 @@ export const alchemists = createReducer(initialState, (r) => {
 							}
 						}
 					}
-					if (playerState.required.length === 0) {
-						if (playerState.hasStartButton) {
-							console.log(
-								'Player ',
-								payload.player,
-								' is out of things to do, and holds the button!'
-							);
-							//playerState.required = ['pass_button'];
-						} else {
-							console.log('Player ', payload.player, ' is out of things to do!');
-						}
-					} else {
+					if (playerState.required.length > 0) {
 						playerState.currentActionKey = playerState.required[0];
 					}
 					state.emailToPlayerState[payload.player] = playerState;

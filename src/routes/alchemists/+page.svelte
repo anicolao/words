@@ -15,6 +15,7 @@
 		discard_favour,
 		draw_ingredient,
 		forage,
+		pass,
 		place_cube,
 		queue_pending,
 		redo_pending,
@@ -105,15 +106,17 @@
 
 	$: currentActionKey = state?.currentActionKey;
 
-	function describeAction(name: string, count: number) {
+	function describeAction(name: string, count: number, prefix?: string) {
 		const display: { [k: string]: string } = {
-			discard_favour: 'Discard your starting favour.',
-			turn_order: 'Choose your place in turn order.',
-			forage: 'Forage for an ingredient.',
-			transmute: 'Transmute an ingredient.',
-			commit: 'Commit or undo/redo your actions.',
-			place_cube: 'Place an action cube.'
+			discard_favour: 'discard a starting favour.',
+			turn_order: 'choose turn order.',
+			forage: 'forage for an ingredient.',
+			transmute: 'transmute an ingredient.',
+			commit: 'commit or undo/redo actions.',
+			place_cube: 'place an action cube.',
+			pass: 'end your round.'
 		};
+		let please = prefix || 'Please ';
 		let suffix = '';
 		if (count > 1) {
 			const nTimes = [
@@ -128,9 +131,9 @@
 			suffix = nTimes[count];
 		}
 		if (name === 'commit' && !canCommit(state)) {
-			return "Wait to check other player's choices.";
+			return please + "wait to check other player's choices.";
 		}
-		return display[name] + suffix;
+		return please + display[name] + suffix;
 	}
 	function nextPlayerForAction() {
 		const npStore = $store.alchemists;
@@ -144,6 +147,14 @@
 		});
 		let maxCubes = 0;
 		let maxCubePlayer = $store.alchemists.players[$store.alchemists.currentPlayerIndex];
+		if (
+			currentActionKey === 'commit' &&
+			state.pending.filter((x) => x.type === 'place_cube').length > 0
+		) {
+			let index = $store.alchemists.currentPlayerIndex - 1;
+			if (index < 0) index += $store.alchemists.players.length;
+			maxCubePlayer = $store.alchemists.players[index];
+		}
 		for (let i = 0; i < npStore.players.length; ++i) {
 			if (cubeCount[i] > maxCubes) {
 				maxCubes = cubeCount[i];
@@ -153,7 +164,13 @@
 		return maxCubePlayer;
 	}
 	$: if (state) {
-		if (state.required.length) {
+		if (currentActionKey === 'pass') {
+			if (!canCommit(state)) {
+				store.dispatch(custom_title('Waiting for other players.'));
+			} else {
+				immediate(pass({ player: me }));
+			}
+		} else if (state.required.length) {
 			const num = state.required.filter((x) => x === currentActionKey).length;
 			const prompt = describeAction(currentActionKey, num);
 			if (prompt !== 'undefined') store.dispatch(custom_title(prompt));
@@ -187,11 +204,30 @@
 		};
 	}
 	function conflict() {
-		const sequential = ['turn_order', 'place_cube', 'forage'];
+		const sequential = ['turn_order', 'place_cube', 'forage', 'pass'];
 		const pending = $store.alchemists.emailToPlayerState[me].pending;
 		for (let i = 0; i < sequential.length; ++i) {
-			if (pending.filter((x) => x.type === sequential[i]).length > 0) {
+			if (pending.filter((x) => x.type === sequential[i]).length > 0 || passing(state)) {
 				if (nextPlayerForAction() !== me) return true;
+			}
+		}
+		return false;
+	}
+	function playerPass(pstate: PlayerState) {
+		return pstate.required.length >= 1 && pstate.required[0] === 'pass';
+	}
+	function playerTurn(pstate: PlayerState) {
+		return pstate.required.length >= 1 && pstate.required[0] === 'turn_order';
+	}
+	function passing(previewState: PlayerState) {
+		if (playerPass(previewState)) {
+			if (previewStore) {
+				let ret = true;
+				previewStore.players.forEach((p) => {
+					const s = previewStore.emailToPlayerState[p];
+					ret = ret && (playerPass(s) || playerTurn(s));
+				});
+				return ret;
 			}
 		}
 		return false;
@@ -199,8 +235,10 @@
 	function canCommit(previewState: PlayerState) {
 		return (
 			previewState &&
-			(previewState.required.length === 0 || previewState.required[0] === 'commit') &&
-			previewState.pending.length > 0 &&
+			(previewState.required.length === 0 ||
+				previewState.required[0] === 'commit' ||
+				previewState.required[0] === 'pass') &&
+			(previewState.pending.length > 0 || passing(previewState)) &&
 			!conflict()
 		);
 	}

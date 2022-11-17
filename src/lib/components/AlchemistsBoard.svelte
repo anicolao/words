@@ -156,6 +156,7 @@
 		cubes = {};
 		keys.forEach((key) => {
 			const players = previewStore.cubeActionToPlayerEmails[key];
+			if (key === 'pass') return;
 			const num = previewStore.players.length;
 			const offset = num === 2 ? 2 : 1;
 			const playerIndexes = players.map((x) => previewStore.players.indexOf(x) + offset);
