@@ -99,7 +99,7 @@
 	$: cstate = $store.alchemists.emailToPlayerState[me];
 	$: state = previewStore?.emailToPlayerState[me];
 	$: seals = state?.seals || [];
-	$: favours = state?.favours || [];
+	$: favours = state?.favours.map((x, i) => (i < cstate.favours.length ? x : -1)) || [];
 	$: ingredients = state?.ingredients.map((x, i) => (i < cstate.ingredients.length ? x : -2)) || [];
 	$: player = state ? $store.alchemists.players.indexOf(me) : -1;
 	$: numPlayers = $store.alchemists.players.length;

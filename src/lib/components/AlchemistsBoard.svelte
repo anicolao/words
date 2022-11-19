@@ -131,7 +131,7 @@
 		{ id: 'artifact3', x: 405, y: 243, width: 85, height: 135 }, // artifact
 		{ id: 'action_renounce', x: 995, y: 170, width: 40, height: 40 }, // renounce
 		{ id: 'hospital', x: 995, y: 240, width: 40, height: 40 }, // hospital
-		{ id: 'paralyzed', x: 1065, y: 255, width: 30, height: 30 }, // paralyzed
+		{ id: 'turn9_paralyzed', x: 1065, y: 255, width: 30, height: 30 }, // paralyzed
 		{ id: 'turn0', x: 1065, y: 30, width: 30, height: 30 }, // pay
 		{ id: 'turn1', x: 1065, y: 63, width: 30, height: 30 }, //
 		{ id: 'turn2', x: 1065, y: 96, width: 30, height: 30 }, // 1 ingredient

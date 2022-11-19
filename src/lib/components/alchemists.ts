@@ -57,6 +57,11 @@ export enum Artifacts_III {
 	mirror,
 	cup
 }
+export interface BonusInfo {
+	coins: number;
+	favours: number;
+	ingredients: number;
+}
 export interface PlayerState {
 	coins: number;
 	ingredients: Ingredients[];
@@ -67,6 +72,7 @@ export interface PlayerState {
 	pending: AnyAction[];
 	undone: AnyAction[];
 	color: number;
+	turnToBonusMap: { [k: string]: BonusInfo };
 	hasStartButton: boolean;
 }
 const initialPlayerState = {
@@ -91,6 +97,16 @@ const initialPlayerState = {
 	pending: [],
 	color: -1,
 	hasStartButton: false,
+	turnToBonusMap: {
+		turn9_paralyzed: { coins: 0, favours: 1, ingredients: 1 }, // paralyzed
+		turn0: { coins: -1, favours: 0, ingredients: 0 }, // pay
+		turn1: { coins: 0, favours: 0, ingredients: 0 }, //
+		turn2: { coins: 0, favours: 0, ingredients: 1 }, // 1 ingredient
+		turn3: { coins: 0, favours: 0, ingredients: 2 }, // two
+		turn4: { coins: 0, favours: 1, ingredients: 1 }, // 1 of each
+		turn5: { coins: 0, favours: 2, ingredients: 0 }, // two favours
+		turn6: { coins: 0, favours: 1, ingredients: 2 } // three player only
+	},
 	undone: []
 };
 
@@ -253,7 +269,17 @@ export const alchemists = createReducer(initialState, (r) => {
 	});
 
 	r.addCase(turn_order, (state, { payload }) => {
+		if (payload.order === 'turn6' && state.players.length !== 3) {
+			throw 'wrong number of players for turn6 option';
+		}
 		if (state.turnOrderToPlayerEmail[payload.order] === undefined) {
+			const oldTurns = Object.keys(state.turnOrderToPlayerEmail);
+			for (let t = 0; t < oldTurns.length; ++t) {
+				if (state.turnOrderToPlayerEmail[oldTurns[t]] === payload.player) {
+					delete state.turnOrderToPlayerEmail[oldTurns[t]];
+					state.currentPlayerIndex--;
+				}
+			}
 			state.turnOrderToPlayerEmail[payload.order] = payload.player;
 			state.currentPlayerIndex++;
 			if (state.currentPlayerIndex === state.players.length) {
@@ -264,6 +290,17 @@ export const alchemists = createReducer(initialState, (r) => {
 					const email = state.turnOrderToPlayerEmail[turns[i]];
 					playerOrder.push(email);
 					const playerState = state.emailToPlayerState[email];
+					const bonus = playerState.turnToBonusMap[turns[i]];
+					playerState.coins += bonus.coins;
+					for (let c = 0; c < bonus.ingredients; ++c) {
+						playerState.ingredients = [
+							...playerState.ingredients,
+							...state.ingredientPile.splice(0, 1)
+						];
+					}
+					for (let c = 0; c < bonus.favours; ++c) {
+						playerState.favours = [...playerState.favours, ...state.favoursPile.splice(0, 1)];
+					}
 					if (playerState.required.length > 0) {
 						playerState.required = [...playerState.required, 'commit'];
 					}
