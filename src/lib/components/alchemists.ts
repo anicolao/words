@@ -289,6 +289,10 @@ export const alchemists = createReducer(initialState, (r) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		const card: Favours = playerState.favours.splice(payload.index, 1)[0];
 		switch (card) {
+			case Favours.assistant:
+				playerState.required = ['place_cube', ...playerState.required];
+				state.emailToPlayerState[payload.player] = playerState;
+				break;
 			case Favours.herbalist:
 				playerState.ingredients = [
 					...playerState.ingredients,
