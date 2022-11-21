@@ -21,6 +21,16 @@ export enum Favours {
 	shopkeeper,
 	sage
 }
+export const favourToPhase: string[] = [
+	'place_cube',
+	'place_cube',
+	'sell',
+	'place_cube',
+	'immediate',
+	'sell',
+	'buy',
+	'transmute'
+];
 export enum Ingredients {
 	toadstool,
 	fern,
@@ -155,6 +165,7 @@ export const queue_pending = createAction<{ player: string; action: AnyAction }>
 export const undo_pending = createAction<{ player: string }>('undo_pending');
 export const redo_pending = createAction<{ player: string }>('redo_pending');
 export const discard_favour = createAction<{ player: string; index: number }>('discard_favour');
+export const play_favour = createAction<{ player: string; index: number }>('play_favour');
 export const commit = createAction<{ player: string }>('commit');
 export const draw_ingredient = createAction<{ player: string }>('draw_ingredient');
 export const forage = createAction<{ player: string; index: number }>('forage');
@@ -253,6 +264,17 @@ export const alchemists = createReducer(initialState, (r) => {
 		playerState.favours.splice(payload.index, 1);
 		playerState.required = [...playerState.required, 'turn_order'];
 		playerState.currentActionKey = playerState.required[0];
+	});
+	r.addCase(play_favour, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		const card: Favours = playerState.favours.splice(payload.index, 1)[0];
+		switch (card) {
+			case Favours.sage:
+				playerState.coins += 1;
+				break;
+			default:
+				throw 'unrecognized favour';
+		}
 	});
 	r.addCase(transmute, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];

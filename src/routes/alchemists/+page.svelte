@@ -14,9 +14,11 @@
 		commit,
 		discard_favour,
 		draw_ingredient,
+		favourToPhase,
 		forage,
 		pass,
 		place_cube,
+		play_favour,
 		queue_pending,
 		redo_pending,
 		transmute,
@@ -198,9 +200,13 @@
 
 	function discardFavour(index: number) {
 		return () => {
-			console.log('discard the ith favour: ', index);
 			const action = discard_favour({ player: me, index });
 			enqueue(action);
+		};
+	}
+	function playFavour(index: number) {
+		return () => {
+			enqueue(play_favour({ player: me, index }));
 		};
 	}
 	function conflict() {
@@ -326,12 +332,19 @@
 		</Button>
 	</div>
 	<div class="row">
+		{#if state}
+			Coins: {state.coins}
+		{/if}
+	</div>
+	<div class="row">
 		{#each favours as favour, i}
 			<span class="card larger">
 				<Favour
 					{favour}
+					glowing={favourToPhase[favour] === currentActionKey}
 					discard={currentActionKey === 'discard_favour'}
 					on:discard={discardFavour(i)}
+					on:play={playFavour(i)}
 				/>
 			</span>
 		{/each}
