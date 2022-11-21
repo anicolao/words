@@ -13,6 +13,7 @@
 		alchemists,
 		commit,
 		discard_favour,
+		discard_ingredient,
 		draw_ingredient,
 		favourToPhase,
 		forage,
@@ -27,7 +28,7 @@
 		type AlchemistsState,
 		type PlayerState
 	} from '$lib/components/alchemists';
-	import type { AnyAction } from '@reduxjs/toolkit';
+	import type { AnyAction, current } from '@reduxjs/toolkit';
 	import { dispatchToTable } from '$lib/components/gameutil';
 	import Button, { Label } from '@smui/button';
 	import { EdgesGeometry } from 'three';
@@ -102,7 +103,10 @@
 	$: state = previewStore?.emailToPlayerState[me];
 	$: seals = state?.seals || [];
 	$: favours = state?.favours.map((x, i) => (i < cstate.favours.length ? x : -1)) || [];
-	$: ingredients = state?.ingredients.map((x, i) => (i < cstate.ingredients.length ? x : -2)) || [];
+	$: ingredients =
+		state?.ingredients.map((x, i) =>
+			i < cstate.ingredients.length || currentActionKey === 'discard_ingredient' ? x : -2
+		) || [];
 	$: player = state ? $store.alchemists.players.indexOf(me) : -1;
 	$: numPlayers = $store.alchemists.players.length;
 
@@ -111,6 +115,8 @@
 	function describeAction(name: string, count: number, prefix?: string) {
 		const display: { [k: string]: string } = {
 			discard_favour: 'discard a starting favour.',
+			discard_ingredient: 'discard an ingredient.',
+			play_favour: 'play immediate favours.',
 			turn_order: 'choose turn order.',
 			forage: 'forage for an ingredient.',
 			transmute: 'transmute an ingredient.',
@@ -308,6 +314,8 @@
 		return () => {
 			if (currentActionKey === 'transmute') {
 				enqueue(transmute({ player: me, index: i }));
+			} else if (currentActionKey === 'discard_ingredient') {
+				enqueue(discard_ingredient({ player: me, index: i }));
 			}
 		};
 	}
@@ -341,7 +349,8 @@
 			<span class="card larger">
 				<Favour
 					{favour}
-					glowing={favourToPhase[favour] === currentActionKey}
+					glowing={favourToPhase[favour] === currentActionKey ||
+						(favourToPhase[favour] === 'immediate' && currentActionKey !== 'discard_favour')}
 					discard={currentActionKey === 'discard_favour'}
 					on:discard={discardFavour(i)}
 					on:play={playFavour(i)}

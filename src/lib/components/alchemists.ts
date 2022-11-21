@@ -165,6 +165,9 @@ export const queue_pending = createAction<{ player: string; action: AnyAction }>
 export const undo_pending = createAction<{ player: string }>('undo_pending');
 export const redo_pending = createAction<{ player: string }>('redo_pending');
 export const discard_favour = createAction<{ player: string; index: number }>('discard_favour');
+export const discard_ingredient = createAction<{ player: string; index: number }>(
+	'discard_ingredient'
+);
 export const play_favour = createAction<{ player: string; index: number }>('play_favour');
 export const commit = createAction<{ player: string }>('commit');
 export const draw_ingredient = createAction<{ player: string }>('draw_ingredient');
@@ -235,6 +238,12 @@ export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(draw_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload];
 		playerState.favours = [...playerState.favours, ...state.favoursPile.splice(0, 1)];
+		if (state.round > 0) {
+			const herbalists = playerState.favours.filter(
+				(favour) => favourToPhase[favour] === 'immediate'
+			);
+			playerState.required = [...playerState.required, ...herbalists.map(() => 'play_favour')];
+		}
 		state.emailToPlayerState[payload] = playerState;
 	});
 	r.addCase(queue_pending, (state, { payload }) => {
@@ -262,13 +271,37 @@ export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(discard_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.favours.splice(payload.index, 1);
-		playerState.required = [...playerState.required, 'turn_order'];
+		const herbalists = playerState.favours.filter(
+			(favour) => favourToPhase[favour] === 'immediate'
+		);
+		playerState.required = [
+			...playerState.required,
+			...herbalists.map(() => 'play_favour'),
+			'turn_order'
+		];
 		playerState.currentActionKey = playerState.required[0];
+	});
+	r.addCase(discard_ingredient, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		playerState.ingredients.splice(payload.index, 1);
 	});
 	r.addCase(play_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		const card: Favours = playerState.favours.splice(payload.index, 1)[0];
 		switch (card) {
+			case Favours.herbalist:
+				playerState.ingredients = [
+					...playerState.ingredients,
+					...state.ingredientPile.splice(0, 2)
+				];
+				playerState.required = [
+					'discard_ingredient',
+					'discard_ingredient',
+					'commit',
+					...playerState.required
+				];
+				state.emailToPlayerState[payload.player] = playerState;
+				break;
 			case Favours.sage:
 				playerState.coins += 1;
 				break;
