@@ -179,6 +179,9 @@ export const draw_favour = createAction<string>('draw_favour');
 export const turn_order = createAction<{ player: string; order: string }>('turn_order');
 export const place_cube = createAction<{ player: string; cube: string }>('place_cube');
 export const pass = createAction<{ player: string }>('pass');
+export const drink_potion = createAction<{ player: string; i0: number; i1: number }>(
+	'drink_potion'
+);
 
 export const initialState: AlchemistsState = {
 	gameType: 'base',
@@ -289,6 +292,13 @@ export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(discard_ingredient, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.ingredients.splice(payload.index, 1);
+	});
+	r.addCase(drink_potion, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		const minI = Math.min(payload.i0, payload.i1);
+		const maxI = Math.max(payload.i0, payload.i1);
+		playerState.ingredients.splice(maxI, 1);
+		playerState.ingredients.splice(minI, 1);
 	});
 	r.addCase(play_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
@@ -449,6 +459,7 @@ export const alchemists = createReducer(initialState, (r) => {
 					if (requiredIndex === -1) {
 						const alternates: { [k: string]: string } = {};
 						alternates['draw_ingredient'] = 'forage';
+						alternates['drink_potion'] = 'custodian';
 						const alias = alternates[action.type];
 						if (alias) {
 							requiredIndex = playerState.required.indexOf(alias);
@@ -498,6 +509,7 @@ export const alchemists = createReducer(initialState, (r) => {
 						const phaseOrder = [
 							'forage',
 							'transmute',
+							'custodian',
 							'sell',
 							'shop',
 							'debunk',

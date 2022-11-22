@@ -6,7 +6,14 @@
 	import Ingredient from '$lib/components/Ingredient.svelte';
 	import AlchemistsBoard from '$lib/components/AlchemistsBoard.svelte';
 	import Favour from '$lib/components/Favour.svelte';
-	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
+	import {
+		collection,
+		onSnapshot,
+		orderBy,
+		query,
+		setIndexConfiguration,
+		type Unsubscribe
+	} from 'firebase/firestore';
 	import firebase from '$lib/firebase';
 	import { custom_title } from '$lib/components/nav';
 	import {
@@ -15,6 +22,7 @@
 		discard_favour,
 		discard_ingredient,
 		draw_ingredient,
+		drink_potion,
 		favourToPhase,
 		forage,
 		pass,
@@ -28,7 +36,7 @@
 		type AlchemistsState,
 		type PlayerState
 	} from '$lib/components/alchemists';
-	import type { AnyAction, current } from '@reduxjs/toolkit';
+	import { current, type AnyAction } from '@reduxjs/toolkit';
 	import { dispatchToTable } from '$lib/components/gameutil';
 	import Button, { Label } from '@smui/button';
 	import { EdgesGeometry } from 'three';
@@ -119,6 +127,7 @@
 			play_favour: 'play immediate favours.',
 			turn_order: 'choose turn order.',
 			forage: 'forage for an ingredient.',
+			custodian: 'drink a potion.',
 			transmute: 'transmute an ingredient.',
 			commit: 'commit or undo/redo actions.',
 			place_cube: 'place an action cube.',
@@ -310,12 +319,39 @@
 			enqueue(forage({ player: me, index }));
 		}
 	}
+	let potionCards: number[] = [];
 	function clickIngredient(i: number) {
 		return () => {
 			if (currentActionKey === 'transmute') {
 				enqueue(transmute({ player: me, index: i }));
 			} else if (currentActionKey === 'discard_ingredient') {
 				enqueue(discard_ingredient({ player: me, index: i }));
+			} else if (currentActionKey === 'custodian') {
+				let found = potionCards.indexOf(i);
+				if (found === -1 && potionCards.length >= 1) {
+					for (let s = 0; s < potionCards.length; ++s) {
+						if (state.ingredients[potionCards[s]] === state.ingredients[i]) {
+							found = s;
+							potionCards.push(i);
+							break;
+						}
+					}
+				}
+				if (found !== -1) {
+					potionCards.splice(found, 1);
+					undoPending();
+				} else {
+					potionCards.push(i);
+				}
+				if (potionCards.length > 2) {
+					potionCards.splice(0, 1);
+					undoPending();
+				}
+				if (potionCards.length === 2) {
+					enqueue(drink_potion({ player: me, i0: potionCards[0], i1: potionCards[1] }));
+					potionCards = [];
+				}
+				potionCards = potionCards;
 			}
 		};
 	}
@@ -361,7 +397,7 @@
 	<div class="row">
 		{#each ingredients as ingredient, i}
 			<span class="card" on:click={clickIngredient(i)}>
-				<Ingredient {ingredient} />
+				<Ingredient {ingredient} selected={potionCards.indexOf(i) !== -1} />
 			</span>
 		{/each}
 	</div>
