@@ -95,12 +95,12 @@
 		{ id: 'cube_transmute_22a', x: 440, y: 504 },
 		{ id: 'cube_transmute_23a', x: 419, y: 532 },
 		{ id: 'cube_transmute_23b', x: 440, y: 532 },
-		{ id: 'cube_sell_1a', x: 187, y: 460 }, // adventurer
-		{ id: 'cube_sell_1b', x: 208, y: 460 },
-		{ id: 'cube_sell_2a', x: 187, y: 489 },
-		{ id: 'cube_sell_2b', x: 208, y: 489 },
-		{ id: 'cube_sell_3a', x: 187, y: 518 },
-		{ id: 'cube_sell_3b', x: 208, y: 518 },
+		{ id: 'cube_sell_11a', x: 187, y: 460 }, // adventurer
+		{ id: 'cube_sell_11b', x: 208, y: 460 },
+		{ id: 'cube_sell_12a', x: 187, y: 489 },
+		{ id: 'cube_sell_12b', x: 208, y: 489 },
+		{ id: 'cube_sell_13a', x: 187, y: 518 },
+		{ id: 'cube_sell_13b', x: 208, y: 518 },
 		{ id: 'sell_exact', x: 117, y: 447 }, // advent top guarantee
 		{ id: 'sell_sign', x: 117, y: 475 }, // sign
 		{ id: 'sell_soup', x: 117, y: 502 }, // soup
