@@ -138,7 +138,11 @@
 		{ id: 'turn3', x: 1065, y: 125, width: 30, height: 30 }, // two
 		{ id: 'turn4', x: 1065, y: 155, width: 30, height: 30 }, // 1 of each
 		{ id: 'turn5', x: 1065, y: 185, width: 30, height: 30 }, // two favours
-		{ id: 'turn6', x: 1065, y: 217, width: 30, height: 30 } // three player only
+		{ id: 'turn6', x: 1065, y: 217, width: 30, height: 30 }, // three player only
+		{ id: 'card_custodian', x: 240, y: 455, width: 85, height: 135 },
+		{ id: 'cube_custodian_11', x: 260, y: 475 },
+		{ id: 'cube_custodian_12', x: 260, y: 502 },
+		{ id: 'cube_custodian_13', x: 260, y: 530 }
 	];
 	$: if (boardHeight) {
 		targets = targets;
@@ -151,12 +155,15 @@
 	$: favourDeckCount = previewStore.favoursPile.length;
 	$: turns = previewStore.turnOrderToPlayerEmail;
 	let cubes: { [k: string]: string } = {};
+	let custodian = false;
 	$: if (previewStore.cubeActionToPlayerEmails) {
 		const keys = Object.keys(previewStore.cubeActionToPlayerEmails);
 		cubes = {};
+		custodian = false;
 		keys.forEach((key) => {
 			const players = previewStore.cubeActionToPlayerEmails[key];
 			if (key === 'pass') return;
+			custodian = custodian || key === 'custodian';
 			const num = previewStore.players.length;
 			const offset = num === 2 ? 2 : 1;
 			const playerIndexes = players.map((x) => previewStore.players.indexOf(x) + offset);
@@ -200,6 +207,8 @@
 					/>{:else if target.id.startsWith('artifact') && artifacts[parseInt(target.id.substring(8)) - 1] >= 0}<Artifact
 						{level}
 						artifact={artifacts[parseInt(target.id.substring(8)) - 1]}
+					/>{:else if target.id.startsWith('card_custodian') && custodian}<Favour
+						favour={3}
 					/>{:else if target.id === 'draw_ingredient'}<Ingredient ingredient={-1} /><span
 						class="cardcount">{ingredientDeckCount}</span
 					>{:else if target.id === 'draw_favour'}<Favour favour={-1} /><span class="cardcount"

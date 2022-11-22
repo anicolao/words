@@ -1,5 +1,6 @@
 import type { AnyAction } from '@reduxjs/toolkit';
 import * as toolkitRaw from '@reduxjs/toolkit';
+import type { WritableDraft } from 'immer/dist/internal';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { createAction, createReducer } = ((toolkitRaw as any).default ??
 	toolkitRaw) as typeof toolkitRaw;
@@ -122,6 +123,7 @@ const initialPlayerState = {
 
 export const actionToColumnCubeCount: { [k: string]: number[] } = {
 	forage: [1, 1, 1],
+	custodian: [1],
 	transmute: [1, 2],
 	sell: [2],
 	shop: [1, 2],
@@ -279,6 +281,9 @@ export const alchemists = createReducer(initialState, (r) => {
 			...herbalists.map(() => 'play_favour'),
 			'turn_order'
 		];
+		if (state.round === 0) {
+			state.round++;
+		}
 		playerState.currentActionKey = playerState.required[0];
 	});
 	r.addCase(discard_ingredient, (state, { payload }) => {
@@ -308,6 +313,11 @@ export const alchemists = createReducer(initialState, (r) => {
 				break;
 			case Favours.sage:
 				playerState.coins += 1;
+				break;
+			case Favours.custodian:
+				placeCube(state, payload.player, 'custodian');
+				playerState.required.splice(0, 1);
+				state.emailToPlayerState[payload.player] = playerState;
 				break;
 			default:
 				throw 'unrecognized favour';
@@ -349,6 +359,9 @@ export const alchemists = createReducer(initialState, (r) => {
 					const email = state.turnOrderToPlayerEmail[turns[i]];
 					playerOrder.push(email);
 					const playerState = state.emailToPlayerState[email];
+					if (playerState.required.length > 0) {
+						playerState.required = [...playerState.required, 'commit'];
+					}
 					const bonus = playerState.turnToBonusMap[turns[i]];
 					playerState.coins += bonus.coins;
 					for (let c = 0; c < bonus.ingredients; ++c) {
@@ -360,14 +373,15 @@ export const alchemists = createReducer(initialState, (r) => {
 					for (let c = 0; c < bonus.favours; ++c) {
 						playerState.favours = [...playerState.favours, ...state.favoursPile.splice(0, 1)];
 					}
-					if (playerState.required.length > 0) {
-						playerState.required = [...playerState.required, 'commit'];
-					}
+					const herbalists = playerState.favours.filter(
+						(favour) => favourToPhase[favour] === 'immediate'
+					);
+					playerState.required = [...playerState.required, ...herbalists.map(() => 'play_favour')];
 					playerState.required = [...playerState.required, 'place_cube'];
 					playerState.currentActionKey = playerState.required[0];
 					playerState.required = [...playerState.required, 'place_cube'];
 					playerState.required = [...playerState.required, 'place_cube'];
-					if (state.round > 0) {
+					if (state.round > 1) {
 						playerState.required = [...playerState.required, 'place_cube'];
 						if (state.players.length < 4) {
 							playerState.required = [...playerState.required, 'place_cube'];
@@ -378,7 +392,6 @@ export const alchemists = createReducer(initialState, (r) => {
 					}
 					playerState.required = [...playerState.required, 'commit'];
 				}
-				state.round++;
 				state.players = playerOrder.reverse();
 			}
 		} else {
@@ -386,10 +399,7 @@ export const alchemists = createReducer(initialState, (r) => {
 		}
 	});
 
-	r.addCase(place_cube, (state, { payload }) => {
-		const player = payload.player;
-		const splitSpot = payload.cube.split('_');
-		const action = splitSpot[1];
+	function placeCube(state: WritableDraft<AlchemistsState>, player: string, action: string) {
 		let priors: string[] = [];
 		if (state.cubeActionToPlayerEmails[action]) {
 			priors = [...state.cubeActionToPlayerEmails[action]];
@@ -405,11 +415,18 @@ export const alchemists = createReducer(initialState, (r) => {
 			}
 			state.cubeActionToPlayerEmails['pass'] = [...priors, player];
 		}
+	}
+	r.addCase(place_cube, (state, { payload }) => {
+		const player = payload.player;
+		const splitSpot = payload.cube.split('_');
+		const action = splitSpot[1];
+		placeCube(state, player, action);
 	});
 
 	r.addCase(pass, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.required = [...playerState.required, 'turn_order'];
+		state.round++;
 		playerState.currentActionKey = playerState.required[0];
 		if (state.completedCubeActionToPlayerEmails['pass']) {
 			if (state.completedCubeActionToPlayerEmails['pass'].length === state.players.length - 1) {
