@@ -42,6 +42,54 @@ export enum Ingredients {
 	scorpion,
 	feather
 }
+export enum Alchemicals {
+	BlueMinus,
+	BluePlus,
+	GreenMinus,
+	GreenPlus,
+	RedMinus,
+	RedPlus,
+	Minus,
+	Plus,
+	Soup
+}
+export const MixesTable: { [k: number]: Alchemicals } = {};
+MixesTable[Alchemicals.BlueMinus * 10 + Alchemicals.Minus] = Alchemicals.RedMinus;
+MixesTable[Alchemicals.BlueMinus * 10 + Alchemicals.Plus] = Alchemicals.GreenPlus;
+MixesTable[Alchemicals.BluePlus * 10 + Alchemicals.Minus] = Alchemicals.GreenMinus;
+MixesTable[Alchemicals.BluePlus * 10 + Alchemicals.Plus] = Alchemicals.RedPlus;
+MixesTable[Alchemicals.BlueMinus * 10 + Alchemicals.BluePlus] = Alchemicals.Soup;
+
+MixesTable[Alchemicals.GreenMinus * 10 + Alchemicals.Minus] = Alchemicals.BlueMinus;
+MixesTable[Alchemicals.GreenMinus * 10 + Alchemicals.Plus] = Alchemicals.RedPlus;
+MixesTable[Alchemicals.GreenPlus * 10 + Alchemicals.Minus] = Alchemicals.RedMinus;
+MixesTable[Alchemicals.GreenPlus * 10 + Alchemicals.Plus] = Alchemicals.BluePlus;
+MixesTable[Alchemicals.GreenMinus * 10 + Alchemicals.GreenPlus] = Alchemicals.Soup;
+
+MixesTable[Alchemicals.RedMinus * 10 + Alchemicals.Minus] = Alchemicals.GreenMinus;
+MixesTable[Alchemicals.RedMinus * 10 + Alchemicals.Plus] = Alchemicals.BluePlus;
+MixesTable[Alchemicals.RedPlus * 10 + Alchemicals.Minus] = Alchemicals.BlueMinus;
+MixesTable[Alchemicals.RedPlus * 10 + Alchemicals.Plus] = Alchemicals.GreenPlus;
+MixesTable[Alchemicals.RedMinus * 10 + Alchemicals.RedPlus] = Alchemicals.Soup;
+
+MixesTable[Alchemicals.Minus * 10 + Alchemicals.Plus] = Alchemicals.Soup;
+
+MixesTable[Alchemicals.BlueMinus * 10 + Alchemicals.GreenMinus] = Alchemicals.BlueMinus;
+MixesTable[Alchemicals.BlueMinus * 10 + Alchemicals.RedPlus] = Alchemicals.BlueMinus;
+MixesTable[Alchemicals.BlueMinus * 10 + Alchemicals.RedMinus] = Alchemicals.RedMinus;
+MixesTable[Alchemicals.BlueMinus * 10 + Alchemicals.GreenPlus] = Alchemicals.GreenPlus;
+
+MixesTable[Alchemicals.BluePlus * 10 + Alchemicals.GreenMinus] = Alchemicals.GreenMinus;
+MixesTable[Alchemicals.BluePlus * 10 + Alchemicals.RedPlus] = Alchemicals.RedPlus;
+MixesTable[Alchemicals.BluePlus * 10 + Alchemicals.RedMinus] = Alchemicals.BluePlus;
+MixesTable[Alchemicals.BluePlus * 10 + Alchemicals.GreenPlus] = Alchemicals.BluePlus;
+
+MixesTable[Alchemicals.GreenMinus * 10 + Alchemicals.RedPlus] = Alchemicals.RedPlus;
+MixesTable[Alchemicals.GreenMinus * 10 + Alchemicals.RedMinus] = Alchemicals.GreenMinus;
+
+MixesTable[Alchemicals.GreenPlus * 10 + Alchemicals.RedPlus] = Alchemicals.GreenPlus;
+MixesTable[Alchemicals.GreenPlus * 10 + Alchemicals.RedMinus] = Alchemicals.RedMinus;
+
 export enum Artifacts_I {
 	periscope,
 	mortar,
@@ -85,6 +133,7 @@ export interface PlayerState {
 	color: number;
 	turnToBonusMap: { [k: string]: BonusInfo };
 	hasStartButton: boolean;
+	mixes: [Ingredients, Ingredients, Alchemicals][];
 }
 const initialPlayerState = {
 	coins: 2,
@@ -108,6 +157,7 @@ const initialPlayerState = {
 	pending: [],
 	color: -1,
 	hasStartButton: false,
+	mixes: [],
 	turnToBonusMap: {
 		turn9_paralyzed: { coins: 0, favours: 1, ingredients: 1 }, // paralyzed
 		turn0: { coins: -1, favours: 0, ingredients: 0 }, // pay
@@ -152,11 +202,13 @@ export interface AlchemistsState {
 	completedCubeActionToPlayerEmails: { [k: string]: string[] };
 	currentPlayerIndex: number;
 	round: number;
+	ingredientToAlchemical: Alchemicals[];
 }
 
 export const initial_setup = createAction<{
 	gameType: 'base' | 'golem';
 	ingredientPile: Ingredients[];
+	answerKey: Alchemicals[];
 	favoursPile: Favours[];
 	levelI: Artifacts_I[];
 	levelII: Artifacts_II[];
@@ -200,7 +252,8 @@ export const initialState: AlchemistsState = {
 	completedCubeActionToPlayerEmails: {},
 	emailToPlayerState: {},
 	currentPlayerIndex: 0,
-	round: 0
+	round: 0,
+	ingredientToAlchemical: []
 };
 
 export const alchemists = createReducer(initialState, (r) => {
@@ -208,6 +261,7 @@ export const alchemists = createReducer(initialState, (r) => {
 		const ret = { ...initialState, ...payload };
 		ret.faceupIngredients = ret.ingredientPile.slice(0, 5);
 		ret.ingredientPile = ret.ingredientPile.slice(5);
+		ret.ingredientToAlchemical = payload.answerKey;
 		ret.shop = [ret.levelI.slice(0, 3), ret.levelII.slice(0, 3), ret.levelIII.slice(0, 3)];
 		return { ...ret };
 	});
@@ -297,8 +351,14 @@ export const alchemists = createReducer(initialState, (r) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		const minI = Math.min(payload.i0, payload.i1);
 		const maxI = Math.max(payload.i0, payload.i1);
-		playerState.ingredients.splice(maxI, 1);
-		playerState.ingredients.splice(minI, 1);
+		const i0 = playerState.ingredients.splice(maxI, 1)[0];
+		const i1 = playerState.ingredients.splice(minI, 1)[0];
+		const a0 = state.ingredientToAlchemical[i0];
+		const a1 = state.ingredientToAlchemical[i1];
+		const m0 = Math.min(a0, a1);
+		const m1 = Math.max(a0, a1);
+		const result = MixesTable[m0 * 10 + m1];
+		playerState.mixes.push([i0, i1, result]);
 	});
 	r.addCase(play_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];

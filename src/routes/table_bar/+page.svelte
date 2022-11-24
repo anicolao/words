@@ -107,8 +107,17 @@
 				let levelI = shuffle([0, 1, 2, 3, 4, 5]);
 				let levelII = shuffle([0, 1, 2, 3, 4, 5]);
 				let levelIII = shuffle([0, 1, 2, 3, 4, 5]);
+				let answerKey = shuffle([0, 1, 2, 3, 4, 5, 6, 7]);
 				const setupActions: any[] = [
-					alch_initial_setup({ gameType, ingredientPile, favoursPile, levelI, levelII, levelIII })
+					alch_initial_setup({
+						gameType,
+						ingredientPile,
+						favoursPile,
+						levelI,
+						levelII,
+						levelIII,
+						answerKey
+					})
 				];
 				players.forEach((player) => {
 					setupActions.push(join_game(player));

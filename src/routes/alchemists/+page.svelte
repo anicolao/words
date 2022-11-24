@@ -6,14 +6,7 @@
 	import Ingredient from '$lib/components/Ingredient.svelte';
 	import AlchemistsBoard from '$lib/components/AlchemistsBoard.svelte';
 	import Favour from '$lib/components/Favour.svelte';
-	import {
-		collection,
-		onSnapshot,
-		orderBy,
-		query,
-		setIndexConfiguration,
-		type Unsubscribe
-	} from 'firebase/firestore';
+	import { collection, onSnapshot, orderBy, query, type Unsubscribe } from 'firebase/firestore';
 	import firebase from '$lib/firebase';
 	import { custom_title } from '$lib/components/nav';
 	import {
@@ -25,6 +18,7 @@
 		drink_potion,
 		favourToPhase,
 		forage,
+		MixesTable,
 		pass,
 		place_cube,
 		play_favour,
@@ -36,10 +30,11 @@
 		type AlchemistsState,
 		type PlayerState
 	} from '$lib/components/alchemists';
-	import { current, type AnyAction } from '@reduxjs/toolkit';
+	import type { AnyAction } from '@reduxjs/toolkit';
 	import { dispatchToTable } from '$lib/components/gameutil';
 	import Button, { Label } from '@smui/button';
-	import { EdgesGeometry } from 'three';
+	import Alchemical from '$lib/components/Alchemical.svelte';
+	import Potion from '$lib/components/Potion.svelte';
 
 	// TODO: centralize this
 	const tableId = $page.url.searchParams.get('slug') || undefined;
@@ -406,6 +401,34 @@
 			<Seal {player} {seal} />
 		{/each}
 	</div>
+	<div class="row" style="width: 30px">
+		{#each [0, 1, 2, 3, 4, 5, 6, 7] as ingredient}
+			<Ingredient {ingredient} />
+			<Alchemical alchemical={$store.alchemists.ingredientToAlchemical[ingredient]} />
+		{/each}
+	</div>
+	{#if state && state.mixes !== undefined}
+		{#each state.mixes as mix}
+			<div class="row" style="width: 40px">
+				<Ingredient ingredient={mix[0]} />
+				<Ingredient ingredient={mix[1]} />
+				<Potion potion={mix[2]} />
+			</div>
+		{/each}
+	{/if}
+	<div class="row" style="width: 30px">
+		{#each [-1, 0, 1, 2, 3, 4, 5, 6, 7] as a}
+			<Alchemical alchemical={a} />
+		{/each}
+	</div>
+	{#each [0, 1, 2, 3, 4, 5, 6, 7] as r}
+		<div class="row" style="width: 30px">
+			<Alchemical alchemical={r} />
+			{#each [0, 1, 2, 3, 4, 5, 6, 7] as a}
+				<Potion potion={MixesTable[r * 10 + a]} />
+			{/each}
+		</div>
+	{/each}
 </div>
 
 <style>
