@@ -35,6 +35,8 @@
 	import Button, { Label } from '@smui/button';
 	import Alchemical from '$lib/components/Alchemical.svelte';
 	import Potion from '$lib/components/Potion.svelte';
+	import Notebook from '$lib/components/Notebook.svelte';
+	import IngredientToken from '$lib/components/IngredientToken.svelte';
 
 	// TODO: centralize this
 	const tableId = $page.url.searchParams.get('slug') || undefined;
@@ -350,6 +352,14 @@
 			}
 		};
 	}
+
+	function mixIngredients(i0: number, i1: number) {
+		const alchemicalA = $store.alchemists.ingredientToAlchemical[i0];
+		const alchemicalB = $store.alchemists.ingredientToAlchemical[i1];
+		const a0 = Math.min(alchemicalA, alchemicalB);
+		const a1 = Math.max(alchemicalA, alchemicalB);
+		return MixesTable[a0 * 10 + a1];
+	}
 </script>
 
 <div class="container">
@@ -407,14 +417,8 @@
 			<Alchemical alchemical={$store.alchemists.ingredientToAlchemical[ingredient]} />
 		{/each}
 	</div>
-	{#if state && state.mixes !== undefined}
-		{#each state.mixes as mix}
-			<div class="row" style="width: 40px">
-				<Ingredient ingredient={mix[0]} />
-				<Ingredient ingredient={mix[1]} />
-				<Potion potion={mix[2]} />
-			</div>
-		{/each}
+	{#if cstate && cstate.mixes !== undefined}
+		<Notebook mixes={cstate.mixes} />
 	{/if}
 	<div class="row" style="width: 30px">
 		{#each [-1, 0, 1, 2, 3, 4, 5, 6, 7] as a}
@@ -426,6 +430,19 @@
 			<Alchemical alchemical={r} />
 			{#each [0, 1, 2, 3, 4, 5, 6, 7] as a}
 				<Potion potion={MixesTable[r * 10 + a]} />
+			{/each}
+		</div>
+	{/each}
+	<div class="row" style="width: 30px">
+		{#each [-1, 0, 1, 2, 3, 4, 5, 6, 7] as i}
+			<IngredientToken ingredient={i} />
+		{/each}
+	</div>
+	{#each [0, 1, 2, 3, 4, 5, 6, 7] as r}
+		<div class="row" style="width: 30px">
+			<IngredientToken ingredient={r} />
+			{#each [0, 1, 2, 3, 4, 5, 6, 7] as a}
+				<Potion potion={mixIngredients(r, a)} />
 			{/each}
 		</div>
 	{/each}
