@@ -37,6 +37,8 @@
 	import Potion from '$lib/components/Potion.svelte';
 	import Notebook from '$lib/components/Notebook.svelte';
 	import IngredientToken from '$lib/components/IngredientToken.svelte';
+	import PotionToken from '$lib/components/PotionToken.svelte';
+	import ExperimentGrid from '$lib/components/ExperimentGrid.svelte';
 
 	// TODO: centralize this
 	const tableId = $page.url.searchParams.get('slug') || undefined;
@@ -442,10 +444,13 @@
 		<div class="row" style="width: 30px">
 			<IngredientToken ingredient={r} />
 			{#each [0, 1, 2, 3, 4, 5, 6, 7] as a}
-				<Potion potion={mixIngredients(r, a)} />
+				<PotionToken potion={mixIngredients(r, a)} />
 			{/each}
 		</div>
 	{/each}
+	{#if cstate}
+		<ExperimentGrid mixes={cstate.mixes} />
+	{/if}
 </div>
 
 <style>
