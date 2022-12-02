@@ -98,6 +98,7 @@ export enum Artifacts_I {
 	printingpress,
 	respect
 }
+const Costs_I = [3, 3, 4, 3, 4, 4];
 
 export enum Artifacts_II {
 	chalice,
@@ -107,6 +108,7 @@ export enum Artifacts_II {
 	hypnotic,
 	authority
 }
+const Costs_II = [4, 4, 4, 3, 3, 4];
 
 export enum Artifacts_III {
 	featherincap,
@@ -116,6 +118,8 @@ export enum Artifacts_III {
 	mirror,
 	cup
 }
+const Costs_III = [3, 5, 1, 4, 4, 4];
+const Costs = [Costs_I, Costs_II, Costs_III];
 export interface BonusInfo {
 	coins: number;
 	favours: number;
@@ -124,6 +128,7 @@ export interface BonusInfo {
 export interface PlayerState {
 	coins: number;
 	ingredients: Ingredients[];
+	artifacts: number[];
 	favours: Favours[];
 	seals: Seals[];
 	required: string[];
@@ -138,6 +143,7 @@ export interface PlayerState {
 const initialPlayerState = {
 	coins: 2,
 	ingredients: [],
+	artifacts: [],
 	favours: [],
 	seals: [
 		Seals.hedgeRed,
@@ -202,6 +208,7 @@ export interface AlchemistsState {
 	completedCubeActionToPlayerEmails: { [k: string]: string[] };
 	currentPlayerIndex: number;
 	round: number;
+	studentSick: boolean;
 	ingredientToAlchemical: Alchemicals[];
 }
 
@@ -226,6 +233,8 @@ export const play_favour = createAction<{ player: string; index: number }>('play
 export const commit = createAction<{ player: string }>('commit');
 export const draw_ingredient = createAction<{ player: string }>('draw_ingredient');
 export const forage = createAction<{ player: string; index: number }>('forage');
+export const shop = createAction<{ player: string; index: number }>('shop');
+export const renounce = createAction<{ player: string; action: string }>('renounce');
 export const transmute = createAction<{ player: string; index: number }>('transmute');
 export const draw_favour = createAction<string>('draw_favour');
 export const turn_order = createAction<{ player: string; order: string }>('turn_order');
@@ -234,6 +243,8 @@ export const pass = createAction<{ player: string }>('pass');
 export const drink_potion = createAction<{ player: string; i0: number; i1: number }>(
 	'drink_potion'
 );
+export const drink = createAction<{ player: string; i0: number; i1: number }>('drink');
+export const test_potion = createAction<{ player: string; i0: number; i1: number }>('test_potion');
 
 export const initialState: AlchemistsState = {
 	gameType: 'base',
@@ -253,6 +264,7 @@ export const initialState: AlchemistsState = {
 	emailToPlayerState: {},
 	currentPlayerIndex: 0,
 	round: 0,
+	studentSick: false,
 	ingredientToAlchemical: []
 };
 
@@ -293,6 +305,34 @@ export const alchemists = createReducer(initialState, (r) => {
 		}
 		playerState.ingredients = newHand;
 		state.emailToPlayerState[payload.player] = playerState;
+	});
+	r.addCase(shop, (state, { payload }) => {
+		const playerState = state.emailToPlayerState[payload.player];
+		// 1 2 3 4 5 6
+		// 0 0 0 1 1 2
+		const artifactLevel = [0, 0, 0, 1, 1, 2];
+		const artifacts = state.shop[artifactLevel[state.round]];
+		const newHand = [
+			...playerState.artifacts,
+			...artifacts
+				.splice(payload.index, 1, -1)
+				.map((x) => (x >= 0 ? x + 10 * (artifactLevel[state.round] + 1) * 10 : x))
+		];
+		if (newHand.indexOf(-1) !== -1) {
+			throw 'card already drawn';
+		}
+		state.shop[artifactLevel[state.round]] = artifacts;
+		state.shop = [...state.shop];
+		playerState.artifacts = newHand;
+		console.log({ Costs, l: artifactLevel[state.round], a: newHand[newHand.length - 1] });
+		playerState.coins -= Costs[artifactLevel[state.round]][newHand[newHand.length - 1] % 10];
+		if (playerState.coins < 0) {
+			throw 'not enough money to buy that artifact';
+		}
+		state.emailToPlayerState[payload.player] = playerState;
+	});
+	r.addCase(renounce, (state, { payload }) => {
+		return state;
 	});
 	r.addCase(draw_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload];
@@ -347,7 +387,10 @@ export const alchemists = createReducer(initialState, (r) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.ingredients.splice(payload.index, 1);
 	});
-	r.addCase(drink_potion, (state, { payload }) => {
+	function mix(
+		state: WritableDraft<AlchemistsState>,
+		payload: { player: string; i0: number; i1: number }
+	) {
 		const playerState = state.emailToPlayerState[payload.player];
 		const minI = Math.min(payload.i0, payload.i1);
 		const maxI = Math.max(payload.i0, payload.i1);
@@ -358,6 +401,34 @@ export const alchemists = createReducer(initialState, (r) => {
 		const m0 = Math.min(a0, a1);
 		const m1 = Math.max(a0, a1);
 		const result = MixesTable[m0 * 10 + m1];
+		return { i0, i1, result };
+	}
+	r.addCase(drink_potion, (state, { payload }) => {
+		const { i0, i1, result } = mix(state, payload);
+		const playerState = state.emailToPlayerState[payload.player];
+		playerState.mixes.push([i0, i1, result]);
+	});
+	r.addCase(drink, (state, { payload }) => {
+		const { i0, i1, result } = mix(state, payload);
+		const playerState = state.emailToPlayerState[payload.player];
+		playerState.mixes.push([i0, i1, result]);
+	});
+	r.addCase(test_potion, (state, { payload }) => {
+		const { i0, i1, result } = mix(state, payload);
+		const playerState = state.emailToPlayerState[payload.player];
+		if (state.studentSick) {
+			playerState.coins -= 1;
+			if (playerState.coins < 0) {
+				throw 'no money for sick student';
+			}
+		}
+		if (
+			result === Alchemicals.BlueMinus ||
+			result === Alchemicals.GreenMinus ||
+			result === Alchemicals.RedMinus
+		) {
+			state.studentSick = true;
+		}
 		playerState.mixes.push([i0, i1, result]);
 	});
 	r.addCase(play_favour, (state, { payload }) => {
@@ -371,7 +442,7 @@ export const alchemists = createReducer(initialState, (r) => {
 			case Favours.herbalist:
 				playerState.ingredients = [
 					...playerState.ingredients,
-					...state.ingredientPile.splice(0, 2)
+					...state.ingredientPile.splice(0, 3)
 				];
 				playerState.required = [
 					'discard_ingredient',
@@ -496,11 +567,13 @@ export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(pass, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.required = [...playerState.required, 'turn_order'];
-		state.round++;
 		playerState.currentActionKey = playerState.required[0];
 		if (state.completedCubeActionToPlayerEmails['pass']) {
 			if (state.completedCubeActionToPlayerEmails['pass'].length === state.players.length - 1) {
 				console.log('*** I am the last passer ' + payload.player);
+				state.round++;
+				state.players = [...state.players.slice(1), state.players[0]];
+				state.studentSick = false;
 				state.turnOrderToPlayerEmail = {};
 				state.cubeActionToPlayerEmails = {};
 				state.completedCubeActionToPlayerEmails = {};
@@ -520,6 +593,8 @@ export const alchemists = createReducer(initialState, (r) => {
 						const alternates: { [k: string]: string } = {};
 						alternates['draw_ingredient'] = 'forage';
 						alternates['drink_potion'] = 'custodian';
+						alternates['test_potion'] = 'student';
+						alternates['renounce'] = action.payload.action;
 						const alias = alternates[action.type];
 						if (alias) {
 							requiredIndex = playerState.required.indexOf(alias);

@@ -24,6 +24,9 @@
 		play_favour,
 		queue_pending,
 		redo_pending,
+		renounce,
+		shop,
+		test_potion,
 		transmute,
 		turn_order,
 		undo_pending,
@@ -39,6 +42,7 @@
 	import IngredientToken from '$lib/components/IngredientToken.svelte';
 	import PotionToken from '$lib/components/PotionToken.svelte';
 	import ExperimentGrid from '$lib/components/ExperimentGrid.svelte';
+	import Artifact from '$lib/components/Artifact.svelte';
 
 	// TODO: centralize this
 	const tableId = $page.url.searchParams.get('slug') || undefined;
@@ -110,6 +114,7 @@
 	$: state = previewStore?.emailToPlayerState[me];
 	$: seals = state?.seals || [];
 	$: favours = state?.favours.map((x, i) => (i < cstate.favours.length ? x : -1)) || [];
+	$: artifacts = state?.artifacts || [];
 	$: ingredients =
 		state?.ingredients.map((x, i) =>
 			i < cstate.ingredients.length || currentActionKey === 'discard_ingredient' ? x : -2
@@ -128,6 +133,9 @@
 			forage: 'forage for an ingredient.',
 			custodian: 'drink a potion.',
 			transmute: 'transmute an ingredient.',
+			student: 'test on a student.',
+			shop: 'buy an artifact.',
+			drink: 'drink a potion.',
 			commit: 'commit or undo/redo actions.',
 			place_cube: 'place an action cube.',
 			pass: 'end your round.'
@@ -224,7 +232,7 @@
 		};
 	}
 	function conflict() {
-		const sequential = ['turn_order', 'place_cube', 'forage', 'pass'];
+		const sequential = ['turn_order', 'place_cube', 'forage', 'pass', 'test_potion', 'shop'];
 		const pending = $store.alchemists.emailToPlayerState[me].pending;
 		for (let i = 0; i < sequential.length; ++i) {
 			if (pending.filter((x) => x.type === sequential[i]).length > 0 || passing(state)) {
@@ -256,6 +264,8 @@
 		return (
 			previewState &&
 			(previewState.required.length === 0 ||
+				previewState.required[0] === 'student' ||
+				previewState.required[0] === 'drink' ||
 				previewState.required[0] === 'commit' ||
 				previewState.required[0] === 'pass') &&
 			(previewState.pending.length > 0 || passing(previewState)) &&
@@ -298,6 +308,7 @@
 					case 'shop':
 					case 'student':
 					case 'drink':
+					case 'action_renounce':
 						break;
 					case 'debunk':
 					case 'sell':
@@ -316,6 +327,11 @@
 			console.log('Draw specific ingredient...');
 			const index = parseInt(e?.detail.substring(6));
 			enqueue(forage({ player: me, index }));
+		} else if (currentActionKey === 'shop' && e?.detail.startsWith('artifact')) {
+			const index = parseInt(e?.detail.substring(8)) - 1;
+			enqueue(shop({ player: me, index }));
+		} else if (e?.detail.startsWith('action_renounce')) {
+			enqueue(renounce({ player: me, action: currentActionKey }));
 		}
 	}
 	let potionCards: number[] = [];
@@ -325,7 +341,11 @@
 				enqueue(transmute({ player: me, index: i }));
 			} else if (currentActionKey === 'discard_ingredient') {
 				enqueue(discard_ingredient({ player: me, index: i }));
-			} else if (currentActionKey === 'custodian') {
+			} else if (
+				currentActionKey === 'custodian' ||
+				currentActionKey === 'student' ||
+				currentActionKey === 'drink'
+			) {
 				let found = potionCards.indexOf(i);
 				if (found === -1 && potionCards.length >= 1) {
 					for (let s = 0; s < potionCards.length; ++s) {
@@ -347,7 +367,11 @@
 					undoPending();
 				}
 				if (potionCards.length === 2) {
-					enqueue(drink_potion({ player: me, i0: potionCards[0], i1: potionCards[1] }));
+					if (currentActionKey === 'custodian' || currentActionKey === 'drink') {
+						enqueue(drink_potion({ player: me, i0: potionCards[0], i1: potionCards[1] }));
+					} else {
+						enqueue(test_potion({ player: me, i0: potionCards[0], i1: potionCards[1] }));
+					}
 					potionCards = [];
 				}
 				potionCards = potionCards;
@@ -384,7 +408,9 @@
 	</div>
 	<div class="row">
 		{#if state}
-			Coins: {state.coins}
+			<p>Round: {$store.alchemists.round}</p>
+			<p>Start Player: {$store.alchemists.players[0]}</p>
+			<p>Coins: {state.coins}</p>
 		{/if}
 	</div>
 	<div class="row">
@@ -405,6 +431,13 @@
 		{#each ingredients as ingredient, i}
 			<span class="card" on:click={clickIngredient(i)}>
 				<Ingredient {ingredient} selected={potionCards.indexOf(i) !== -1} />
+			</span>
+		{/each}
+	</div>
+	<div class="row">
+		{#each artifacts as artifact, i}
+			<span class="card larger">
+				<Artifact level={Math.floor(artifact / 100)} artifact={artifact % 10} />
 			</span>
 		{/each}
 	</div>
@@ -469,6 +502,9 @@
 	.row {
 		display: flex;
 		flex-direction: row;
+	}
+	p {
+		padding: 1em;
 	}
 
 	:global(.mdc-drawer-app-content) {
