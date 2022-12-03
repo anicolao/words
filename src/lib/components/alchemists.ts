@@ -29,7 +29,7 @@ export const favourToPhase: string[] = [
 	'place_cube',
 	'immediate',
 	'sell',
-	'buy',
+	'shop',
 	'transmute'
 ];
 export enum Ingredients {
@@ -332,7 +332,11 @@ export const alchemists = createReducer(initialState, (r) => {
 		state.emailToPlayerState[payload.player] = playerState;
 	});
 	r.addCase(renounce, (state, { payload }) => {
-		return state;
+		const playerState = state.emailToPlayerState[payload.player];
+		if (playerState.pending.length > 1) {
+			throw 'undo actions before renouncing';
+		}
+		state.emailToPlayerState[payload.player] = playerState;
 	});
 	r.addCase(draw_favour, (state, { payload }) => {
 		const playerState = state.emailToPlayerState[payload];
@@ -452,6 +456,7 @@ export const alchemists = createReducer(initialState, (r) => {
 				];
 				state.emailToPlayerState[payload.player] = playerState;
 				break;
+			case Favours.shopkeeper:
 			case Favours.sage:
 				playerState.coins += 1;
 				break;
