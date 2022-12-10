@@ -482,7 +482,7 @@
 		</div>
 	{/each}
 	{#if cstate}
-		<ExperimentGrid mixes={cstate.mixes} />
+		<ExperimentGrid {tableId} mixes={cstate.mixes} />
 	{/if}
 </div>
 

@@ -139,6 +139,7 @@ export interface PlayerState {
 	turnToBonusMap: { [k: string]: BonusInfo };
 	hasStartButton: boolean;
 	mixes: [Ingredients, Ingredients, Alchemicals][];
+	grid: string[];
 }
 const initialPlayerState = {
 	coins: 2,
@@ -164,6 +165,16 @@ const initialPlayerState = {
 	color: -1,
 	hasStartButton: false,
 	mixes: [],
+	grid: [
+		'         ',
+		'         ',
+		'         ',
+		'         ',
+		'         ',
+		'         ',
+		'         ',
+		'         '
+	],
 	turnToBonusMap: {
 		turn9_paralyzed: { coins: 0, favours: 1, ingredients: 1 }, // paralyzed
 		turn0: { coins: -1, favours: 0, ingredients: 0 }, // pay
@@ -245,6 +256,12 @@ export const drink_potion = createAction<{ player: string; i0: number; i1: numbe
 );
 export const drink = createAction<{ player: string; i0: number; i1: number }>('drink');
 export const test_potion = createAction<{ player: string; i0: number; i1: number }>('test_potion');
+export const update_grid = createAction<{
+	player: string;
+	row: number;
+	column: number;
+	letter: string;
+}>('update_grid');
 
 export const initialState: AlchemistsState = {
 	gameType: 'base',
@@ -416,6 +433,14 @@ export const alchemists = createReducer(initialState, (r) => {
 		const { i0, i1, result } = mix(state, payload);
 		const playerState = state.emailToPlayerState[payload.player];
 		playerState.mixes.push([i0, i1, result]);
+	});
+	r.addCase(update_grid, (state, { payload }) => {
+		const { row, column, letter } = payload;
+		const playerState = state.emailToPlayerState[payload.player];
+		const original = playerState.grid[column];
+		const now = original.substring(0, row) + letter + original.substring(row + 1);
+		playerState.grid[column] = now;
+		playerState.grid = [...playerState.grid];
 	});
 	r.addCase(test_potion, (state, { payload }) => {
 		const { i0, i1, result } = mix(state, payload);
