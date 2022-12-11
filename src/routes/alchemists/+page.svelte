@@ -447,41 +447,9 @@
 			<Seal {player} {seal} />
 		{/each}
 	</div>
-	<div class="row" style="width: 30px">
-		{#each [0, 1, 2, 3, 4, 5, 6, 7] as ingredient}
-			<Ingredient {ingredient} />
-			<Alchemical alchemical={$store.alchemists.ingredientToAlchemical[ingredient]} />
-		{/each}
-	</div>
 	{#if cstate && cstate.mixes !== undefined}
 		<Notebook mixes={cstate.mixes} />
 	{/if}
-	<div class="row" style="width: 30px">
-		{#each [-1, 0, 1, 2, 3, 4, 5, 6, 7] as a}
-			<Alchemical alchemical={a} />
-		{/each}
-	</div>
-	{#each [0, 1, 2, 3, 4, 5, 6, 7] as r}
-		<div class="row" style="width: 30px">
-			<Alchemical alchemical={r} />
-			{#each [0, 1, 2, 3, 4, 5, 6, 7] as a}
-				<Potion potion={MixesTable[r * 10 + a]} />
-			{/each}
-		</div>
-	{/each}
-	<div class="row" style="width: 30px">
-		{#each [-1, 0, 1, 2, 3, 4, 5, 6, 7] as i}
-			<IngredientToken ingredient={i} />
-		{/each}
-	</div>
-	{#each [0, 1, 2, 3, 4, 5, 6, 7] as r}
-		<div class="row" style="width: 30px">
-			<IngredientToken ingredient={r} />
-			{#each [0, 1, 2, 3, 4, 5, 6, 7] as a}
-				<PotionToken potion={mixIngredients(r, a)} />
-			{/each}
-		</div>
-	{/each}
 	{#if cstate}
 		<ExperimentGrid {tableId} mixes={cstate.mixes} />
 		<Theories players={$store.alchemists.players} />
