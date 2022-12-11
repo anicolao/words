@@ -43,6 +43,7 @@
 	import PotionToken from '$lib/components/PotionToken.svelte';
 	import ExperimentGrid from '$lib/components/ExperimentGrid.svelte';
 	import Artifact from '$lib/components/Artifact.svelte';
+	import Theories from '$lib/components/Theories.svelte';
 
 	// TODO: centralize this
 	const tableId = $page.url.searchParams.get('slug') || undefined;
@@ -483,6 +484,7 @@
 	{/each}
 	{#if cstate}
 		<ExperimentGrid {tableId} mixes={cstate.mixes} />
+		<Theories players={$store.alchemists.players} />
 	{/if}
 </div>
 

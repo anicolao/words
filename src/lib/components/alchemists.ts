@@ -140,6 +140,7 @@ export interface PlayerState {
 	hasStartButton: boolean;
 	mixes: [Ingredients, Ingredients, Alchemicals][];
 	grid: string[];
+	score: number;
 }
 const initialPlayerState = {
 	coins: 2,
@@ -175,6 +176,7 @@ const initialPlayerState = {
 		'         ',
 		'         '
 	],
+	score: 10,
 	turnToBonusMap: {
 		turn9_paralyzed: { coins: 0, favours: 1, ingredients: 1 }, // paralyzed
 		turn0: { coins: -1, favours: 0, ingredients: 0 }, // pay
@@ -211,7 +213,6 @@ export interface AlchemistsState {
 	levelII: Artifacts_II[];
 	levelIII: Artifacts_III[];
 	players: string[];
-	scores: number[];
 	finalScoreAdjustment: number[];
 	emailToPlayerState: { [k: string]: PlayerState };
 	turnOrderToPlayerEmail: { [k: string]: string };
@@ -273,7 +274,6 @@ export const initialState: AlchemistsState = {
 	levelIII: [],
 	favoursPile: [],
 	players: [],
-	scores: [],
 	finalScoreAdjustment: [],
 	turnOrderToPlayerEmail: {},
 	cubeActionToPlayerEmails: {},
@@ -297,7 +297,6 @@ export const alchemists = createReducer(initialState, (r) => {
 	r.addCase(join_game, (state, { payload }) => {
 		const color = state.players.length;
 		state.players.push(payload);
-		state.scores.push(10);
 		state.finalScoreAdjustment.push(0);
 		state.emailToPlayerState[payload] = {
 			...initialPlayerState,
