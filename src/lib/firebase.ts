@@ -91,6 +91,6 @@ const firebase = {
 	}
 };
 
-connectFirestoreEmulator(firebase.firestore, 'localhost', 8080);
+//connectFirestoreEmulator(firebase.firestore, 'localhost', 8080);
 
 export default firebase;
