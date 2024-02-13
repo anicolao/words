@@ -9,6 +9,7 @@
 		leave_table,
 		start_table
 	} from '$lib/components/tables';
+	import { initial_setup } from '$lib/components/ttr/ttr';
 	import { draw_tiles, initial_tiles, join_game } from '$lib/components/words';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
@@ -50,10 +51,10 @@
 	function start(tableid: string) {
 		return async () => {
 			const table = $store.tables.tableIdToTable[tableid];
+			const gameProps =
+				$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[tableid].gameid].properties;
+			const setupActions = [];
 			if (table.gameid === 'ofzl7s0llmrDqf1ON3h6') {
-				const players = shuffle($store.tables.tableIdToTable[tableid].players);
-				const gameProps =
-					$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[tableid].gameid].properties;
 				const shuffledTiles = shuffle(gameProps.tiles.split(''));
 				const tiles = gameProps.tiles;
 				const values = gameProps.values;
@@ -61,7 +62,6 @@
 				const wordm = gameProps.wordm;
 				const num_cols = parseInt(gameProps.numCols);
 				const num_rows = parseInt(gameProps.numRows);
-				const setupActions = [];
 				setupActions.push(
 					initial_tiles({
 						draw_pile: shuffledTiles.join(''),
@@ -73,13 +73,40 @@
 						num_rows
 					})
 				);
+				const players = shuffle($store.tables.tableIdToTable[tableid].players);
 				players.forEach((player) => setupActions.push(join_game(player)));
 				players.forEach((player) => setupActions.push(draw_tiles(player)));
-
-				setupActions.forEach((action) => {
-					dispatchToTable(tableid, action);
-				});
+			} else {
+				if (gameProps?.piles) {
+					console.log('Shuffle piles!', gameProps.piles);
+					const piles: string[] = gameProps.piles as unknown as string[];
+					const initialSetup: any = {};
+					piles.forEach((pile) => {
+						if (gameProps[pile]) {
+							console.log(`Shuffle pile ${pile}`);
+							const uniqueCards = gameProps[pile] as unknown as string[];
+							const cardCounts = gameProps[pile + 'Counts'] as unknown as number[];
+							const sortedCards: string[] = [];
+							cardCounts.forEach((count, i) => {
+								while (count-- > 0) {
+									sortedCards.push(uniqueCards[i]);
+								}
+							});
+							console.log(`We have ${sortedCards.length} unique cards`);
+							initialSetup[pile] = shuffle(sortedCards);
+							console.log(initialSetup);
+						} else {
+							console.error(`Card data not found: ${pile}`);
+						}
+					});
+					setupActions.push(initial_setup(initialSetup));
+					const players = shuffle($store.tables.tableIdToTable[tableid].players);
+					players.forEach((player) => setupActions.push(join_game(player)));
+				}
 			}
+			setupActions.forEach((action) => {
+				dispatchToTable(tableid, action);
+			});
 			const gameDef = $store.gamedefs.gameIdToGame[table.gameid];
 			firebase.dispatch(start_table({ tableid }));
 			goto('/' + gameDef.properties.path + '/?slug=' + tableid);
@@ -100,7 +127,8 @@
 	<ul>
 		{#each tableIds as table}
 			<li>
-				{$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[table].gameid]?.properties?.name}:
+				{$store.gamedefs.gameIdToGame[$store.tables.tableIdToTable[table].gameid]?.properties
+					?.name}:
 				{#each $store.tables.tableIdToTable[table].players as player}
 					<Avatar {player} />
 				{/each}

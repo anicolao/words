@@ -48,8 +48,7 @@
 
 	const me = $store.auth.email || '';
 	$: state = $store.ttr.emailToPlayerState[me];
-	//$: wagons = state?.wagons || [];
-	$: wagons = [Wagons.blue, Wagons.tunnel];
+	$: wagons = state?.wagons || [];
 	$: gameType = $store.ttr.gameType;
 	$: player = state ? $store.ttr.players.indexOf(me) : -1;
 </script>

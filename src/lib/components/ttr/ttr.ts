@@ -30,7 +30,7 @@ export interface TTRState {
 }
 
 export const initial_setup = createAction<{
-	gameType: 'swiss',
+	gameType?: 'swiss',
 	wagonsPile: Wagons[];
 }>('initial_setup');
 export const join_game = createAction<string>('join_game');
@@ -50,6 +50,7 @@ export const ttr = createReducer(initialState, (r) => {
 	r.addCase(join_game, (state, { payload }) => {
 		state.players.push(payload);
 		state.emailToPlayerState[payload] = { ...initialPlayerState };
+		state.emailToPlayerState[payload].wagons = state.wagonsPile.splice(0, 4);
 		return state;
 	});
 	r.addCase(draw_wagon, (state, { payload }) => {
