@@ -6,6 +6,7 @@ import { nav } from '$lib/components/nav';
 import type { Writable } from 'svelte/store';
 import { tables } from './components/tables';
 import { words } from './components/words';
+import { duplicate } from './components/duplicate';
 import { things } from './components/things';
 import { users } from './components/users';
 import { gamedefs } from './components/gamedefs';
@@ -38,6 +39,7 @@ const reducer = {
 	things,
 	ttr,
 	users,
+	duplicate,
 	words
 };
 const rawStore = configureStore({ reducer, enhancers: [svelteStoreEnhancer] });

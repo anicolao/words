@@ -11,6 +11,7 @@
 	} from '$lib/components/tables';
 	import { initial_setup } from '$lib/components/ttr/ttr';
 	import { draw_tiles, initial_tiles, join_game } from '$lib/components/words';
+	import { draw_tiles as draw_tiles_d, initial_tiles as initial_tiles_d, join_game as join_game_d } from '$lib/components/duplicate';
 	import firebase from '$lib/firebase';
 	import { store } from '$lib/store';
 	import Button from '@smui/button';
@@ -76,6 +77,28 @@
 				const players = shuffle($store.tables.tableIdToTable[tableid].players);
 				players.forEach((player) => setupActions.push(join_game(player)));
 				players.forEach((player) => setupActions.push(draw_tiles(player)));
+			} else if (table.gameid === 'Uzxi49MfYLVNvosYgIo6') {
+				const shuffledTiles = shuffle(gameProps.tiles.split(''));
+				const tiles = gameProps.tiles;
+				const values = gameProps.values;
+				const letterm = gameProps.letterm;
+				const wordm = gameProps.wordm;
+				const num_cols = parseInt(gameProps.numCols);
+				const num_rows = parseInt(gameProps.numRows);
+				setupActions.push(
+					initial_tiles_d({
+						draw_pile: shuffledTiles.join(''),
+						tiles,
+						values,
+						letterm,
+						wordm,
+						num_cols,
+						num_rows
+					})
+				);
+				const players = shuffle($store.tables.tableIdToTable[tableid].players);
+				players.forEach((player) => setupActions.push(join_game_d(player)));
+				setupActions.push(draw_tiles_d());
 			} else {
 				if (gameProps?.piles) {
 					console.log('Shuffle piles!', gameProps.piles);

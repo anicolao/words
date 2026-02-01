@@ -4,6 +4,10 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export async function dispatchToTable(tableid: string, action: AnyAction) {
 	const gameActions = collection(firebase.firestore, 'tables', tableid, 'actions');
+	console.log("JSON: ", JSON.stringify(action));
+	if (action.payload === undefined) {
+		delete action.payload;
+	}
 	addDoc(gameActions, { ...action, timestamp: serverTimestamp() }).catch((message) => {
 		console.error(message);
 	});
